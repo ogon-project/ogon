@@ -41,6 +41,16 @@
 
 #define TAG OGON_TAG("core.openh264")
 
+#ifdef WITH_ENCODER_STATS
+#include <freerdp/utils/stopwatch.h>
+#define STOPWATCH_START(sw)     stopwatch_start(sw)
+#define STOPWATCH_STOP(sw)      stopwatch_stop(sw)
+#else
+#define STOPWATCH_START(sw)     do { } while (0)
+#define STOPWATCH_STOP(sw)      do { } while (0)
+#endif
+
+
 typedef int (*pfn_create_openh264_encoder)(ISVCEncoder **ppEncoder);
 typedef void (*pfn_destroy_openh264_encoder)(ISVCEncoder *pEncoder);
 typedef void (*pfn_get_openh264_version)(OpenH264Version *pVersion);
@@ -65,7 +75,76 @@ struct _ogon_h264_context {
 	UINT32 bitRate;
 	UINT32 nullCount;
 	UINT32 nullValue;
+#ifdef WITH_ENCODER_STATS
+	STOPWATCH *swRGB2YUV420;
+	STOPWATCH *swRGB2YUV444V1;
+	STOPWATCH *swRGB2YUV444V2;
+	STOPWATCH *swAVCEncode;
+	STOPWATCH *swImageCopy;
+#endif
 };
+
+#ifdef WITH_ENCODER_STATS
+static void ogon_print_h264_stopwatchxx(STOPWATCH *sw, const char *title) {
+	double s = stopwatch_get_elapsed_time_in_seconds(sw);
+	double avg = sw->count == 0 ? 0 : s/sw->count;
+	WLog_DBG(TAG, "%-20s | %10u | %10.4fs | %8.6fs | %6.0f",
+	         title, sw->count, s, avg, sw->count/s);
+}
+
+static void ogon_print_h264_stopwatches(ogon_h264_context *h264) {
+	WLog_DBG(TAG, "------------------------------------------------------------+-------");
+	WLog_DBG(TAG, "STOPWATCH            |      COUNT |       TOTAL |       AVG |    IPS");
+	WLog_DBG(TAG, "---------------------+------------+-------------+-----------+-------");
+	ogon_print_h264_stopwatchxx(h264->swRGB2YUV420, "yuv420");
+	ogon_print_h264_stopwatchxx(h264->swRGB2YUV444V1, "yuv444v1");
+	ogon_print_h264_stopwatchxx(h264->swRGB2YUV444V2, "yuv444v2");
+	ogon_print_h264_stopwatchxx(h264->swAVCEncode, "avcencode");
+	WLog_DBG(TAG, "------------------------------------------------------------+-------");
+}
+
+static void ogon_delete_h264_stopwatches(ogon_h264_context *h264) {
+	STOPWATCH *sw;
+	if ((sw = h264->swRGB2YUV420)) {
+		stopwatch_free(sw);
+	}
+	if ((sw = h264->swRGB2YUV444V1)) {
+		stopwatch_free(sw);
+	}
+	if ((sw = h264->swRGB2YUV444V2)) {
+		stopwatch_free(sw);
+	}
+	if ((sw = h264->swAVCEncode)) {
+		stopwatch_free(sw);
+	}
+}
+
+static BOOL ogon_create_h264_stopwatches(ogon_h264_context *h264) {
+	if (!h264) {
+		return FALSE;
+	}
+
+	if (!(h264->swRGB2YUV420 = stopwatch_create())) {
+		goto fail;
+	}
+	if (!(h264->swRGB2YUV444V1 = stopwatch_create())) {
+		goto fail;
+	}
+	if (!(h264->swRGB2YUV444V2 = stopwatch_create())) {
+		goto fail;
+	}
+	if (!(h264->swAVCEncode = stopwatch_create())) {
+		goto fail;
+	}
+
+	return TRUE;
+
+fail:
+	ogon_delete_h264_stopwatches(h264);
+	return FALSE;
+}
+#endif /* WITH_ENCODER_STATS */
+
 
 BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	UINT32 targetFrameSizeInBits, BYTE *data, BYTE **ppDstData,
@@ -75,7 +154,7 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	SSourcePicture *sourcePicture = NULL;
 	prim_size_t screenSize;
 	pstatus_t pstatus = PRIMITIVES_SUCCESS;
-	int i, j;
+	int i, j, status;
 
 	if (!h264 || !h264_init_success) {
 		return FALSE;
@@ -86,24 +165,30 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 
 	switch(avcMode) {
 	case COMPRESS_MODE_AVC420:
+		STOPWATCH_START(h264->swRGB2YUV420);
 		pstatus = freerdp_primitives->RGBToYUV420_8u_P3AC4R(
 				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
 				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
 				&screenSize);
+		STOPWATCH_STOP(h264->swRGB2YUV420);
 		break;
 	case COMPRESS_MODE_AVC444V1_A:
+		STOPWATCH_START(h264->swRGB2YUV444V1);
 		pstatus = freerdp_primitives->RGBToAVC444YUV(
 				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
 				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
 				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
 				&screenSize);
+		STOPWATCH_STOP(h264->swRGB2YUV444V1);
 		break;
 	case COMPRESS_MODE_AVC444V2_A:
+		STOPWATCH_START(h264->swRGB2YUV444V2);
 		pstatus = freerdp_primitives->RGBToAVC444YUVv2(
 				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
 				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
 				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
 				&screenSize);
+		STOPWATCH_STOP(h264->swRGB2YUV444V2);
 		break;
 	case COMPRESS_MODE_AVC444VX_B:
 		/* YUV conversion already completed in previous call */
@@ -152,7 +237,11 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 		sourcePicture = &h264->pic2;
 	}
 
-	if ((*h264->pEncoder)->EncodeFrame(h264->pEncoder, sourcePicture, &info)) {
+	STOPWATCH_START(h264->swAVCEncode);
+	status = (*h264->pEncoder)->EncodeFrame(h264->pEncoder, sourcePicture, &info);
+	STOPWATCH_STOP(h264->swAVCEncode);
+
+	if (status != 0) {
 		WLog_ERR(TAG, "Failed to encode frame");
 		return FALSE;
 	}
@@ -209,6 +298,11 @@ void ogon_openh264_context_free(ogon_h264_context *h264) {
 	_aligned_free(h264->pic2.pData[0]);
 	_aligned_free(h264->pic2.pData[1]);
 	_aligned_free(h264->pic2.pData[2]);
+
+#ifdef WITH_ENCODER_STATS
+        ogon_print_h264_stopwatches(h264);
+        ogon_delete_h264_stopwatches(h264);
+#endif
 
 	free(h264);
 
@@ -375,6 +469,12 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 
 	h264->maxBitRate = bitrate.iBitrate;
 	/* WLog_DBG(TAG, "maxBitRate: %"PRIu32"", h264->maxBitRate); */
+
+#ifdef WITH_ENCODER_STATS
+	if (!ogon_create_h264_stopwatches(h264)) {
+		goto err;
+	}
+#endif
 
 	return h264;
 
