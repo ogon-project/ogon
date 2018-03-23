@@ -1,0 +1,93 @@
+Source: ogon
+Maintainer: ogon packaging team <ogon+package@thincast.com>
+Section: net
+Priority: optional
+Standards-Version: 3.9.7
+Homepage: http://ogon-project.com/
+Vcs-Browser: https://github.com/ogon/ogon
+Vcs-Git: https://github.com/ogon/ogon
+Build-Depends:
+ debhelper (>=9),
+ dpkg-dev (>= 1.16.1.1),
+ freerdp2-dev,
+ cmake,
+ protobuf-c-compiler,
+ libprotobuf-c-dev,
+ libprotobuf-dev,
+ libpam0g-dev,
+ libsystemd-dev,
+ libboost-dev,
+ protobuf-compiler,
+ libthrift-dev (>= 1.0.0~dev),
+ thrift-compiler (>= 1.0.0~dev),
+ dh-systemd (>= 1.5),
+ libdbus-1-dev,
+ libssl-dev,
+ libxau-dev
+
+Package: libogon-backend0
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: ogon - backend library
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains the backend library that provides
+ an interface for communication with the services.
+
+Package: libogon-backend0-dbg
+Architecture: any
+Priority: extra
+Section: debug
+Pre-Depends: ${misc:Pre-Depends}
+Depends:
+ ${misc:Depends},
+ libogon-backend0 (= ${binary:Version})
+Description: ogon - backend library
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains the debugging symbols for the backend
+ library.
+
+Package: ogon-core
+Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends},
+ ssl-cert
+Description: ogon - core services and files
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains the base files as well as the session
+ manager and rdp server.
+
+Package: ogon-dev
+Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
+Depends:
+ ${misc:Depends},
+ libogon-backend0 (= ${binary:Version}),
+ ogon-core (= ${binary:Version}),
+ freerdp2-dev,
+ winrp2-dev
+Description: ogon - core services and files
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains all development related files.
+
+Package: ogon-core-dbg
+Architecture: any
+Priority: extra
+Section: debug
+Depends: ${misc:Depends},
+ ogon-core (= ${binary:Version}),
+Description: ogon - core services and files
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains the debugging symbols for the core
+ services.

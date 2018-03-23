@@ -1,0 +1,173 @@
+syntax="proto2";
+package ogon.backend;
+
+
+enum MSGTYPE {
+	Capabilities = 0;
+	GetVersion = 1;
+	SyncRequest = 2;
+	ImmediateSyncRequest = 3;
+	SeatNew = 4;
+	SeatRemove = 5;
+	SbpReply = 6;
+	KeyboardSynchronize = 7;
+	KeyboardScanCode = 8;
+	KeyboardVirtualScanCode = 9;
+	KeyboardUnicode = 10;
+	MouseBasic = 11;
+	MouseExtented = 12;
+	Message = 13;
+	
+	
+	FrameBufferInfos = 200;
+	SyncReply = 201;
+	SetSystemPointer = 202;
+	SetPointerShape = 203;
+	Beep = 204;
+	SbpRequest = 205;
+	MessageReply = 206;	
+}
+
+message capabilities {
+	required uint32 version = 1;
+	required uint32 desktopWidth = 2;
+	required uint32 desktopHeight = 3;
+	required uint32 colorDepth = 4; 
+	required uint32 keyboardLayout = 5;
+	required uint32 keyboardType = 6;
+	required uint32 keyboardSubType = 7;
+	required uint32 clientId = 8;
+}
+
+message keyboardSync {
+	required uint32 flags = 1;
+	required uint32 clientId = 2;
+}
+
+message keyboardScanCode {
+	required uint32 flags = 1;
+	required uint32 code = 2;
+	required uint32 keyboardType = 3;
+	required uint32 clientId = 4;
+}
+
+message keyboardVirtualScanCode {
+	required uint32 flags = 1;
+	required uint32 code = 2;
+	required uint32 clientId = 3;
+}
+
+message keyboardUnicode {
+	required uint32 flags = 1;
+	required uint32 code = 2;
+	required uint32 clientId = 3;
+}
+
+message mouseEvent {
+	required uint32 flags = 1;
+	required uint32 x = 2;
+	required uint32 y = 3;
+	required uint32 clientId = 4;
+}
+
+message mouseExtendedEvent {
+	required uint32 flags = 1;
+	required uint32 x = 2;
+	required uint32 y = 3;
+	required uint32 clientId = 4;
+}
+
+message syncRequest {
+	required uint32 bufferId = 1;
+}
+
+message immediateSyncRequest {
+	required uint32 bufferId = 1;
+}
+
+message sbpReply {
+	required uint32 status = 1;
+	required uint32 tag = 2;
+	required uint32 sbpType = 3;
+	required bytes data = 4;
+}
+
+message seatNew {
+	required uint32 clientId = 1;
+	required uint32 keyboardLayout = 2;
+	required uint32 keyboardType = 3;
+	required uint32 keyboardSubType = 4;
+}
+
+message seatRemoved {
+	required uint32 clientId = 1;
+}
+
+message message {
+	required uint32 messageId = 1;
+	required uint32 messageType = 2;
+	required uint32 style = 3;
+	required uint32 timeout = 4;
+	repeated string parameters = 5;
+}
+
+message versionReply {
+	required uint32 major = 1;
+	required uint32 minor = 2;
+	optional string cookie = 3;
+}
+
+// =============================================================================
+
+enum BACKEND_FLAGS {
+	MULTISEAT = 1; /* the backend handles multiseat */
+}
+
+
+message framebufferInfos {
+	required uint32 version = 1;
+	required uint32 width = 2;
+	required uint32 height = 3;
+	required uint32 scanline = 4;
+	required uint32 bitsPerPixel = 5;
+	required uint32 bytesPerPixel = 6;
+	required uint32 userId = 7;
+	required uint32 flags = 8;
+}
+
+message setPointerShape {
+	required uint32 xPos = 1;
+	required uint32 yPos = 2;
+	required uint32 width = 3;
+	required uint32 height = 4;
+	required uint32 xorBpp = 5;
+	optional bytes andMask = 6;
+	optional bytes xorMask = 7;
+	required uint32 clientId = 8;
+}
+
+message beep {
+	required uint32 duration = 1;
+	required uint32 frequency = 2;
+}
+
+message setSystemPointer {
+	required uint32 type = 1;
+	required uint32 clientId = 2;
+}
+
+message sbpRequest {
+	required uint32 sbpType = 1;
+	required uint32 tag = 2;
+	required bytes data = 3;
+}
+
+message syncReply {
+	required uint32 bufferId = 1;
+}
+
+message messageReply {
+	required uint32 messageId = 1;
+	required uint32 result = 2;
+}
+

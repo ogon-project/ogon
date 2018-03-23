@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service version="1.0">
+<short>rdp</short>
+<description>Enable this if you run a RDP server, and you wish that external users can connect using the RDP protocol.</description>
+<port protocol="tcp" port="3389"/>
+</service>

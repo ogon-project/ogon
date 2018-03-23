@@ -1,0 +1,186 @@
+syntax="proto2";
+package ogon.icp;
+
+enum MSGTYPE {
+	IsChannelAllowed = 1;
+	Ping             = 2;
+	//GetUserSession   = 3;
+	DisconnectUserSession = 4;
+	LogoffUserSession = 5;
+	OtsApiVirtualChannelOpen = 6;
+	LogonUser = 7;
+	SwitchTo = 8;
+	PropertyBool = 9;
+	PropertyNumber = 10;
+	PropertyString = 11;
+	OtsApiVirtualChannelClose = 12;
+	OtsApiStartRemoteControl = 13;
+	OtsApiStopRemoteControl = 14;
+	RemoteControlEnded = 15;
+	Message = 16;
+}
+
+message IsChannelAllowedRequest {
+	required string channelName = 1;	
+}
+message IsChannelAllowedResponse {
+	required bool channelAllowed = 1;
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+	required bool pong = 1;
+}
+
+message DisconnectUserSessionRequest {
+	required uint32 connectionId = 1;
+}
+
+message DisconnectUserSessionResponse {
+	required bool disconnected = 1;
+}
+
+message LogoffUserSessionRequest {
+	required uint32 connectionId = 1;
+}
+
+message LogoffUserSessionResponse {
+	required bool loggedoff = 1;
+}
+
+message OtsApiVirtualChannelOpenRequest {
+	required uint32 connectionId = 1;
+	required string virtualName = 2;
+	required bool dynamicChannel = 3;
+	required uint32 flags = 4;
+}
+
+message OtsApiVirtualChannelOpenResponse {
+	required string connectionString = 1;
+	required uint32 instance = 2;
+}
+
+message LogonUserRequest {
+	required uint32 connectionId = 1;
+	required string username = 2;
+	required string password = 3;
+	required string domain = 4;
+	required uint32 width = 5;
+	required uint32 height = 6;
+	required uint32 colorDepth = 7;
+	required string clientHostName = 8;
+	required string clientAddress = 9;
+	required uint32 clientBuildNumber = 10;
+	required uint32 clientProductId = 11;
+	required uint32 clientHardwareId = 12;
+	required uint32 clientProtocolType = 13;
+}
+
+message LogonUserResponse {
+	required string serviceEndpoint = 1;
+	required uint32 maxHeight = 2;
+	required uint32 maxWidth = 3;
+	required string backendCookie = 4;
+	required string ogonCookie = 5;
+}
+
+message SwitchToRequest {
+	required uint32 connectionId = 1;
+	required string serviceEndpoint = 2;
+	required uint32 maxHeight = 3;
+	required uint32 maxWidth = 4;
+	required string backendCookie = 5;
+	required string ogonCookie = 6;
+}
+
+message SwitchToResponse {
+	required bool success = 1;
+}
+
+message PropertyBoolRequest {
+	required uint32 connectionId = 1;
+	required string path = 2;
+}
+
+message PropertyBoolResponse {
+	required bool value = 1;
+	required bool success = 2;
+}
+
+message PropertyNumberRequest {
+	required uint32 connectionId = 1;
+	required string path = 2;
+}
+
+message PropertyNumberResponse {
+	required uint32 value = 1;
+	required bool success = 2;
+}
+
+message PropertyStringRequest {
+	required uint32 connectionId = 1;
+	required string path = 2;
+}
+
+message PropertyStringResponse {
+	required string value = 1;
+	required bool success = 2;
+}
+
+message OtsApiVirtualChannelCloseRequest {
+	required uint32 connectionId = 1;
+	required string virtualName = 2;
+	required uint32 instance = 3;
+}
+
+message OtsApiVirtualChannelCloseResponse {
+	required bool success = 1;
+}
+
+message OtsApiStartRemoteControlRequest {
+	required uint32 connectionId = 1;
+	required uint32 targetConnectionId = 2;
+	required uint32 hotKeyVk = 3;
+	required uint32 hotKeyModifiers = 4;
+	optional uint32 flags = 5 [default = 0];
+}
+
+message OtsApiStartRemoteControlResponse {
+	required bool success = 1;
+}
+
+message OtsApiStopRemoteControlRequest {
+	required uint32 connectionId = 1;
+}
+
+message OtsApiStopRemoteControlResponse {
+	required bool success = 1;
+}
+
+message RemoteControlEndedRequest {
+	required uint32 spyId = 1;
+	required uint32 spiedId = 2;
+}
+
+message RemoteControlEndedResponse {
+	required bool success = 1;
+}
+
+message MessageRequest {
+	required uint32 connectionId = 1;
+	required uint32 type = 2;
+	required uint32 style = 3;
+	required uint32 timeout = 4;
+	required uint32 parameterNum = 5;
+	optional string parameter1 = 6;
+	optional string parameter2 = 7;
+	optional string parameter3 = 8;
+	optional string parameter4 = 9;
+	optional string parameter5 = 10;
+}
+
+message MessageResponse {
+	required uint32 result = 1;
+}

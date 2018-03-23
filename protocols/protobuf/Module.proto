@@ -1,0 +1,93 @@
+syntax="proto2";
+package ogon.module;
+
+enum MSGTYPE {
+	ModuleStart = 300;
+	ModuleStop = 301;
+	ModuleGetCustomInfo = 302;
+	ModuleConnect = 303;
+	ModuleDisconnect = 304;
+	PropertyBool = 305;
+	PropertyNumber = 306;
+	PropertyString = 307;
+	ModuleExit = 308;
+}
+
+message ModuleStartRequest {
+	required uint32 sessionId = 1;
+	required string userName = 2;
+	required string userDomain = 3;
+	required string baseConfigPath = 4;
+	required bytes  envBlock = 5;
+	required string moduleFileName = 6;
+	required string remoteIp = 7;
+}
+
+message ModuleStartResponse {
+	required string pipeName = 1;
+}
+
+message ModuleStopRequest {
+}
+
+message ModuleStopResponse {
+	required int32 success = 1;
+}
+
+message ModuleGetCustomInfoRequest {
+}
+
+message ModuleGetCustomInfoResponse {
+	required string info = 1;
+}
+
+message ModuleConnectRequest {
+}
+
+message ModuleConnectResponse {
+	required int32 success = 1;
+}
+
+message ModuleDisconnectRequest {
+}
+
+message ModuleDisconnectResponse {
+	required int32 success = 1;
+}
+
+message PropertyBoolRequest {
+	required uint32 sessionId = 1;
+	required string path = 2;
+}
+
+message PropertyBoolResponse {
+	required bool success = 1;
+	optional bool value = 2;
+}
+
+message PropertyNumberRequest {
+	required uint32 sessionId = 1;
+	required string path = 2;
+}
+
+message PropertyNumberResponse {
+	required bool success = 1;
+	optional uint32 value = 2;
+}
+
+message PropertyStringRequest {
+	required uint32 sessionId = 1;
+	required string path = 2;
+}
+
+message PropertyStringResponse {
+	required bool success = 1;
+	optional string value = 2;
+}
+
+message ModuleExitRequest {
+}
+
+message ModuleExitResponse {
+	required bool success = 1;
+}

@@ -1,0 +1,23 @@
+syntax="proto2";
+package ogon.pbrpc;
+
+message VersionInfo {
+	required uint32 major = 1;
+	required uint32 minor = 2;
+	optional string cookie = 3;
+}
+
+message RPCBase {
+	required uint32 tag = 1; // Tag to identify the message
+	required bool isResponse = 2 [default = false]; // request or response
+	enum RPCSTATUS {
+		SUCCESS = 0;
+		FAILED = 1;
+		NOTFOUND = 2;
+	}
+	required RPCSTATUS status = 3 [default = SUCCESS];
+	required uint32 msgType = 4;
+	optional bytes payload = 5;
+	optional string errorDescription = 6;
+	optional VersionInfo versionInfo = 7;
+}

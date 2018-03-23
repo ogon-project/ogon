@@ -1,0 +1,45 @@
+syntax="proto2";
+package ogon.sbp;
+
+enum MSGTYPE {
+	AuthenticateUser = 200;	
+	EndSession = 201;
+	VersionInfo = 202;
+}
+
+message VersionInfoRequest {
+	required uint32 sessionId = 1;
+	required uint32 major = 2;
+	required uint32 minor = 3;
+}
+
+message VersionInfoResponse {
+	required uint32 major = 2;
+	required uint32 minor = 3;
+}
+
+message AuthenticateUserRequest {
+	required uint32 sessionId = 1;
+	required string username = 2;
+	required string password = 3;
+	required string domain = 4;
+}
+
+message AuthenticateUserResponse {
+	enum AUTH_STATUS {
+		AUTH_SUCCESSFUL = 0;
+		AUTH_BAD_CREDENTIALS = 1;
+		AUTH_WRONG_SESSION_STATE = 2;
+		AUTH_UNKNOWN_ERROR = 3;
+	}
+
+	required AUTH_STATUS authStatus = 1;
+}
+
+message EndSessionRequest {
+	required uint32 sessionId = 1;
+}
+
+message EndSessionResponse {
+	required bool success = 1;
+}

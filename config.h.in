@@ -1,0 +1,22 @@
+#ifndef _OGON_CONFIG_H_
+#define _OGON_CONFIG_H_
+
+#define OGON_OPENH264_LIBRARY "${OGON_OPENH264_LIBRARY}"
+
+/* Include files */
+
+#cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_EVENTFD_H
+#cmakedefine HAVE_EPOLL_H
+
+/* Debug */
+#cmakedefine WITH_DEBUG_STATE
+
+/* Cisco OpenH264 */
+#cmakedefine WITH_OPENH264
+#cmakedefine WITH_LIBSYSTEMD
+
+/* Encoder stats */
+#cmakedefine WITH_ENCODER_STATS
+
+#endif /* _OGON_CONFIG_H_ */

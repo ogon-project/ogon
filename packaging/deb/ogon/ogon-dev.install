@@ -1,0 +1,5 @@
+usr/share/ogon
+usr/lib/*/cmake/*
+usr/lib/*/*.so
+usr/lib/*/pkgconfig/*
+usr/include/ogon0

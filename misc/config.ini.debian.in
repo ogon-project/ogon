@@ -1,0 +1,54 @@
+# For details on the configuration see /usr/share/doc/ogon-core/config.md
+[global]
+# Use the snakeoil certificates from ssl-cert
+ssl_certificate_string=/etc/ssl/certs/ssl-cert-snakeoil.pem
+ssl_key_string=/etc/ssl/private/ssl-cert-snakeoil.key
+
+# Greeter definition
+module_greeter_modulename_string=Qt
+module_greeter_cmd_string=@OGON_BIN_PATH@/ogon-qt-greeter --noeffects
+module_greeter_colordepth_number=24
+
+# Xorg backend configuration
+module_xsession_modulename_string=X11
+module_xsession_colordepth_number=24
+module_xsession_displayOffset_number=100
+module_xsession_uselauncher_bool=true
+module_xsession_startwm_string=@OGON_CFG_PATH@/ogonXsession
+module_xsession_launcherexecutable_string=@OGON_SBIN_PATH@/ogon-backend-launcher
+
+# Weston configuration
+module_weston_modulename_string=Weston
+module_weston_cmd_string=@OGON_BIN_PATH@/ogon-backend-weston
+module_weston_uselauncher_bool=true
+module_weston_launcherexecutable_string=@OGON_SBIN_PATH@/ogon-backend-launcher
+
+
+# general settings
+## Globaly set WTSAPI_LIBRARY within the session to make wtsapi (channels) work
+environment_add_string=WTSAPI_LIBRARY:@OGON_LIB_PATH@/ogon@OGON_VERSION_MAJOR@/libogon-otsapi.so
+## use "greeter" as greeter
+auth_greeter_string=greeter
+## use PAM for authentication
+auth_module_string=PAM
+## use X as default backend
+module_string=xsession
+
+# session specific settings
+## enable single session for a user
+session_singleSession_bool=true
+## Allow reconnection to a session
+session_reconnect_bool=true
+## Timeout the session after 60 minutes
+session_timeout_number=60
+## set the maximum allowed resolution
+session_maxXRes_number=1920
+session_maxYRes_number=1200
+## set the default resolution to use
+session_xres_number=1024
+session_yres_number=768
+
+# allow root to have full permissions for wtsapi
+[user_root]
+permission_level_string=FULL
+

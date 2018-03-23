@@ -1,0 +1,16 @@
+*.log
+.debhelper/
+debhelper-build-stamp
+files
+*.substvars
+tmp
+ogon-core-dbg/
+ogon-core/
+ogon-dev/
+libogon-backend0-dbg/
+libogon-backend0/
+
+*.debhelper
+*.pam
+*.service
+*.init

@@ -1,0 +1,65 @@
+
+# /* *INDENT-OFF* */
+# /* *INDENT-ON* */
+# http://astyle.sourceforge.net/astyle.html#_Options
+
+
+# set the maximum code lenght
+--max-code-length=80
+
+# set mode for c/c++
+--mode=c
+
+# attached brackets
+# --style=google (the google style also sets some ident modifiers)
+--style=java
+
+# intend with tab and use space for continuation line alignment
+--indent=tab
+
+# attach the brackets to the namespace
+--attach-namespaces
+
+# attach the brackets to classes
+--indent-classes
+
+# attach the brackets to extern "C"
+--attach-extern-c
+
+# intend one line comments to the code level
+--indent-col1-comments
+
+# when having multiline conditions indent the next line at least one ident
+--min-conditional-indent=1
+
+# 
+--max-instatement-indent=40
+
+# TODO 
+--indent-switches
+
+# pad operators
+--pad-oper
+
+# insert space between if, for and while
+--pad-header
+
+# alingn pointer at the name like char *xx
+--align-pointer=name
+
+# align reference on their name
+--align-reference=name
+
+# add brackets even for signle lines
+--add-brackets
+
+# break after logical conjunctions
+--break-after-logical
+
+## general options
+# preserve the date
+--preserve-date
+# force linux line endings
+--lineend=linux
+# don't save the original file as we are in git anyways
+--suffix=none

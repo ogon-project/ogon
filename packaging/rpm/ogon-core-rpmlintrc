@@ -1,0 +1,2 @@
+setBadness("suse-dbus-unauthorized-service",0)
+addFilter("suse-dbus-unauthorized-service .*/etc/dbus-1/system.d/.*");

@@ -1,0 +1,245 @@
+#!/bin/sh
+
+# ogon - Free Remote Desktop Services
+# OpenH264 Codec Installer
+#
+# Copyright (c) 2018 Thincast Technologies GmbH
+#
+# Authors:
+# Norbert Federa <norbert.federa@thincast.com>
+#
+# You may use this file under the terms of the MIT license as follows:
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+
+REPO="http://ciscobinary.openh264.org"
+TARGET="${OGON_OPENH264_LIBRARY}"
+
+ARCH=$(uname -m)
+TMPD=""
+
+LICENSEACCEPTED=0
+ISROOT=0
+HAVESUDO=0
+
+leave()
+{
+	if [ -d "$TMPD" ]; then
+		rm -rf "$TMPD"
+	fi
+	echo $2
+	exit $1
+}
+
+echo ">>> ogon OpenH264 codec installer <<<"
+echo
+
+if [ "$1" = "--accept-license" ]; then
+	LICENSEACCEPTED=1
+elif [ ! -t 1 ]; then
+	leave 1 "Error: Interactive terminal required."
+fi
+
+if [ "$(id -u)" = 0 ]; then
+	ISROOT=1
+fi
+
+if [ -x "$(which sudo)" ]; then
+	HAVESUDO=1
+fi
+
+
+if [ "$ARCH" = "x86_64" ]; then
+	ARCHIVE="openh264-linux64-2706e36bf0a8b7c539c803ed877148c005ffca59.zip"
+	LIBRARY="libgmpopenh264.so"
+	CSUMZIP="2203ab17dd9ca1b19cd536912f6c4bbfc6849e51f9f1f096eb418990cf5ac5ed"
+	CSUMLIB="1c0fd8bdcaabbb08a7bae607ac2076ebd70098822abc3c5047e7338116e1b5db"
+else
+	leave 1 "Error, unsupported architecture: [$ARCH]"
+fi
+
+TMPD=$(mktemp -d)
+
+echo "$CSUMZIP  $TMPD/$ARCHIVE" >"$TMPD/archive.sha256"
+echo "$CSUMLIB  $TMPD/$LIBRARY" >"$TMPD/library.sha256"
+
+if [ -f "$TARGET" ]; then
+	echo "$CSUMLIB  $TARGET" >"$TMPD/target.sha256"
+	sha256sum --quiet -c "$TMPD/target.sha256" && {
+		leave 0 "The OpenH264 codec library is already installed"
+	}
+fi
+
+if [ "$ISROOT" != 1 ] && [ "$HAVESUDO" != 1 ]; then
+	leave 1 "Error, you need to run this script with root priviledges."
+fi
+
+
+echo "This script will download an appropriate Cisco OpenH264 codec binary from"
+echo "$REPO for this machine."
+
+if [ "$ISROOT" != 1 ]; then
+	echo
+	echo "Note: You will need sudo privilidges afterwards to install the"
+	echo "downloaded binary!"
+	echo
+fi
+
+echo "The OpenH264 codec binary to be downloaded is provided under the terms"
+echo "of the BSD license. Additionally, it is licensed under Cisco’s AVC/H.264"
+echo "Patent Portfolio License from MPEG LA, at no cost to you, provided that"
+echo "the requirements and conditions in the AVC/H.264 Patent Portfolio"
+echo "sections of the Cisco OpenH264 Binary License are met."
+echo
+
+if [ "$LICENSEACCEPTED" = 1 ]; then
+	echo "[Cisco OpenH264 Binary License accepted via command line parameter]"
+	echo
+else
+	if [ ! -t 1 ]; then
+		leave 1 "Error: Interactive terminal required in order to accept the license."
+	fi
+	echo "Press <Enter> to display the license texts:"
+	read X
+	pager << EOF
+-------------------------------------------------------
+CISCO OPENH264 BINARY LICENSE
+http://www.openh264.org/BINARY_LICENSE.txt
+-------------------------------------------------------
+
+
+-------------------------------------------------------
+About The Cisco-Provided Binary of OpenH264 Video Codec
+-------------------------------------------------------
+
+Cisco provides this program under the terms of the BSD license.
+Additionally, this binary is licensed under Cisco’s AVC/H.264 Patent Portfolio
+License from MPEG LA, at no cost to you, provided that the requirements and
+conditions shown below in the AVC/H.264 Patent Portfolio sections are met.
+As with all AVC/H.264 codecs, you may also obtain your own patent license from
+MPEG LA or from the individual patent owners, or proceed at your own risk.
+Your rights from Cisco under the BSD license are not affected by this choice.
+For more information on the OpenH264 binary licensing, please see the OpenH264
+FAQ found at http://www.openh264.org/faq.html#binary
+A corresponding source code to this binary program is available under the same
+BSD terms, which can be found at http://www.openh264.org
+
+-----------
+BSD License
+-----------
+
+Copyright (c) 2014 Cisco Systems, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-----------------------------------------
+AVC/H.264 Patent Portfolio License Notice
+-----------------------------------------
+
+The binary form of this Software is distributed by Cisco under the AVC/H.264
+Patent Portfolio License from MPEG LA, and is subject to the following
+requirements, which may or may not be applicable to your use of this software:
+
+THIS PRODUCT IS LICENSED UNDER THE AVC PATENT PORTFOLIO LICENSE FOR THE
+PERSONAL USE OF A CONSUMER OR OTHER USES IN WHICH IT DOES NOT RECEIVE
+REMUNERATION TO (i) ENCODE VIDEO IN COMPLIANCE WITH THE AVC STANDARD
+(“AVC VIDEO”) AND/OR (ii) DECODE AVC VIDEO THAT WAS ENCODED BY A CONSUMER
+ENGAGED IN A PERSONAL ACTIVITY AND/OR WAS OBTAINED FROM A VIDEO PROVIDER
+LICENSED TO PROVIDE AVC VIDEO.  NO LICENSE IS GRANTED OR SHALL BE IMPLIED FOR
+ANY OTHER USE.  ADDITIONAL INFORMATION MAY BE OBTAINED FROM MPEG LA, L.L.C.
+SEE HTTP://WWW.MPEGLA.COM
+
+Accordingly, please be advised that content providers and broadcasters using
+AVC/H.264 in their service may be required to obtain a separate use license
+from MPEG LA, referred to as "(b) sublicenses" in the SUMMARY OF AVC/H.264
+LICENSE TERMS from MPEG LA found at http://www.openh264.org/mpegla
+
+---------------------------------------------
+AVC/H.264 Patent Portfolio License Conditions
+---------------------------------------------
+
+In addition, the Cisco-provided binary of this Software is licensed under
+Cisco's license from MPEG LA only if the following conditions are met:
+
+1. The Cisco-provided binary is separately downloaded to an end user's device,
+   and not integrated into or combined with third party software prior to being
+   downloaded to the end user’s device;
+2. The end user must have the ability to control (e.g., to enable, disable, or
+   re-enable) the use of the Cisco-provided binary;
+3. Third party software, in the location where end users can control the use
+   of the Cisco-provided binary, must display the following text:
+       "OpenH264 Video Codec provided by Cisco Systems, Inc."
+4. Any third-party software that makes use of the Cisco-provided binary must
+   reproduce all of the above text, as well as this last condition, in the EULA
+   and/or in another location where licensing information is to be presented to
+   the end user.
+EOF
+	echo
+	echo "If you have read and accept the terms and conditions set forth in the"
+	echo "Cisco OpenH264 Binary License (http://www.openh264.org/BINARY_LICENSE.txt)"
+	echo "type YES at the following prompt:"
+	echo -n "> "
+
+	read X
+
+	if [ "$X" != "YES" ]; then
+		leave 2 "License not accepted, aborting"
+	fi
+	echo
+fi
+
+echo "Downloading $ARCHIVE ... "
+curl -s "$REPO/$ARCHIVE" -o "$TMPD/$ARCHIVE" || {
+	leave 3 "Error downloading the OpenH264 archive"
+}
+sha256sum --quiet -c "$TMPD/archive.sha256" || {
+	leave 4 "Error verifying the downloaded OpenH264 archive"
+}
+echo "Done, installing the codec binary ... "
+unzip -q -d "$TMPD" "$TMPD/$ARCHIVE" "$LIBRARY" || {
+	leave 5 "Error extracting the OpenH264 codec libary"
+}
+sha256sum --quiet -c "$TMPD/library.sha256" || {
+	leave 7 "Error verifying the extracted OpenH264 codec library"
+}
+sudo cp "$TMPD/$LIBRARY" "$TARGET" || {
+	leave 8 "Error installing the OpenH264 codec library"
+}
+
+leave 0 "The OpenH264 codec library has been successfully installed"

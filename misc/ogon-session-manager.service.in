@@ -1,0 +1,20 @@
+[Unit]
+Description=ogon session manager
+After=network.target
+Requires=dbus.service
+
+[Service]
+Type=forking
+ExecStartPre=-${OGON_CFG_PATH}/ogon_cleanup.sh
+ExecStart=${OGON_SBIN_PATH}/ogon-session-manager --log=syslog
+ExecStop=${OGON_SBIN_PATH}/ogon-session-manager --kill
+ExecReload=/bin/kill -HUP $MAINPID
+User=root
+Group=root
+KillMode=control-group
+PIDFile=${OGON_PID_PATH}/ogon-session-manager.pid
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

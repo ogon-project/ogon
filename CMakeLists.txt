@@ -1,0 +1,218 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(ogon C CXX)
+
+set(CMAKE_COLOR_MAKEFILE ON)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+include(CheckCmakeCompat)
+include(CheckIncludeFiles)
+include(CheckLibraryExists)
+include(CheckStructHasMember)
+include(FindPkgConfig)
+include(TestBigEndian)
+include(FindDependency)
+include(GNUInstallDirsWrapper)
+include(CMakePackageConfigHelpers)
+include(ConfigOptions)
+
+set(OGON_VERSION_MAJOR "1")
+set(OGON_VERSION_MINOR "0")
+set(OGON_VERSION_REVISION "0")
+set(OGON_VERSION "${OGON_VERSION_MAJOR}.${OGON_VERSION_MINOR}")
+set(OGON_VERSION_FULL "${OGON_VERSION}.${OGON_VERSION_REVISION}")
+
+if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
+	set(PUBLIC_KEYWORD "")
+	set(PRIVATE_KEYWORD "")
+else()
+	set(PUBLIC_KEYWORD "PUBLIC")
+	set(PRIVATE_KEYWORD "PRIVATE")
+endif()
+
+include(GetGitRevisionDescription)
+
+git_describe(GIT_REVISION --match "v[0-9]*" --abbrev=4 --tags --always)
+message(STATUS "Git Revision ${GIT_REVISION}")
+
+set(EXTERNAL_PROJECTS_BASE "${CMAKE_CURRENT_BINARY_DIR}/external")
+set_property(DIRECTORY PROPERTY "EP_BASE" ${EXTERNAL_PROJECTS_BASE})
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+
+# Prepare paths
+set(SBINDIR "${CMAKE_INSTALL_PREFIX}/sbin")
+if (NOT DEFINED SYSCONFDIR)
+	set(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc")
+endif()
+if (NOT DEFINED LOCALSTATEDIR)
+	set(LOCALSTATEDIR "${CMAKE_INSTALL_PREFIX}/var")
+endif()
+set(DATADIR "${CMAKE_INSTALL_PREFIX}/share")
+set(OGON_CFG_PATH "${SYSCONFDIR}/ogon")
+set(OGON_SBIN_PATH "${CMAKE_INSTALL_FULL_SBINDIR}")
+set(OGON_BIN_PATH "${CMAKE_INSTALL_FULL_BINDIR}")
+set(OGON_VAR_PATH "${LOCALSTATEDIR}")
+set(OGON_PID_PATH "${LOCALSTATEDIR}/run")
+set(OGON_LIB_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
+set(OGON_APP_LIB_DIR "ogon${OGON_VERSION_MAJOR}")
+set(OGON_APP_LIB_PATH "${OGON_LIB_PATH}/${OGON_APP_LIB_DIR}")
+set(OGON_MODULE_LIB_PATH "${OGON_APP_LIB_PATH}/modules")
+set(OGON_AUTH_MODULE_LIB_PATH "${OGON_APP_LIB_PATH}/auth")
+
+if(WITH_OPENH264)
+	set(OGON_OPENH264_LIBRARY "${OGON_APP_LIB_PATH}/libogon-openh264.so")
+endif()
+
+include(ogonCompilerFlags)
+
+check_include_files(sys/epoll.h HAVE_EPOLL_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads REQUIRED)
+
+find_package(OpenSSL REQUIRED)
+
+add_definitions("-DHAVE_CONFIG_H")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
+
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+if(NOT DEFINED BUILD_SHARED_LIBS)
+	set(BUILD_SHARED_LIBS ON)
+endif()
+
+set(WINPR_DEPENDENCY_TYPE "REQUIRED")
+set(WINPR_DEPENDENCY_PURPOSE "WINPR libraries and headers")
+set(WINPR_DEPENDENCY_DESCRIPTION "WINPR")
+set(WINPR_DEPENDENCY_VERSION "2.0")
+find_dependency(WinPR ${WINPR_DEPENDENCY_TYPE} ${WINPR_DEPENDENCY_PURPOSE} ${WINPR_DEPENDENCY_DESCRIPTION} ${WINPR_DEPENDENCY_VERSION})
+include_directories(${WinPR_INCLUDE_DIR})
+
+set(FREERDP_DEPENDENCY_TYPE "REQUIRED")
+set(FREERDP_DEPENDENCY_PURPOSE "FreeRDP libraries and headers")
+set(FREERDP_DEPENDENCY_DESCRIPTION "FreeRDP")
+set(FREERDP_DEPENDENCY_VERSION "2.0")
+find_dependency(FreeRDP ${FREERDP_DEPENDENCY_TYPE} ${FREERDP_DEPENDENCY_PURPOSE} ${FREERDP_DEPENDENCY_DESCRIPTION} ${FREERDP_DEPENDENCY_VERSION})
+include_directories(${FreeRDP_INCLUDE_DIR})
+
+set(FREERDP_SERVER_DEPENDENCY_TYPE "REQUIRED")
+set(FREERDP_SERVER_DEPENDENCY_PURPOSE "FreeRDP-Server libraries and headers")
+set(FREERDP_SERVER_DEPENDENCY_DESCRIPTION "FreeRDP-Server")
+set(FREERDP_SERVER_DEPENDENCY_VERSION "2.0")
+find_dependency(FreeRDP-Server ${FREERDP_SERVER_DEPENDENCY_TYPE} ${FREERDP_SERVER_DEPENDENCY_PURPOSE} ${FREERDP_SERVER_DEPENDENCY_DESCRIPTION} ${FREERDP_SERVER_DEPENDENCY_VERSION})
+include_directories(${FreeRDP-Server_INCLUDE_DIR})
+
+set(PROTOBUFC_DEPENDENCY_TYPE "REQUIRED")
+set(PROTOBUFC_DEPENDENCY_PURPOSE "Protobuf based RPC - C library")
+set(PROTOBUFC_DEPENDENCY_DESCRIPTION "google protocol buffers")
+find_dependency(ProtobufC ${PROTOBUFC_DEPENDENCY_TYPE} ${PROTOBUFC_DEPENDENCY_PURPOSE} ${PROTOBUFC_DEPENDENCY_DESCRIPTION} "")
+
+set(PROTOBUF_DEPENDENCY_TYPE "REQUIRED")
+set(PROTOBUF_DEPENDENCY_PURPOSE "Protobuf based RPC")
+set(PROTOBUF_DEPENDENCY_DESCRIPTION "google protocol buffers")
+find_dependency(Protobuf ${PROTOBUF_DEPENDENCY_TYPE} ${PROTOBUF_DEPENDENCY_PURPOSE} ${PROTOBUF_DEPENDENCY_DESCRIPTION} "")
+if (NOT PROTOBUF_PROTOC_EXECUTABLE)
+	message(FATAL_ERROR "Protobuf compiler executable not found!")
+endif()
+
+set(PAM_DEPENDENCY_TYPE "REQUIRED")
+set(PAM_DEPENDENCY_PURPOSE "authentication")
+set(PAM_DEPENDENCY_DESCRIPTION "user authentication")
+find_dependency(PAM ${PAM_DEPENDENCY_TYPE} ${PAM_DEPENDENCY_PURPOSE} ${PAM_DEPENDENCY_DESCRIPTION} "")
+
+set(DBUS_DEPENDENCY_TYPE "REQUIRED")
+set(DBUS_DEPENDENCY_PURPOSE "session notifications")
+set(DBUS_DEPENDENCY_DESCRIPTION "dbus library")
+find_dependency(DBus ${DBUS_DEPENDENCY_TYPE} ${DBUS_DEPENDENCY_PURPOSE} ${DBUS_DEPENDENCY_DESCRIPTION} "")
+
+set(LIBSYSTEMD_DEPENDENCY_TYPE "RECOMMENDED")
+set(LIBSYSTEMD_DEPENDENCY_PURPOSE "systemd integration")
+set(LIBSYSTEMD_DEPENDENCY_DESCRIPTION "systemd library")
+find_dependency(libsystemd ${LIBSYSTEMD_DEPENDENCY_TYPE} ${LIBSYSTEMD_DEPENDENCY_PURPOSE} ${LIBSYSTEMD_DEPENDENCY_DESCRIPTION} "")
+
+set(X11_DEPENDENCY_TYPE "REQUIRED")
+set(X11_DEPENDENCY_PURPOSE "X11 libraries and headers")
+set(X11_DEPENDENCY_DESCRIPTION "X11")
+find_dependency(X11 ${X11_DEPENDENCY_TYPE} ${X11_DEPENDENCY_PURPOSE} ${X11_DEPENDENCY_DESCRIPTION} "")
+
+if (NOT X11_Xau_FOUND)
+	message(FATAL_ERROR "xauth development files not found")
+endif()
+
+
+include (CTest)
+
+if(BUILD_TESTING)
+	enable_testing()
+	if(MSVC)
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+	else()
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+	endif()
+endif()
+
+add_subdirectory(include)
+
+add_subdirectory(backend)
+add_subdirectory(rdp-server)
+add_subdirectory(misc)
+add_subdirectory(session-manager)
+add_subdirectory(backend-launcher)
+add_subdirectory(cli)
+add_subdirectory(snmon)
+
+FILE(GLOB protobuf_files "${CMAKE_CURRENT_SOURCE_DIR}/protocols/protobuf/*.proto")
+INSTALL(FILES ${protobuf_files} DESTINATION share/ogon/${OGON_VERSION_MAJOR}/protobuf)
+
+FILE(GLOB protobuf_files "${CMAKE_CURRENT_SOURCE_DIR}/protocols/thrift/*.thrift")
+INSTALL(FILES ${protobuf_files} DESTINATION share/ogon/${OGON_VERSION_MAJOR}/thrift)
+
+if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
+
+	export(PACKAGE ogon)
+
+	set(OGON_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ogon${OGON_VERSION_MAJOR}")
+	set(OGON_INCLUDE_DIR "include/ogon${OGON_VERSION_MAJOR}")
+	set(OGON_PROTOCOL_DIR "share/ogon/${OGON_VERSION_MAJOR}")
+
+	configure_package_config_file(ogonConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/ogonConfig.cmake
+		INSTALL_DESTINATION ${OGON_CMAKE_INSTALL_DIR}
+		PATH_VARS OGON_INCLUDE_DIR OGON_PROTOCOL_DIR)
+
+	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ogonConfigVersion.cmake
+		VERSION ${OGON_VERSION} COMPATIBILITY SameMajorVersion)
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ogonConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/ogonConfigVersion.cmake
+		DESTINATION ${OGON_CMAKE_INSTALL_DIR})
+
+endif()
+
+if(NOT MSVC)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ogon.pc.in ${CMAKE_CURRENT_BINARY_DIR}/ogon${OGON_VERSION_MAJOR}.pc @ONLY)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ogon${OGON_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+endif()
+
+# Generate build flags
+set(OGON_BUILD_CONFIG_LIST "")
+GET_CMAKE_PROPERTY(res VARIABLES)
+FOREACH(var ${res})
+ IF (var MATCHES "^WITH_*|^HAVE_*")
+  LIST(APPEND OGON_BUILD_CONFIG_LIST "${var}=${${var}}")
+ ENDIF()
+ENDFOREACH()
+string(REPLACE ";" " " OGON_BUILD_CONFIG "${OGON_BUILD_CONFIG_LIST}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)

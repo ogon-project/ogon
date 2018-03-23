@@ -1,0 +1,4 @@
+ogon-core binary: new-package-should-close-itp-bug
+ogon-core binary: binary-without-manpage *
+ogon-core binary: pkg-has-shlibs-control-file-but-no-actual-shared-libs
+ogon-core binary: postinst-has-useless-call-to-ldconfig

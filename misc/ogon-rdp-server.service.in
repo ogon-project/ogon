@@ -1,0 +1,17 @@
+[Unit]
+Description=ogon RDP server
+After=network.target
+After=ogon-session-manager.service
+Requires=ogon-session-manager.service
+JoinsNamespaceOf=ogon-session-manager.service
+
+[Service]
+Type=forking
+PIDFile=${OGON_PID_PATH}/ogon-rdp-server.pid
+ExecStart=${OGON_SBIN_PATH}/ogon-rdp-server --log=syslog
+ExecStop=${OGON_SBIN_PATH}/ogon-rdp-server --kill
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

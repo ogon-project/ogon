@@ -1,0 +1,37 @@
+#!/bin/bash
+
+CONF_FILE="${HOME}/.config/ogon/desktop"
+XSESSION_DIR="/usr/share/xsessions"
+DESKTOP_SESSION=""
+SESSION_COMMAND=""
+
+
+if [ -z "${OGON_X11_NODBUS}" ] && [ -z "${DBUS_SESSION_BUS_ADDRESS}" ]; then
+	eval `dbus-launch --sh-syntax --exit-with-session`
+fi
+
+if [ ! -z "${OGON_X11_DESKTOP}" ]; then
+	DESKTOP_SESSION=${OGON_X11_DESKTOP}
+elif [ -r ${CONF_FILE} ]; then
+	DESKTOP_SESSION=$(cat ${CONF_FILE} | tr -d '\n')
+fi
+
+if [ ! -z ${DESKTOP_SESSION} ] && [ -r "${XSESSION_DIR}/${DESKTOP_SESSION}.desktop" ]; then
+	SESSION_COMMAND=$(grep -e '^Exec=' "${XSESSION_DIR}/${DESKTOP_SESSION}.desktop" | tr -d '\n' | cut -d "=" -f 2-)
+fi
+
+export DESKTOP_SESSION=${DESKTOP_SESSION}
+export GDMSESSION=${DESKTOP_SESSION}
+export XDG_SESSION_DESKTOP=${DESKTOP_SESSION}
+
+if [ -r /etc/X11/Xsession ]; then
+  . /etc/X11/Xsession ${SESSION_COMMAND}
+elif [ -r /etc/X11/xdm/Xsession ]; then
+  . /etc/X11/xdm/Xsession ${SESSION_COMMAND}
+elif [ -r /etc/gdm/Xsession ]; then
+  /etc/gdm/Xsession ${SESSION_COMMAND}
+elif [ -r /etc/X11/xinit/Xsession ]; then
+  . /etc/X11/xinit/Xsession ${SESSION_COMMAND}
+elif [ -r /etc/X11/xinit/xinitrc ]; then
+  . /etc/X11/xinit/xinitrc ${SESSION_COMMAND}
+fi
