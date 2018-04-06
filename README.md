@@ -28,7 +28,7 @@ design it's easily possible to extend or add features or add new backends.
 Most components of the ogon-project are licensed under the GNU AFFERO GENERAL PUBLIC LICENSE version 3.
 See LICENSE file of the respective repository.
 
-[support]: https://github.com/ogon-project/ogon-project/SUPPORT.md
-[bugs]: https://github.com/ogon-project/ogon-project/SUPPORT.md#bugs
-[documentation]: https://github.com/ogon-project/ogon-project/SUPPORT.md#documentation
-[contribute]: https://github.com/ogon-project/ogon-project/CONTRIBUTING.md
+[support]: https://github.com/ogon-project/ogon-project/blob/master/SUPPORT.md
+[bugs]: https://github.com/ogon-project/ogon-project/blob/master/SUPPORT.md#bugs
+[documentation]: https://github.com/ogon-project/ogon-project/blob/master/SUPPORT.md#documentation
+[contribute]: https://github.com/ogon-project/ogon-project/blob/master/CONTRIBUTING.md
