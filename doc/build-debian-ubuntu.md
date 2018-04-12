@@ -113,7 +113,7 @@ Then let's start ogon:
 
 ```console
 # Debian stretch/Ubuntu 16.04+
-sudo systemctl start ogon-session-manager
+sudo systemctl enable ogon-rdp-server
 sudo systemctl start ogon-rdp-server
 ```
 
