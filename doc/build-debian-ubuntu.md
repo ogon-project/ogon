@@ -1,6 +1,6 @@
-# Building on Ubuntu 14.04/16.04/17.10 or Debian stretch
+# Building on Ubuntu 14.04/16.04/17.10 or Debian stretch/jessie
 
-These instructions where tested on Debian stretch and Ubuntu 16.04/17.10 (amd64) but should basically
+These instructions where tested on Debian stretch/Jessie and Ubuntu 16.04/17.10 (amd64) but should basically
 work on every Debian based system with systemd.
 
 Some basic packages are required for building any of the component.
@@ -164,7 +164,7 @@ sudo apt-get install libxkbcommon-dev libfontconfig1-dev libmtdev-dev libudev-de
 ### Build
 
 ```console
-git clone https://github.com/ogon/ogon-platform-qt.git
+git clone https://github.com/ogon-project/ogon-platform-qt.git
 cd ogon-platform-qt
 qtchooser -qt=qt5 -run-tool=qmake ADDITIONAL_RPATHS=/opt/ogon/lib/:/opt/ogon/lib/x86_64-linux-gnu/pkgconfig/ PREFIX=/opt/ogon
 ```
@@ -203,11 +203,11 @@ With this you can have a X desktop rendered through ogon.
 Compiling xorg requires quite a lot of packages:
 
 ```console
-sudo apt-get install autoconf automake xutils-dev libtool libpixman-1-dev x11proto-bigreqs-dev x11proto-composite-dev x11proto-dri3-dev x11proto-present-dev x11proto-resource-dev x11proto-scrnsaver-dev x11proto-fonts-dev  x11proto-xf86dri-dev x11proto-xcmisc-dev x11proto-record-dev xfonts-utils 
+sudo apt-get install autoconf automake xutils-dev libtool libpixman-1-dev x11proto-bigreqs-dev x11proto-composite-dev x11proto-dri3-dev x11proto-present-dev x11proto-resource-dev x11proto-scrnsaver-dev x11proto-fonts-dev x11proto-xf86dri-dev x11proto-xcmisc-dev x11proto-record-dev xfonts-utils x11-xkb-utils
 ```
 
 ```
-# Ubuntu 14.04
+# Debian jessie / Ubuntu 14.04
 sudo apt-get install libxfont-dev
 ```
 ```
@@ -271,7 +271,8 @@ cd ..
 ## Test and run
 
 At this point the rdp-server and session-manager should be started and you should be able to connect with any RDP client.
-In case you use a firewall make sure port 3389 isn't blocked.
+In case you use a firewall make sure port 3389 isn't blocked. If your have the minimal debian installation, you should install
+at least a X11 window manager (apt-get install blackbox for example).
 
 In the example configurations the channels (clipboard, drive redirection, and sound) are not started.
 For testing you can start them manually - have a look to misc/startvc.sh.example.
