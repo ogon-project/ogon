@@ -9,6 +9,8 @@
 #cmakedefine HAVE_EVENTFD_H
 #cmakedefine HAVE_EPOLL_H
 
+#cmakedefine HAVE_SURFACECMD_BMP
+
 /* Debug */
 #cmakedefine WITH_DEBUG_STATE
 
