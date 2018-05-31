@@ -80,7 +80,6 @@ find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 add_definitions("-DHAVE_CONFIG_H")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -115,6 +114,9 @@ set(FREERDP_SERVER_DEPENDENCY_DESCRIPTION "FreeRDP-Server")
 set(FREERDP_SERVER_DEPENDENCY_VERSION "2.0")
 find_dependency(FreeRDP-Server ${FREERDP_SERVER_DEPENDENCY_TYPE} ${FREERDP_SERVER_DEPENDENCY_PURPOSE} ${FREERDP_SERVER_DEPENDENCY_DESCRIPTION} ${FREERDP_SERVER_DEPENDENCY_VERSION})
 include_directories(${FreeRDP-Server_INCLUDE_DIR})
+
+set(CMAKE_REQUIRED_INCLUDES ${WinPR_INCLUDE_DIR} ${FreeRDP_INCLUDE_DIR})
+check_struct_has_member("SURFACE_BITS_COMMAND" "bmp" "freerdp/update.h" HAVE_SURFACECMD_BMP LANGUAGE C)
 
 set(PROTOBUFC_DEPENDENCY_TYPE "REQUIRED")
 set(PROTOBUFC_DEPENDENCY_PURPOSE "Protobuf based RPC - C library")
@@ -153,6 +155,8 @@ if (NOT X11_Xau_FOUND)
 	message(FATAL_ERROR "xauth development files not found")
 endif()
 
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 include (CTest)
 
