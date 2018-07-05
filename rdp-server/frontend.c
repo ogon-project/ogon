@@ -400,6 +400,7 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client)
 	rdpSettings* settings = client->settings;
 	ogon_connection *conn = (ogon_connection *)client->context;
 	ogon_front_connection *front = &conn->front;
+	ARC_CS_PRIVATE_PACKET *arc = settings->ClientAutoReconnectCookie;
 	int error_code;
 
 	WLog_DBG(TAG, "connection id %ld client hostname=[%s]", conn->id, client->hostname);
@@ -414,23 +415,15 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client)
 		return FALSE;
 	}
 
-	if (client->settings->AutoLogonEnabled)	{
-		WLog_DBG(TAG, "autologon enabled, user=[%s] domain=[%s]",
-			client->settings->Username, client->settings->Domain);
-	}
-
-	WLog_DBG(TAG, "requested desktop: %"PRIu32"x%"PRIu32"@%"PRIu32"bpp", settings->DesktopWidth,
-			 settings->DesktopHeight, settings->ColorDepth);
-
 	/**
-	 * Note regarding some ogon_icp_LogonUser parameters:
+	 * Note regarding some ogon_icp_LogonUser / ogon_icp_ReconnectUser parameters:
 	 * clientProductId:
 	 * This is the WTSClientProductId value the session manager will return in
 	 * in WTS_INFO_CLASS enumerations. This should be set to the clientProductId
-	 * value receiced in the GCC client core data (see MS-RDPBCGR 2.2.1.3.2).
+	 * value received in the GCC client core data (see MS-RDPBCGR 2.2.1.3.2).
 	 * However, FreeRDP's settings->clientProductId currently incorrectly stores the
 	 * char[64] clientDigProductId string and does not parse clientProductId from
-	 * the wire. Thus we corrently hardcode this value to 1 because the docs say
+	 * the wire. Thus we correctly hardcode this value to 1 because the docs say
 	 * that this value SHOULD be initialized to 1.
 	 * hardwareID:
 	 * This is the WTSClientHardwareId value the session manager will return in
@@ -438,16 +431,52 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client)
 	 * is reserved for future use and that it will always return a value of 0.
 	 */
 
-	error_code = ogon_icp_LogonUser((UINT32)(conn->id),
-			settings->Username, settings->Domain, settings->Password,
-			settings->ClientHostname, settings->ClientAddress,
-			settings->ClientBuild,
-			1, /* clientProductId not parsed by FreeRDP currently */
-			0, /* WTSClientHardwareId: always 0, reserved for future use */
-			WTS_PROTOCOL_TYPE_RDP,
-			settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth,
-			&front->backendProps,
-			&front->maxWidth, &front->maxHeight);
+	if (arc && arc->cbLen == 28 && ogon_icp_protocol_version() > 100) {
+		/* ReconnectUser is only available starting at 1.1 */
+		BYTE zeroBytes[32];
+		BYTE *clientRandom;
+		UINT32 clientRandomLen;
+
+		WLog_DBG(TAG, "got autoreconnect cookie version %d", arc->version);
+		if (settings->ClientRandom && settings->ClientRandomLength) {
+			clientRandom = settings->ClientRandom;
+			clientRandomLen = settings->ClientRandomLength;
+		} else {
+			memset(zeroBytes, 0, sizeof(zeroBytes));
+			clientRandom = zeroBytes;
+			clientRandomLen = 32;
+		}
+
+		error_code = ogon_icp_ReconnectUser((UINT32)(conn->id), arc->logonId,
+					clientRandom, clientRandomLen, arc->securityVerifier,
+					settings->ClientHostname, settings->ClientAddress,
+					settings->ClientBuild,
+					1, /* clientProductId not parsed by FreeRDP currently */
+					0, /* WTSClientHardwareId: always 0, reserved for future use */
+					WTS_PROTOCOL_TYPE_RDP,
+					settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth,
+					&front->backendProps,
+					&front->maxWidth, &front->maxHeight);
+	} else {
+		if (client->settings->AutoLogonEnabled)	{
+			WLog_DBG(TAG, "autologon enabled, user=[%s] domain=[%s]",
+				client->settings->Username, client->settings->Domain);
+		}
+
+		WLog_DBG(TAG, "requested desktop: %"PRIu32"x%"PRIu32"@%"PRIu32"bpp", settings->DesktopWidth,
+				 settings->DesktopHeight, settings->ColorDepth);
+
+		error_code = ogon_icp_LogonUser((UINT32)(conn->id),
+				settings->Username, settings->Domain, settings->Password,
+				settings->ClientHostname, settings->ClientAddress,
+				settings->ClientBuild,
+				1, /* clientProductId not parsed by FreeRDP currently */
+				0, /* WTSClientHardwareId: always 0, reserved for future use */
+				WTS_PROTOCOL_TYPE_RDP,
+				settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth,
+				&front->backendProps,
+				&front->maxWidth, &front->maxHeight);
+	}
 
 	if (error_code != PBRPC_SUCCESS) {
 		WLog_ERR(TAG, "logon user call failed with error %d", error_code);

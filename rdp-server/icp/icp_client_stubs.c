@@ -36,17 +36,18 @@
 
 #define TAG OGON_TAG("icp.client")
 
-#define ICP_CLIENT_STUB_SETUP(camel, expanded) \
+#define ICP_CLIENT_STUB_SETUP_EX(camel, expanded, camelResponse) \
 	UINT32 type = OGON__ICP__MSGTYPE__##camel ; \
 	pbRPCPayload pbrequest; \
 	pbRPCPayload *pbresponse = NULL; \
 	size_t ret; \
 	Ogon__Icp__##camel ## Request request; \
-	Ogon__Icp__##camel ## Response *response = NULL; \
+	Ogon__Icp__##camelResponse ## Response *response = NULL; \
 	pbRPCContext* context = (pbRPCContext*) ogon_icp_get_context(); \
 	if (!context) \
 		return PBRPC_FAILED; \
-	ogon__icp__ ##expanded ##_request__init(&request);
+	ogon__icp__ ##expanded ##_request__init(&request)
+#define ICP_CLIENT_STUB_SETUP(camel, expanded) ICP_CLIENT_STUB_SETUP_EX(camel, expanded, camel)
 
 #define ICP_CLIENT_STUB_SETUP_ASYNC(camel, expanded) \
 	UINT32 type = OGON__ICP__MSGTYPE__##camel ; \
@@ -56,22 +57,24 @@
 	pbRPCContext* context = (pbRPCContext*) ogon_icp_get_context(); \
 	if (!context) \
 		return PBRPC_FAILED; \
-	ogon__icp__ ##expanded ##_request__init(&request);
+	ogon__icp__ ##expanded ##_request__init(&request)
 
 
 #define ICP_CLIENT_STUB_CALL(camel, expanded) \
-	pbrequest.dataLen = ogon__icp__##expanded ##_request__get_packed_size(&request); \
-	if (!(pbrequest.data = malloc(pbrequest.dataLen))) \
-		return PBRPC_FAILED; \
-	ret = ogon__icp__##expanded ##_request__pack(&request, (uint8_t*) pbrequest.data); \
-	if (ret == pbrequest.dataLen) \
-	{ \
-		ret = pbrpc_call_method(context, type, &pbrequest, &pbresponse); \
-	} \
-	else \
-	{ \
-		ret = PBRPC_BAD_REQEST_DATA; \
-	}
+	do { \
+		pbrequest.dataLen = ogon__icp__##expanded ##_request__get_packed_size(&request); \
+		if (!(pbrequest.data = malloc(pbrequest.dataLen))) \
+			return PBRPC_FAILED; \
+		ret = ogon__icp__##expanded ##_request__pack(&request, (uint8_t*) pbrequest.data); \
+		if (ret == pbrequest.dataLen) \
+		{ \
+			ret = pbrpc_call_method(context, type, &pbrequest, &pbresponse); \
+		} \
+		else \
+		{ \
+			ret = PBRPC_BAD_REQEST_DATA; \
+		} \
+	} while(0)
 
 void dummyCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
 	OGON_UNUSED(reason);
@@ -89,32 +92,34 @@ void dummyCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
 	{ \
 		pbrcp_call_method_async(context, type, &pbrequest, dummyCallback, (void *)NULL); \
 	} \
-	free(pbrequest.data);
+	free(pbrequest.data)
 
 #define ICP_CLIENT_STUB_UNPACK_RESPONSE(camel, expanded) \
 	response = ogon__icp__##expanded ##_response__unpack(NULL, pbresponse->dataLen, (uint8_t*) pbresponse->data); \
-	pbrpc_free_payload(pbresponse);
+	pbrpc_free_payload(pbresponse)
 
 #define ICP_CLIENT_STUB_CLEANUP(camel, expanded) \
 	if (response) \
-		ogon__icp__##expanded ##_response__free_unpacked(response, NULL);
+		ogon__icp__##expanded ##_response__free_unpacked(response, NULL)
 
 #define ICP_CLIENT_SEND_PREPARE(camel, expanded) \
 			Ogon__Icp__##camel ##Response response; \
 			ogon__icp__##expanded ##_response__init(&response)
 
 #define ICP_CLIENT_SEND_PACK(camel, expanded) \
-			if (status == 0) {\
-				pbresponse->dataLen = ogon__icp__##expanded ##_response__get_packed_size(&response); \
-				if (!(pbresponse->data = malloc(pbresponse->dataLen))) { \
-					return -1; \
-				} \
-				ret = ogon__icp__##expanded ##_response__pack(&response, (uint8_t*) pbresponse->data); \
-			} else { \
-				pbresponse->dataLen = 0; \
-				pbresponse->data = NULL; \
-				ret = 0; \
-			}
+	do { \
+		if (status == 0) {\
+			pbresponse->dataLen = ogon__icp__##expanded ##_response__get_packed_size(&response); \
+			if (!(pbresponse->data = malloc(pbresponse->dataLen))) { \
+				return -1; \
+			} \
+			ret = ogon__icp__##expanded ##_response__pack(&response, (uint8_t*) pbresponse->data); \
+		} else { \
+			pbresponse->dataLen = 0; \
+			pbresponse->data = NULL; \
+			ret = 0; \
+		} \
+	} while(0)
 
 int ogon_icp_sendResponse(UINT32 tag, UINT32 type, UINT32 status, BOOL success, void *responseparam1)
 {
@@ -207,12 +212,18 @@ int ogon_icp_sendResponse(UINT32 tag, UINT32 type, UINT32 status, BOOL success, 
 	return ret;
 }
 
+int ogon_icp_protocol_version()
+{
+	pbRPCContext* context = (pbRPCContext*) ogon_icp_get_context();
+	return context ? (context->remoteVersionMajor * 100 + context->remoteVersionMinor) : 0;
+}
+
 int ogon_icp_Ping(BOOL* pong)
 {
 	int retValue = PBRPC_SUCCESS;
-	ICP_CLIENT_STUB_SETUP(Ping, ping)
+	ICP_CLIENT_STUB_SETUP(Ping, ping);
 
-	ICP_CLIENT_STUB_CALL(Ping, ping)
+	ICP_CLIENT_STUB_CALL(Ping, ping);
 
 	if (ret != 0)
 	{
@@ -220,7 +231,7 @@ int ogon_icp_Ping(BOOL* pong)
 		goto out_cleanup;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(Ping, ping)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(Ping, ping);
 
 	if (NULL == response)
 	{
@@ -232,24 +243,24 @@ int ogon_icp_Ping(BOOL* pong)
 	*pong = response->pong;
 
 out_cleanup:
-	ICP_CLIENT_STUB_CLEANUP(Ping, ping)
+	ICP_CLIENT_STUB_CLEANUP(Ping, ping);
 	return retValue;
 }
 
 int ogon_icp_DisconnectUserSession(UINT32 connectionId, BOOL* disconnected)
 {
-	ICP_CLIENT_STUB_SETUP(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_SETUP(DisconnectUserSession, disconnect_user_session);
 
 	request.connectionid = connectionId;
 
-	ICP_CLIENT_STUB_CALL(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_CALL(DisconnectUserSession, disconnect_user_session);
 
 	if (ret != 0)
 	{
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(DisconnectUserSession, disconnect_user_session);
 
 	if (NULL == response)
 	{
@@ -258,18 +269,18 @@ int ogon_icp_DisconnectUserSession(UINT32 connectionId, BOOL* disconnected)
 
 	*disconnected = response->disconnected;
 
-	ICP_CLIENT_STUB_CLEANUP(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_CLEANUP(DisconnectUserSession, disconnect_user_session);
 
 	return PBRPC_SUCCESS;
 }
 
 int ogon_icp_DisconnectUserSession_async(UINT32 connectionId)
 {
-	ICP_CLIENT_STUB_SETUP_ASYNC(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_SETUP_ASYNC(DisconnectUserSession, disconnect_user_session);
 
 	request.connectionid = connectionId;
 
-	ICP_CLIENT_STUB_CALL_ASYNC(DisconnectUserSession, disconnect_user_session)
+	ICP_CLIENT_STUB_CALL_ASYNC(DisconnectUserSession, disconnect_user_session);
 
 	return ret;
 }
@@ -280,14 +291,14 @@ int ogon_icp_LogonUser(UINT32 connectionId, const char* username, const char* do
 		UINT32 width, UINT32 height, UINT32 bbp, ogon_backend_props *props,
 		UINT32* maxWidth, UINT32* maxHeight)
 {
-	ICP_CLIENT_STUB_SETUP(LogonUser, logon_user)
+	ICP_CLIENT_STUB_SETUP(LogonUser, logon_user);
 
 	request.connectionid = connectionId;
 	request.width = width;
 	request.height = height;
 	request.colordepth = bbp;
-	request.clientbuildnumber= clientBuild;
-	request.clientproductid =clientProductId;
+	request.clientbuildnumber = clientBuild;
+	request.clientproductid = clientProductId;
 	request.clienthardwareid = hardwareID;
 	request.clientprotocoltype = protocol;
 #if __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
@@ -303,12 +314,12 @@ int ogon_icp_LogonUser(UINT32 connectionId, const char* username, const char* do
 #pragma GCC diagnostic pop
 #endif //  __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 
-	ICP_CLIENT_STUB_CALL(LogonUser, logon_user)
+	ICP_CLIENT_STUB_CALL(LogonUser, logon_user);
 	if (ret != 0) {
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(LogonUser, logon_user)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(LogonUser, logon_user);
 
 	if (NULL == response) {
 		return PBRPC_BAD_RESPONSE;
@@ -320,7 +331,7 @@ int ogon_icp_LogonUser(UINT32 connectionId, const char* username, const char* do
 	*maxWidth = response->maxwidth;
 	*maxHeight = response->maxheight;
 
-	ICP_CLIENT_STUB_CLEANUP(LogonUser, logon_user)
+	ICP_CLIENT_STUB_CLEANUP(LogonUser, logon_user);
 
 	if (!props->serviceEndpoint || !props->backendCookie || !props->ogonCookie) {
 		free(props->serviceEndpoint);
@@ -332,24 +343,83 @@ int ogon_icp_LogonUser(UINT32 connectionId, const char* username, const char* do
 	return PBRPC_SUCCESS;
 }
 
+int ogon_icp_ReconnectUser(UINT32 connectionId, UINT32 sessionId, const BYTE *clientRandom,
+		UINT32 clientRandomLen, const char *clientCookie, const char* clientHostName,
+		const char* clientAddress, UINT32 clientBuild, UINT16 clientProductId, UINT32 hardwareID, UINT16 protocol,
+		UINT32 width, UINT32 height, UINT32 bbp, ogon_backend_props *props,
+		UINT32* maxWidth, UINT32* maxHeight)
+{
+	ICP_CLIENT_STUB_SETUP_EX(ReconnectUser, reconnect_user, LogonUser);
+
+	request.connectionid = connectionId;
+	request.sessionid = sessionId;
+	request.width = width;
+	request.height = height;
+	request.colordepth = bbp;
+	request.clientbuildnumber = clientBuild;
+	request.clientproductid = clientProductId;
+	request.clienthardwareid = hardwareID;
+	request.clientprotocoltype = protocol;
+#if __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif // __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+	request.clientrandom.data = (uint8_t *)clientRandom;
+	request.clientrandom.len = clientRandomLen;
+	request.clientcookie.data = (uint8_t *)clientCookie;
+	request.clientcookie.len = 16;
+	request.clienthostname = (char *)clientHostName;
+	request.clientaddress = (char *)clientAddress;
+#if __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif //  __clang__ || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+
+	ICP_CLIENT_STUB_CALL(ReconnectUser, reconnect_user);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(LogonUser, logon_user);
+
+	if (NULL == response) {
+		return PBRPC_BAD_RESPONSE;
+	}
+
+	props->serviceEndpoint = _strdup(response->serviceendpoint);
+	props->backendCookie = _strdup(response->backendcookie);
+	props->ogonCookie = _strdup(response->ogoncookie);
+	*maxWidth = response->maxwidth;
+	*maxHeight = response->maxheight;
+
+	ICP_CLIENT_STUB_CLEANUP(LogonUser, logon_user);
+
+	if (!props->serviceEndpoint || !props->backendCookie || !props->ogonCookie) {
+		free(props->serviceEndpoint);
+		free(props->backendCookie);
+		free(props->ogonCookie);
+		return -1;
+	}
+
+	return PBRPC_SUCCESS;
+}
 int ogon_icp_get_property_bool(UINT32 connectionId,char * path,BOOL * value)
 {
 	if (value == NULL)
 		return -1;
 
-	ICP_CLIENT_STUB_SETUP(PropertyBool, property_bool)
+	ICP_CLIENT_STUB_SETUP(PropertyBool, property_bool);
 
 	request.connectionid = connectionId;
 	request.path = path;
 
-	ICP_CLIENT_STUB_CALL(PropertyBool, property_bool)
+	ICP_CLIENT_STUB_CALL(PropertyBool, property_bool);
 
 	if (ret != 0)
 	{
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBool, property_bool)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBool, property_bool);
 
 	if (NULL == response)
 	{
@@ -357,13 +427,13 @@ int ogon_icp_get_property_bool(UINT32 connectionId,char * path,BOOL * value)
 	}
 
 	if (!response->success) {
-		ICP_CLIENT_STUB_CLEANUP(PropertyBool, property_bool)
+		ICP_CLIENT_STUB_CLEANUP(PropertyBool, property_bool);
 		return -1;
 	}
 
 	*value = response->value;
 
-	ICP_CLIENT_STUB_CLEANUP(PropertyBool, property_bool)
+	ICP_CLIENT_STUB_CLEANUP(PropertyBool, property_bool);
 	return PBRPC_SUCCESS;
 }
 
@@ -372,19 +442,19 @@ int ogon_icp_get_property_number(UINT32 connectionId,char * path,INT32 * value)
 	if (value == NULL)
 		return -1;
 
-	ICP_CLIENT_STUB_SETUP(PropertyNumber, property_number)
+	ICP_CLIENT_STUB_SETUP(PropertyNumber, property_number);
 
 	request.connectionid = connectionId;
 	request.path = path;
 
-	ICP_CLIENT_STUB_CALL(PropertyNumber, property_number)
+	ICP_CLIENT_STUB_CALL(PropertyNumber, property_number);
 
 	if (ret != 0)
 	{
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyNumber, property_number)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyNumber, property_number);
 
 	if (NULL == response)
 	{
@@ -392,13 +462,13 @@ int ogon_icp_get_property_number(UINT32 connectionId,char * path,INT32 * value)
 	}
 
 	if (!response->success) {
-		ICP_CLIENT_STUB_CLEANUP(PropertyNumber, property_number)
+		ICP_CLIENT_STUB_CLEANUP(PropertyNumber, property_number);
 		return -1;
 	}
 
 	*value = response->value;
 
-	ICP_CLIENT_STUB_CLEANUP(PropertyNumber, property_number)
+	ICP_CLIENT_STUB_CLEANUP(PropertyNumber, property_number);
 	return PBRPC_SUCCESS;
 }
 
@@ -407,19 +477,19 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 	if (value == NULL)
 		return -1;
 
-	ICP_CLIENT_STUB_SETUP(PropertyString, property_string)
+	ICP_CLIENT_STUB_SETUP(PropertyString, property_string);
 
 	request.connectionid = connectionId;
 	request.path = path;
 
-	ICP_CLIENT_STUB_CALL(PropertyString, property_string)
+	ICP_CLIENT_STUB_CALL(PropertyString, property_string);
 
 	if (ret != 0)
 	{
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyString, property_string)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyString, property_string);
 
 	if (NULL == response)
 	{
@@ -427,13 +497,13 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 	}
 
 	if (!response->success) {
-		ICP_CLIENT_STUB_CLEANUP(PropertyString, property_string)
+		ICP_CLIENT_STUB_CLEANUP(PropertyString, property_string);
 		return -1;
 	}
 
 	*value = _strdup(response->value);
 
-	ICP_CLIENT_STUB_CLEANUP(PropertyString, property_string)
+	ICP_CLIENT_STUB_CLEANUP(PropertyString, property_string);
 	if (!*value){
 		return -1;
 	}
@@ -443,24 +513,24 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 int ogon_icp_RemoteControlEnded(UINT32 spyId, UINT32 spiedId)
 {
 	int retVal = -1;
-	ICP_CLIENT_STUB_SETUP(RemoteControlEnded, remote_control_ended)
+	ICP_CLIENT_STUB_SETUP(RemoteControlEnded, remote_control_ended);
 
 	request.spyid = spyId;
 	request.spiedid = spiedId;
 
-	ICP_CLIENT_STUB_CALL(RemoteControlEnded, remote_control_ended)
+	ICP_CLIENT_STUB_CALL(RemoteControlEnded, remote_control_ended);
 
 	if (ret != 0) {
 		return ret;
 	}
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(RemoteControlEnded, remote_control_ended)
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(RemoteControlEnded, remote_control_ended);
 
 	if (!response) {
 		return PBRPC_BAD_RESPONSE;
 	}
 
 	retVal = response->success ? PBRPC_SUCCESS : PBRPC_FAILED;
-	ICP_CLIENT_STUB_CLEANUP(RemoteControlEnded, remote_control_ended)
+	ICP_CLIENT_STUB_CLEANUP(RemoteControlEnded, remote_control_ended);
 	return retVal;
 }

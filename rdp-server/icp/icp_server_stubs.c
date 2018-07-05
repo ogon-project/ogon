@@ -40,10 +40,10 @@
 	size_t ret = 0; \
 	ogon__icp__##expanded ##_response__init(&response); \
 	request = ogon__icp__##expanded ##_request__unpack(NULL, pbrequest->dataLen, (uint8_t*)pbrequest->data);\
-	if (!request) \
-	{ \
+	if (!request) { \
 		return PBRPC_BAD_REQEST_DATA; \
-	}
+	} \
+	while(0)
 
 #define ICP_SERVER_STUB_RESPOND(camel, expanded) \
 	ogon__icp__##expanded ##_request__free_unpacked(request, NULL); \
@@ -63,19 +63,19 @@
 		free(payload->data); \
 		return PBRPC_BAD_RESPONSE; \
 	} \
-	*pbresponse = payload;
+	*pbresponse = payload
 
 int ping(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 {
 	OGON_UNUSED(tag);
-	ICP_SERVER_STUB_SETUP(Ping, ping)
+	ICP_SERVER_STUB_SETUP(Ping, ping);
 
 	// call functions with parameters from request and set answer to response
 	response.pong = TRUE;
 
-	ICP_SERVER_STUB_RESPOND(Ping, ping)
+	ICP_SERVER_STUB_RESPOND(Ping, ping);
 
-	// freeup response data if necessary
+	// free up response data if necessary
 
 	return PBRPC_SUCCESS;
 }
@@ -83,7 +83,7 @@ int ping(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 int switchTo(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 {
 	ogon_backend_props *props = NULL;
-	ICP_SERVER_STUB_SETUP(SwitchTo, switch_to)
+	ICP_SERVER_STUB_SETUP(SwitchTo, switch_to);
 	struct ogon_notification_switch *msg = calloc(1, sizeof(struct ogon_notification_switch));
 	if (!msg) {
 		goto out_fail;
@@ -112,13 +112,13 @@ out_fail:
 		free(msg);
 	}
 	response.success = FALSE;
-	ICP_SERVER_STUB_RESPOND(SwitchTo, switch_to)
+	ICP_SERVER_STUB_RESPOND(SwitchTo, switch_to);
 	return PBRPC_SUCCESS;
 }
 
 int logoffUserSession(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 {
-	ICP_SERVER_STUB_SETUP(LogoffUserSession, logoff_user_session)
+	ICP_SERVER_STUB_SETUP(LogoffUserSession, logoff_user_session);
 	struct ogon_notification_logoff *msg = malloc(sizeof(struct ogon_notification_logoff));
 	if (!msg) {
 		goto out_fail;
@@ -137,13 +137,13 @@ int logoffUserSession(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbrespon
 out_fail:
 	response.loggedoff = FALSE;
 
-	ICP_SERVER_STUB_RESPOND(LogoffUserSession, logoff_user_session)
+	ICP_SERVER_STUB_RESPOND(LogoffUserSession, logoff_user_session);
 	return PBRPC_SUCCESS;
 }
 
 int otsapiVirtualChannelOpen(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 {
-	ICP_SERVER_STUB_SETUP(OtsApiVirtualChannelOpen, ots_api_virtual_channel_open)
+	ICP_SERVER_STUB_SETUP(OtsApiVirtualChannelOpen, ots_api_virtual_channel_open);
 	struct ogon_notification_vc_connect *msg = calloc(1, sizeof(struct ogon_notification_vc_connect));
 	if (!msg) {
 		goto out_fail;
@@ -172,13 +172,13 @@ out_fail:
 	response.connectionstring = "";
 	response.instance = 0;
 
-	ICP_SERVER_STUB_RESPOND(OtsApiVirtualChannelOpen, ots_api_virtual_channel_open)
+	ICP_SERVER_STUB_RESPOND(OtsApiVirtualChannelOpen, ots_api_virtual_channel_open);
 	return PBRPC_SUCCESS;
 }
 
 int otsapiVirtualChannelClose(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
 {
-	ICP_SERVER_STUB_SETUP(OtsApiVirtualChannelClose, ots_api_virtual_channel_close)
+	ICP_SERVER_STUB_SETUP(OtsApiVirtualChannelClose, ots_api_virtual_channel_close);
 	struct ogon_notification_vc_disconnect *msg = calloc(1, sizeof(struct ogon_notification_vc_disconnect));
 	if (!msg) {
 		goto out_fail;
@@ -205,13 +205,13 @@ out_fail:
 	}
 	response.success = FALSE;
 
-	ICP_SERVER_STUB_RESPOND(OtsApiVirtualChannelClose, ots_api_virtual_channel_close)
+	ICP_SERVER_STUB_RESPOND(OtsApiVirtualChannelClose, ots_api_virtual_channel_close);
 	return PBRPC_SUCCESS;
 }
 
 int otsapiStartRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse)
 {
-	ICP_SERVER_STUB_SETUP(OtsApiStartRemoteControl, ots_api_start_remote_control)
+	ICP_SERVER_STUB_SETUP(OtsApiStartRemoteControl, ots_api_start_remote_control);
 	struct ogon_notification_start_remote_control *msg = malloc(sizeof(struct ogon_notification_start_remote_control));
 	if (!msg ) {
 		goto out_fail;
@@ -237,15 +237,13 @@ int otsapiStartRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **p
 out_fail:
 	response.success = FALSE;
 
-	ICP_SERVER_STUB_RESPOND(OtsApiStartRemoteControl, ots_api_start_remote_control)
+	ICP_SERVER_STUB_RESPOND(OtsApiStartRemoteControl, ots_api_start_remote_control);
 	return PBRPC_SUCCESS;
 }
 
 int otsapiStopRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse)
 {
-	OGON_UNUSED(tag);
-
-	ICP_SERVER_STUB_SETUP(OtsApiStopRemoteControl, ots_api_stop_remote_control)
+	ICP_SERVER_STUB_SETUP(OtsApiStopRemoteControl, ots_api_stop_remote_control);
 
 	struct rds_notification_stop_remote_control *msg = malloc(sizeof(struct rds_notification_stop_remote_control));
 	if (!msg) {
@@ -265,13 +263,13 @@ int otsapiStopRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pb
 out_fail:
 	response.success = FALSE;
 
-	ICP_SERVER_STUB_RESPOND(OtsApiStopRemoteControl, ots_api_stop_remote_control)
+	ICP_SERVER_STUB_RESPOND(OtsApiStopRemoteControl, ots_api_stop_remote_control);
 	return PBRPC_SUCCESS;
 }
 
 int message(LONG tag, pbRPCPayload *pbrequest, pbRPCPayload **pbresponse) {
 
-	ICP_SERVER_STUB_SETUP(Message, message)
+	ICP_SERVER_STUB_SETUP(Message, message);
 
 	struct ogon_notification_msg_message *msg = calloc(1, sizeof(struct ogon_notification_msg_message));
 	if (!msg) {
@@ -331,6 +329,46 @@ out_fail:
 	}
 	response.result = 0xFFFF;
 
-	ICP_SERVER_STUB_RESPOND(Message, message)
+	ICP_SERVER_STUB_RESPOND(Message, message);
 	return PBRPC_SUCCESS;
 }
+
+int icpLogonInfo(LONG tag, pbRPCPayload *pbrequest, pbRPCPayload **pbresponse) {
+	OGON_UNUSED(tag);
+
+	ICP_SERVER_STUB_SETUP(LogonInfo, logon_info);
+
+	struct ogon_notification_logon_info *msg = calloc(1, sizeof(struct ogon_notification_logon_info));
+	if (!msg) {
+		goto out_fail;
+	}
+
+	msg->sessionId = request->sessionid;
+	if (request->login) {
+		if (!(msg->user = _strdup(request->login))) {
+			goto out_fail;
+		}
+	}
+
+	if (request->domain) {
+		if (!(msg->domain = _strdup(request->domain))) {
+			goto out_fail;
+		}
+	}
+
+	msg->haveCookie = FALSE;
+	if (request->has_cookie) {
+		if (request->cookie.len == 16) {
+			msg->haveCookie = TRUE;
+			memcpy(msg->cookie, request->cookie.data, 16);
+		}
+	}
+
+	response.success = app_context_post_message_connection(request->connectionid,
+			NOTIFY_LOGON_INFO, (void*)msg, NULL);
+
+out_fail:
+	ICP_SERVER_STUB_RESPOND(LogonInfo, logon_info);
+	return PBRPC_SUCCESS;
+}
+

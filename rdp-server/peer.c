@@ -39,6 +39,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
+#include <freerdp/session.h>
 
 #include <ogon/backend.h>
 #include <ogon/dmgbuf.h>
@@ -758,6 +759,39 @@ out_exit:
 	return ret;
 }
 
+static BOOL process_logon_info(ogon_connection *conn, wMessage *msg) {
+	struct ogon_notification_logon_info *notif = (struct ogon_notification_logon_info *)msg->wParam;
+	rdpSettings *settings = conn->context.settings;
+	rdpUpdate *update = conn->context.peer->update;
+	BOOL ret = TRUE;
+
+	if (settings->LogonNotify) {
+		logon_info logonInfo;
+		UINT32 type = settings->LongCredentialsSupported ? INFO_TYPE_LOGON_LONG : INFO_TYPE_LOGON;
+
+		logonInfo.sessionId = notif->sessionId;
+		logonInfo.username = notif->user;
+		logonInfo.domain = notif->domain;
+		ret = update->SaveSessionInfo(&conn->context, type, &logonInfo);
+	}
+
+	if (ret && notif->haveCookie) {
+		logon_info_ex logonInfoEx;
+
+		memset(&logonInfoEx, 0, sizeof(logonInfoEx));
+		logonInfoEx.LogonId = notif->sessionId;
+		logonInfoEx.haveCookie = TRUE;
+		memcpy(logonInfoEx.ArcRandomBits, notif->cookie, 16);
+
+		ret = update->SaveSessionInfo(&conn->context, INFO_TYPE_LOGON_EXTENDED_INF, &logonInfoEx);
+	}
+
+	free(notif->user);
+	free(notif->domain);
+	free(notif);
+	return ret;
+}
+
 /* event loop callback for the commands event */
 static int handle_command_queue_event(int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(fd);
@@ -839,6 +873,12 @@ static int handle_command_queue_event(int mask, int fd, HANDLE handle, void *dat
 		case NOTIFY_STOP_SHADOWING:
 			if (!process_stop_shadowing(connection, &msg)) {
 				WLog_ERR(TAG, "error stopping shadowing");
+			}
+			break;
+
+		case NOTIFY_LOGON_INFO:
+			if (!process_logon_info(connection, &msg)) {
+				WLog_ERR(TAG, "error treating logon infos");
 			}
 			break;
 
@@ -980,7 +1020,12 @@ static int pre_connect_handler(int mask, int fd, HANDLE handle, void *data) {
 		}
 
 		/* we have the magic bytes, let's read the RDPEPS blob */
-		read(peer->sockfd, pre_blob, sizeof(pre_blob_magic)); /* skip the pre blob magic */
+		/* skip the pre blob magic */
+		if (read(peer->sockfd, pre_blob, sizeof(pre_blob_magic)) != sizeof(pre_blob_magic)) {
+			WLog_ERR(TAG, "unable to read the RDPEPS blob");
+			context->state = PRECONNECT_ERROR;
+			return 0;
+		}
 
 		context->inStream = Stream_New(NULL, 128);
 		if (!context->inStream) {

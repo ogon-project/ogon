@@ -29,11 +29,17 @@
 
 #include "../commondefs.h"
 
+int ogon_icp_protocol_version();
 int ogon_icp_Ping(BOOL* pong);
 int ogon_icp_DisconnectUserSession(UINT32 connectionId, BOOL* disconnected);
 int ogon_icp_DisconnectUserSession_async(UINT32 connectionId);
 int ogon_icp_LogonUser(UINT32 connectionId, const char *username, const char *domain,
 		const char *password, const char *clientHostName,
+		const char *clientAddress,UINT32 clientBuild, UINT16 clientProductId, UINT32 hardwareID, UINT16 protocol,
+		UINT32 width, UINT32 height, UINT32 bpp, ogon_backend_props *props,
+		UINT32* maxWidth, UINT32* maxHeight);
+int ogon_icp_ReconnectUser(UINT32 connectionId, UINT32 sessionId, const BYTE *clientRandom, UINT32 clientRandomLen,
+		const char *clientCookie, const char *clientHostName,
 		const char *clientAddress,UINT32 clientBuild, UINT16 clientProductId, UINT32 hardwareID, UINT16 protocol,
 		UINT32 width, UINT32 height, UINT32 bpp, ogon_backend_props *props,
 		UINT32* maxWidth, UINT32* maxHeight);

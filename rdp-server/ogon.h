@@ -109,6 +109,13 @@ struct ogon_notification_rewire_backend {
 	BOOL rewire;
 };
 
+struct ogon_notification_logon_info {
+	UINT32 sessionId;
+	char* user;
+	char* domain;
+	BOOL haveCookie;
+	BYTE cookie[16];
+};
 
 /** @brief sent to the eventloop */
 enum {
@@ -123,6 +130,7 @@ enum {
 	NOTIFY_UNWIRE_SPY,
 	NOTIFY_STOP_SHADOWING,
 	NOTIFY_USER_MESSAGE,
+	NOTIFY_LOGON_INFO,
 };
 
 

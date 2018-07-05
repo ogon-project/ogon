@@ -43,6 +43,10 @@ struct  pbrpc_context
 	wListDictionary* transactions;
 	wQueue* writeQueue;
 	BOOL isConnected;
+	UINT32 localVersionMajor;
+	UINT32 localVersionMinor;
+	UINT32 remoteVersionMajor;
+	UINT32 remoteVersionMinor;
 	BOOL runLoop;
 	LONG tag;
 	pbRPCMethod* methods;

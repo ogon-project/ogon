@@ -18,6 +18,8 @@ enum MSGTYPE {
 	OtsApiStopRemoteControl = 14;
 	RemoteControlEnded = 15;
 	Message = 16;
+	LogonInfo = 17;
+	ReconnectUser = 18;
 }
 
 message IsChannelAllowedRequest {
@@ -67,6 +69,22 @@ message LogonUserRequest {
 	required string username = 2;
 	required string password = 3;
 	required string domain = 4;
+	required uint32 width = 5;
+	required uint32 height = 6;
+	required uint32 colorDepth = 7;
+	required string clientHostName = 8;
+	required string clientAddress = 9;
+	required uint32 clientBuildNumber = 10;
+	required uint32 clientProductId = 11;
+	required uint32 clientHardwareId = 12;
+	required uint32 clientProtocolType = 13;
+}
+
+message ReconnectUserRequest {
+	required uint32 connectionId = 1;
+	required uint32 sessionId = 2;
+	required bytes clientRandom = 3;
+	required bytes clientCookie = 4;
 	required uint32 width = 5;
 	required uint32 height = 6;
 	required uint32 colorDepth = 7;
@@ -184,3 +202,17 @@ message MessageRequest {
 message MessageResponse {
 	required uint32 result = 1;
 }
+
+message LogonInfoRequest {
+	required uint32 connectionId = 1;
+	required string login = 2;
+	required string domain = 3;
+	required uint32 sessionId = 4;
+	optional bytes cookie = 5;
+}
+
+message LogonInfoResponse {
+	required bool success = 1;
+}
+
+

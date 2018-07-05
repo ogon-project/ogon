@@ -336,7 +336,7 @@ namespace ogon { namespace pbrpc {
 			mpbRPC.set_msgtype(-1);
 			VersionInfo *info = mpbRPC.mutable_versioninfo();
 			info->set_major(OGON_PROTOCOL_VERSION_MAJOR);
-			info->set_minor(OGON_PROTOCOL_VERSION_MINOR);
+			info->set_minor(0); // TODO: 0 not 1 as for now the session manager doesn't support ReconnectUser and LogonInfo
 
 			mpbRPC.set_status(RPCBase_RPCSTATUS_SUCCESS);
 			mpbRPC.SerializeToString(&serialized);

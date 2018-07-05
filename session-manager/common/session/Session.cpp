@@ -61,7 +61,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		mhExecutorStopEvent(INVALID_HANDLE_VALUE),
 		mhExecutorThreadStartedEvent(INVALID_HANDLE_VALUE),
 		mhExecutorThread(NULL), mExecutorRunning(false),
-		mSBPVersionCompatible(false), mCurrentModule(NULL)
+		mSBPVersionCompatible(false), mCurrentModule(NULL), mCurrentAuthModule(NULL)
 	{
 		if (!InitializeCriticalSectionAndSpinCount(&mCSection, 0x00000400)) {
 			WLog_Print(logger_Session, WLOG_FATAL,

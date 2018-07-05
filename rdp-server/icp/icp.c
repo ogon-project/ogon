@@ -46,6 +46,7 @@ static pbRPCMethod icpMethods[] =
 	{ OGON__ICP__MSGTYPE__OtsApiStartRemoteControl, otsapiStartRemoteControl},
 	{ OGON__ICP__MSGTYPE__OtsApiStopRemoteControl, otsapiStopRemoteControl},
 	{ OGON__ICP__MSGTYPE__Message, message},
+	{ OGON__ICP__MSGTYPE__LogonInfo, icpLogonInfo},
 	{ 0, NULL }
 };
 

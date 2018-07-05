@@ -188,7 +188,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 			context.mPayloadRead = 0;
 			context.mState = READ_HEADER;
 			/* WLog_Print(logger_RemoteModuleTransport, WLOG_TRACE, "received %s %" PRIu32 " with id %" PRIu32 "", mpbRPC.isresponse() ? "answer" : "request", callType, callID); */
-			result =  processCall(context, callID, callType, mpbRPC.isresponse(), mpbRPC.payload(), customData);
+			result = processCall(context, callID, callType, mpbRPC.isresponse(), mpbRPC.payload(), customData);
 		} else {
 			WLog_Print(logger_RemoteModuleTransport, WLOG_ERROR, "RPC status was %s",
 					   mpbRPC.status() == ogon::pbrpc::RPCBase_RPCSTATUS_FAILED ?
