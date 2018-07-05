@@ -570,8 +570,9 @@ static BOOL process_new_shadowing_frontend(ogon_connection *conn, wMessage *msg)
 
 	/* reset the last pointer */
 	if (srcConn->backend->lastSetSystemPointer != backend->lastSetSystemPointer) {
-		pointer->pointer_system.type = backend->lastSetSystemPointer;
-		pointer->PointerSystem(&srcConn->context, &pointer->pointer_system);
+		POINTER_SYSTEM_UPDATE pointer_system;
+		pointer_system.type = backend->lastSetSystemPointer;
+		pointer->PointerSystem(&srcConn->context, &pointer_system);
 	}
 
 	/* force the spy with the last set pointer on the backend */
@@ -597,6 +598,7 @@ static BOOL process_rewire_original_backend(ogon_connection *conn, wMessage *msg
 	ogon_front_connection *front = &conn->front;
 	ogon_backend_connection *backend = conn->backend;
 	rdpSettings *settings = conn->context.settings;
+	POINTER_SYSTEM_UPDATE pointer_system;
 	rdpPointerUpdate* pointer = conn->context.peer->update->pointer;
 
 	BOOL ret = FALSE;
@@ -650,8 +652,8 @@ static BOOL process_rewire_original_backend(ogon_connection *conn, wMessage *msg
 	}
 
 	/* sets back the pointer of the backend */
-	pointer->pointer_system.type = backend->lastSetSystemPointer;
-	pointer->PointerSystem(&conn->context, &pointer->pointer_system);
+	pointer_system.type = backend->lastSetSystemPointer;
+	pointer->PointerSystem(&conn->context, &pointer_system);
 
 	if (backend->haveBackendPointer) {
 		ogon_connection_set_pointer(conn, &backend->lastSetPointer);

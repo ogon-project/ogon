@@ -768,12 +768,11 @@ static int ogon_server_set_system_pointer(ogon_connection *connection,
 		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
 
 		if (!msg->clientId || (frontConnection->id == msg->clientId)) {
-			POINTER_SYSTEM_UPDATE *pointer_system;
+			POINTER_SYSTEM_UPDATE pointer_system;
 			rdpPointerUpdate* pointer = frontConnection->context.peer->update->pointer;
 
-			pointer_system = &(pointer->pointer_system);
-			pointer_system->type = msg->ptrType;
-			IFCALL(pointer->PointerSystem, &frontConnection->context, pointer_system);
+			pointer_system.type = msg->ptrType;
+			IFCALL(pointer->PointerSystem, &frontConnection->context, &pointer_system);
 		}
 	}
 
