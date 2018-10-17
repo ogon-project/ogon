@@ -256,7 +256,9 @@ void lib_unload(void) {
 		freeSessionInfo(sessionInfo);
 	}
 
-	gCurrentServer.transport->close();
+	if (gCurrentServer.transport) {
+		gCurrentServer.transport->close();
+	}
 	LeaveCriticalSection(&gCSection);
 
 	DeleteCriticalSection(&gCSection);
