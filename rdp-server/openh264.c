@@ -323,7 +323,10 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	encParamExt.sSpatialLayers[0].iVideoHeight = encParamExt.iPicHeight;
 	encParamExt.sSpatialLayers[0].iSpatialBitrate = encParamExt.iTargetBitrate;
 	encParamExt.sSpatialLayers[0].iMaxSpatialBitrate = encParamExt.iMaxBitrate;
+
 	encParamExt.iMultipleThreadIdc = 1;
+	encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_SINGLE_SLICE;
+	encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceNum = 1;
 
 	/**
 	 * FIXME:
@@ -335,7 +338,8 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	}
 
 	if (encParamExt.iMultipleThreadIdc > 1) {
-		encParamExt.sSpatialLayers[0].sSliceCfg.uiSliceMode = SM_AUTO_SLICE;
+		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceNum = encParamExt.iMultipleThreadIdc;
 		h264->nullValue = 20 * encParamExt.iMultipleThreadIdc;
 		WLog_DBG(TAG, "Using %hu threads for h.264 encoding (nullValue=%"PRIu32")", encParamExt.iMultipleThreadIdc, h264->nullValue);
 	} else {

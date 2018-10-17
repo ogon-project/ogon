@@ -68,10 +68,10 @@ fi
 
 
 if [ "$ARCH" = "x86_64" ]; then
-	ARCHIVE="openh264-linux64-2706e36bf0a8b7c539c803ed877148c005ffca59.zip"
+	ARCHIVE="openh264-linux64-6c2e7008f8bbe2ff90100972f97071eb87ec37cb.zip"
 	LIBRARY="libgmpopenh264.so"
-	CSUMZIP="2203ab17dd9ca1b19cd536912f6c4bbfc6849e51f9f1f096eb418990cf5ac5ed"
-	CSUMLIB="1c0fd8bdcaabbb08a7bae607ac2076ebd70098822abc3c5047e7338116e1b5db"
+	CSUMZIP="3bc594edeec478da9fc407897f7e0508b945e2339918d99ce1d2c45e083814d5"
+	CSUMLIB="513277b94fd0b36c63e3ed0d29519d68c3aaa7358f191363aad1e408cccfd05d"
 else
 	leave 1 "Error, unsupported architecture: [$ARCH]"
 fi
