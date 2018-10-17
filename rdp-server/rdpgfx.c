@@ -58,6 +58,19 @@ BOOL WTSVirtualChannelWrite(HANDLE ch, PCHAR data, ULONG length, PULONG pWritten
 #define RDPGFX_WIRETOSURFACE_1_HEADER_SIZE 25
 #define RDPGFX_WIRETOSURFACE_2_HEADER_SIZE 21
 
+#ifndef RDPGFX_CAPVERSION_101
+#define RDPGFX_CAPVERSION_101 0x000A0100
+#endif
+#ifndef RDPGFX_CAPVERSION_102
+#define RDPGFX_CAPVERSION_102 0x000A0200
+#endif
+#ifndef RDPGFX_CAPVERSION_103
+#define RDPGFX_CAPVERSION_103 0x000A0301
+#endif
+#ifndef RDPGFX_CAPVERSION_104
+#define RDPGFX_CAPVERSION_104 0x000A0400
+#endif
+
 static BOOL rdpgfx_server_send_capabilities(rdpgfx_server_context* rdpgfx, wStream *s) {
 
 	Stream_SetPosition(s, 0);
@@ -133,16 +146,54 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 				WLog_DBG(TAG, "rdpgfx: - THIN-CLIENT    = %s", flags & RDPGFX_CAPS_FLAG_THINCLIENT  ? "yes" : "no");
 				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
 				WLog_DBG(TAG, "rdpgfx: - AVC420_ENABLED = %s", flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED  ? "yes" : "no");
+				/**
+				 * The flag RDPGFX_CAPS_FLAG_AVC420_ENABLED indicates that the usage of the MPEG-4 AVC/H.264 Codec in
+				 * YUV420p mode is supported in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 */
 				break;
 			case RDPGFX_CAPVERSION_10:
 				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION10  (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
 				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
 				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing the
+				 * MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 */
+				break;
+			case RDPGFX_CAPVERSION_101:
+				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION101 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
+				/**
+				 * No flags. However, according to [MS-RDPEGFX 1.7], usage of the MPEG-4 AVC/H.264 Codec in YUV444v2
+				 * mode is implied by the RDPGFX_CAPSET_VERSION101 structure.
+				 */
 				break;
 			case RDPGFX_CAPVERSION_102:
 				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION102 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
 				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
 				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing the
+				 * MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 */
+				break;
+			case RDPGFX_CAPVERSION_103:
+				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION103 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
+				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing the
+				 * MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 */
+				break;
+			case RDPGFX_CAPVERSION_104:
+				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION104 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
+				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
+				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing:
+				 * 1. The MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 * 2. The MPEG-4 AVC/H.264 Codec in YUV420 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message in the
+				 *    same frame as other codecs.
+				 */
 				break;
 		}
 #endif
