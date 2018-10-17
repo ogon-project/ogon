@@ -631,7 +631,7 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 		ogon_bitmap_encoder* encoder = front->encoder;
 		ogon_backend_connection *backend;
 		rdpPointerUpdate *pointer = client->update->pointer;
-		POINTER_SYSTEM_UPDATE *systemPointer = &(pointer->pointer_system);
+		POINTER_SYSTEM_UPDATE systemPointer;
 
 		backend = conn->shadowing->backend;
 
@@ -670,8 +670,8 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 		}
 
 		/* restore the kind and shape of pointer */
-		systemPointer->type = backend->lastSetSystemPointer;
-		IFCALL(pointer->PointerSystem, client->context, systemPointer);
+		systemPointer.type = backend->lastSetSystemPointer;
+		IFCALL(pointer->PointerSystem, client->context, &systemPointer);
 
 		ogon_connection_clear_pointer_cache(conn);
 		if (backend->haveBackendPointer)
