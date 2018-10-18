@@ -69,9 +69,10 @@ struct _ogon_h264_context {
 
 BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	UINT32 targetFrameSizeInBits, BYTE *data, BYTE **ppDstData,
-	UINT32 *pDstSize, BOOL avcMode, BOOL *pOptimizable)
+	UINT32 *pDstSize, ogon_openh264_compress_mode avcMode, BOOL *pOptimizable)
 {
 	SFrameBSInfo info;
+	SSourcePicture *sourcePicture = NULL;
 	prim_size_t screenSize;
 	pstatus_t pstatus = PRIMITIVES_SUCCESS;
 	int i, j;
@@ -83,27 +84,29 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	screenSize.width = (INT32)h264->scrWidth;
 	screenSize.height = (INT32)h264->scrHeight;
 
-	/**
-	 * avcMode parameter:
-	 * 0: AVC420
-	 * 1: AVC444 step 1/2: convert and encode
-	 * 2: AVC444 step 2/2: just encode
-	 */
-
 	switch(avcMode) {
-	case 0:
+	case COMPRESS_MODE_AVC420:
 		pstatus = freerdp_primitives->RGBToYUV420_8u_P3AC4R(
 				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
 				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
 				&screenSize);
 		break;
-	case 1:
-		// pstatus = ogon_RGBToAVC444YUV_BGRX(
+	case COMPRESS_MODE_AVC444V1_A:
 		pstatus = freerdp_primitives->RGBToAVC444YUV(
 				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
 				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
 				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
 				&screenSize);
+		break;
+	case COMPRESS_MODE_AVC444V2_A:
+		pstatus = freerdp_primitives->RGBToAVC444YUVv2(
+				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
+				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
+				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
+				&screenSize);
+		break;
+	case COMPRESS_MODE_AVC444VX_B:
+		/* YUV conversion already completed in previous call */
 		break;
 	}
 
@@ -144,7 +147,12 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 
 	memset(&info, 0, sizeof(SFrameBSInfo));
 
-	if ((*h264->pEncoder)->EncodeFrame(h264->pEncoder, avcMode==2 ? &h264->pic2 : &h264->pic1, &info)) {
+	sourcePicture = &h264->pic1;
+	if (avcMode == COMPRESS_MODE_AVC444VX_B) {
+		sourcePicture = &h264->pic2;
+	}
+
+	if ((*h264->pEncoder)->EncodeFrame(h264->pEncoder, sourcePicture, &info)) {
 		WLog_ERR(TAG, "Failed to encode frame");
 		return FALSE;
 	}
@@ -162,7 +170,7 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 			*pDstSize += info.sLayerInfo[i].pNalLengthInByte[j];
 		}
 	}
-	/* WLog_DBG(TAG, "ENCODED SIZE (mode=%"PRIu32"): %"PRIu32" byte (%"PRIu32" bits", avcMode, *pDstSize, (*pDstSize) * 8); */
+	/* WLog_DBG(TAG, "ENCODED SIZE (mode=%"PRIu32"): %"PRIu32" byte (%"PRIu32" bits)", avcMode, *pDstSize, (*pDstSize) * 8); */
 
 	/**
 	 * TODO:

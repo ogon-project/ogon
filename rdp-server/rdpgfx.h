@@ -71,6 +71,7 @@ struct _rdpgfx_server_context
 
 	BOOL h264Supported;
 	BOOL avc444Supported;
+	BOOL avc444v2Supported;
 
 	/*** APIs called by the server. ***/
 	/**

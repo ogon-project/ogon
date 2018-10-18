@@ -189,7 +189,7 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 		}
 #endif
 
-		if (version >= RDPGFX_CAPVERSION_8 && version <= RDPGFX_CAPVERSION_102  && version > rdpgfx->version) {
+		if (version >= RDPGFX_CAPVERSION_8 && version <= RDPGFX_CAPVERSION_104  && version > rdpgfx->version) {
 			switch (version) {
 				case RDPGFX_CAPVERSION_8:
 					break;
@@ -198,9 +198,16 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 					rdpgfx->avc444Supported = FALSE;
 					break;
 				case RDPGFX_CAPVERSION_10:
-				case RDPGFX_CAPVERSION_102:
 					rdpgfx->avc444Supported = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 					rdpgfx->h264Supported = rdpgfx->avc444Supported;
+					rdpgfx->avc444v2Supported  = FALSE;
+					break;
+				case RDPGFX_CAPVERSION_102:
+				case RDPGFX_CAPVERSION_103:
+				case RDPGFX_CAPVERSION_104:
+					rdpgfx->avc444Supported = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+					rdpgfx->h264Supported = rdpgfx->avc444Supported;
+					rdpgfx->avc444v2Supported  = rdpgfx->avc444Supported;
 					break;
 
 				default:

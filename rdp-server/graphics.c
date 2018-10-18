@@ -415,8 +415,9 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	UINT32 maxFrameRate = (UINT32)conn->fps;
 	UINT32 targetFrameSizeInBits;
 	BOOL useAVC444 = frontend->rdpgfx->avc444Supported;
+	BOOL useAVC444v2 = frontend->rdpgfx->avc444v2Supported;
 	BOOL enableFullAVC444 = FALSE;
-	UINT32 openh264CompressMode;
+	ogon_openh264_compress_mode openh264CompressMode;
 	BOOL rv;
 
 	s = encoder->stream;
@@ -445,10 +446,14 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 
 	targetFrameSizeInBits = ogon_bwmgtm_calc_max_target_frame_size(conn);
 
-	openh264CompressMode = 0; /* 0 == avc420 frame only */
+	openh264CompressMode = COMPRESS_MODE_AVC420; /* avc420 frame only */
 
 	if (enableFullAVC444) {
-		openh264CompressMode = 1; /* 1 == avc444 step 1 */
+		if (useAVC444v2) {
+			openh264CompressMode = COMPRESS_MODE_AVC444V2_A; /* avc444v2 step 1/2 */
+		} else {
+			openh264CompressMode = COMPRESS_MODE_AVC444V1_A; /* avc444v1 step 1/2 */
+		}
 
 		/* since we'll encoding this frame twice: */
 		maxFrameRate *= 2;
@@ -490,7 +495,7 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 
 	if (enableFullAVC444) {
 		/* generate avc444 avc420EncodedBitstream2 */
-		openh264CompressMode = 2; /* 2 == avc444 step 2 */
+		openh264CompressMode = COMPRESS_MODE_AVC444VX_B; /* avc444 step 2/2 */
 
 		STOPWATCH_START(encoder->swH264Compress);
 		rv = ogon_openh264_compress(encoder->h264_context, maxFrameRate,
@@ -517,8 +522,11 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 
 	pdu.surfaceId = frontend->rdpgfxOutputSurface;
 	pdu.pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
-	pdu.codecId = useAVC444 ? RDPGFX_CODECID_AVC444 : RDPGFX_CODECID_AVC420;
-
+	if (useAVC444) {
+		pdu.codecId = useAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
+	} else  {
+		pdu.codecId = RDPGFX_CODECID_AVC420;
+	}
 	pdu.destRect.left = 0;
 	pdu.destRect.top = 0;
 	pdu.destRect.right = encoder->desktopWidth;
@@ -1172,9 +1180,9 @@ BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
 		case CODEC_MODE_H264:
 			if (front->rdpgfx->avc444Supported) {
 				if (front->rdpgfxH264EnableFullAVC444) {
-					codec = "AVC444f";
+					codec = front->rdpgfx->avc444v2Supported ? "AVC444f2" : "AVC444f1";
 				} else {
-					codec = "AVC444p";
+					codec = front->rdpgfx->avc444v2Supported ? "AVC444p2" : "AVC444p1";
 				}
 			} else {
 				codec = "AVC420";
