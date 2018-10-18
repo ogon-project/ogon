@@ -647,7 +647,7 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 	return TRUE;
 }
 
-static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel, BYTE* data, int size, int flags, int totalSize)
+static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel, const BYTE* data, int size, int flags, int totalSize)
 {
 	UINT32 buffer[2];
 	wStream *buffer_stream;
@@ -731,7 +731,7 @@ out_flush:
 	return ret;
 }
 
-static int ogon_receiveFrontendChannelData(freerdp_peer *client, UINT16 channelId, BYTE* data, int size, int flags, int totalSize)
+static int ogon_receiveFrontendChannelData(freerdp_peer *client, UINT16 channelId, const BYTE* data, int size, int flags, int totalSize)
 {
 	registered_virtual_channel *channel;
 

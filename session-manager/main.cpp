@@ -163,7 +163,7 @@ void printhelp(const char *bin) {
 	printhelprow(NULL, "--buildconfig", "Print build configuration");
 }
 
-void parseCommandLine(int argc, const char **argv,int &no_daemon, int &kill_process, std::string &checkConfigFileName, unsigned &wlog_appender_type ) {
+void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, std::string &checkConfigFileName, unsigned &wlog_appender_type) {
 
 	DWORD flags;
 	int status = 0;
@@ -178,8 +178,7 @@ void parseCommandLine(int argc, const char **argv,int &no_daemon, int &kill_proc
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 	flags |= COMMAND_LINE_SEPARATOR_EQUAL;
 
-	status = CommandLineParseArgumentsA(argc, (const char **) argv,
-										ogon_session_manager_args, flags, NULL, NULL, NULL);
+	status = CommandLineParseArgumentsA(argc, (LPSTR *) argv, ogon_session_manager_args, flags, NULL, NULL, NULL);
 
 	if (status != COMMAND_LINE_STATUS_PRINT_HELP && status != 0)
 	{
@@ -490,7 +489,7 @@ void handleSignal() {
 #endif
 }
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 	pid_t pid;
 
 	int no_daemon;

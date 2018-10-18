@@ -380,7 +380,7 @@ fail:
 	exit(1);
 }
 
-static void parseCommandLine(int argc, const char **argv, int *no_daemon, int *kill_process, unsigned *wlog_appender_type) {
+static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_process, unsigned *wlog_appender_type) {
 	DWORD flags;
 	int status = 0;
 	COMMAND_LINE_ARGUMENT_A *arg;
@@ -392,8 +392,7 @@ static void parseCommandLine(int argc, const char **argv, int *no_daemon, int *k
 	flags |= COMMAND_LINE_SIGIL_DASH;
 	flags |= COMMAND_LINE_SIGIL_DOUBLE_DASH;
 
-	status = CommandLineParseArgumentsA(argc, (const char**) argv,
-			ogon_args, flags, NULL, NULL, NULL);
+	status = CommandLineParseArgumentsA(argc, argv, ogon_args, flags, NULL, NULL, NULL);
 
 	if (status != COMMAND_LINE_STATUS_PRINT_HELP && status != 0) {
 		fprintf(stderr,"Failed to parse command line: %d\n", status);
@@ -600,7 +599,7 @@ void daemonizeCode(char *pid_file) {
 	/* end of daemonizing code */
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
 	int no_daemon;
 	int kill_process;
 	char pid_file[256];

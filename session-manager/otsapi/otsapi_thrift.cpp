@@ -54,6 +54,7 @@
 #include <winpr/ssl.h>
 
 #include <ogon/version.h>
+#include <ogon/api.h>
 
 #include <otsapi/otsapi.h>
 
@@ -1788,7 +1789,7 @@ extern "C" {
  * Export InitWtsApi() but do not expose it with a header file due to possible conflicts
  */
 
-WINPR_API PWtsApiFunctionTable CDECL InitWtsApi(void) {
+OGON_API PWtsApiFunctionTable CDECL InitWtsApi(void) {
 	return &ogon_WtsApiFunctionTable;
 }
 
@@ -1796,7 +1797,7 @@ WINPR_API PWtsApiFunctionTable CDECL InitWtsApi(void) {
  * Export explicit ogon_InitWtsApi() which we can safely expose with a header
  */
 
-WINPR_API PWtsApiFunctionTable CDECL ogon_InitWtsApi(void) {
+OGON_API PWtsApiFunctionTable CDECL ogon_InitWtsApi(void) {
 	return &ogon_WtsApiFunctionTable;
 }
 

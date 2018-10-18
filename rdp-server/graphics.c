@@ -590,17 +590,10 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	cmd.destTop = 0;
 	cmd.destRight = encoder->desktopWidth;
 	cmd.destBottom = encoder->desktopHeight;
-#ifdef HAVE_SURFACECMD_BMP
 	cmd.bmp.codecID = settings->RemoteFxCodecId;
 	cmd.bmp.bpp = 32;
 	cmd.bmp.width = encoder->desktopWidth;
 	cmd.bmp.height = encoder->desktopHeight;
-#else
-	cmd.codecID = settings->RemoteFxCodecId;
-	cmd.bpp = 32;
-	cmd.width = encoder->desktopWidth;
-	cmd.height = encoder->desktopHeight;
-#endif
 	cmd.skipCompression = TRUE;
 
 	s = encoder->stream;
@@ -625,15 +618,9 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 
 	rfx_message_free(encoder->rfx_context, message);
 
-#ifdef HAVE_SURFACECMD_BMP
 	cmd.bmp.bitmapDataLength = Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 	messageSize = cmd.bmp.bitmapDataLength;
-#else
-	cmd.bitmapDataLength = Stream_GetPosition(s);
-	cmd.bitmapData = Stream_Buffer(s);
-	messageSize = cmd.bitmapDataLength;
-#endif
 
 	messageSize += 22; /* the size of the surface bits command header */
 
