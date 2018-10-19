@@ -71,6 +71,7 @@ struct _rdpgfx_server_context
 
 	BOOL h264Supported;
 	BOOL avc444Supported;
+	BOOL avc444v2Supported;
 
 	/*** APIs called by the server. ***/
 	/**
@@ -130,15 +131,7 @@ struct _rdpgfx_server_context
 	pfn_rdpgfx_server_frame_acknowledge FrameAcknowledge;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-FREERDP_API rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);
-FREERDP_API void rdpgfx_server_context_free(rdpgfx_server_context* context);
-
-#ifdef __cplusplus
-}
-#endif
+rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);
+void rdpgfx_server_context_free(rdpgfx_server_context* context);
 
 #endif /* _OGON_RDPSRV_RDPGFX_CHANNEL_H_ */

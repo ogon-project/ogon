@@ -34,11 +34,19 @@
 
 typedef struct _ogon_h264_context ogon_h264_context;
 
+typedef enum _ogon_openh264_compress_mode {
+        COMPRESS_MODE_AVC420,      /* AVC420 frame only */
+        COMPRESS_MODE_AVC444V1_A,  /* AVC444v1 step 1/2: yuv conversion and compress pic1 */
+        COMPRESS_MODE_AVC444V2_A,  /* AVC444v2 step 1/2: yuv conversion and compress pic1 */
+        COMPRESS_MODE_AVC444VX_B,  /* AVC444vX step 2/2: compress pic2 only */
+} ogon_openh264_compress_mode;
+
+
 BOOL ogon_openh264_library_open(void);
 void ogon_openh264_library_close(void);
 BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
                             UINT32 targetFrameSizeInBits, BYTE *data, BYTE **ppDstData,
-                            UINT32 *pDstSize, BOOL avcMode, BOOL *pOptimizable);
+                            UINT32 *pDstSize, ogon_openh264_compress_mode avcMode, BOOL *pOptimizable);
 void ogon_openh264_context_free(ogon_h264_context *h264);
 ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight, UINT32 scrStride);
 
