@@ -484,7 +484,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 		ogon::module::ModuleGetCustomInfoResponse response;
 
 		if (!response.ParseFromString(payload)) {
-			WLog_Print(logger_RemoteModule, WLOG_ERROR , "error deserializing startModuleResponse");
+			WLog_Print(logger_RemoteModule, WLOG_ERROR , "error deserializing ModuleGetCustomInfoResponse");
 			return REMOTE_CLIENT_ERROR;
 		}
 

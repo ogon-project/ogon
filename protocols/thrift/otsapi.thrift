@@ -10,7 +10,7 @@ typedef i32 TINT32
 typedef i64 TINT64
 typedef string TSTRING
 typedef i32 TDWORD
-typedef byte TBYTE
+typedef i8 TBYTE
 
 struct TVersion {
 	1:TINT32 VersionMajor;
@@ -90,7 +90,7 @@ service otsapi {
 	TDWORD getPermissionForToken(1:TSTRING authToken);
 	bool logoffConnection(1:TSTRING authToken);
 	TDWORD ping(1:TDWORD input);
-	TReturnVirtualChannelOpen virtualChannelOpen(1:TSTRING authToken, 2:TDWORD sessionId,3:TSTRING virtualName,4:TBOOL isDynChannel,5:TDWORD flags);
+	TReturnVirtualChannelOpen virtualChannelOpen(1:TSTRING authToken, 2:TDWORD sessionId, 3:TSTRING virtualName, 4:TBOOL isDynChannel, 5:TDWORD flags);
 	bool virtualChannelClose(1:TSTRING authToken,2:TDWORD sessionId, 3:TSTRING virtualName, 4:TDWORD instance);
 	bool disconnectSession(1:TSTRING authToken, 2:TDWORD sessionId, 3:TBOOL wait);
 	bool logoffSession(1:TSTRING authToken,2:TDWORD sessionId, 3:TBOOL wait);

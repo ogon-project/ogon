@@ -41,7 +41,8 @@ namespace ogon { namespace launcher {
  		pSignalStop signalStop) :
 			mGetPropertyBool(getPropBool), mGetPropertyNumber(getPropNumber), mGetPropertyString(getPropString),
 			mAddMonitoringProcess(addMonitoring), mRemoveMonitoringProcess(removeMonitoring), mStop(signalStop),
-			mUserToken(NULL), mModuleLib(NULL), mModuleContext(NULL), mStartSystemSession(false) {
+			mSessionId(0), mSessionPID(0), mUserToken(NULL), mSessionStarted(false),
+			mModuleLib(NULL), mModuleContext(NULL), mStartSystemSession(false) {
 
 		memset(&mEntrypoints, 0, sizeof(RDS_MODULE_ENTRY_POINTS));
 	}
@@ -310,7 +311,7 @@ namespace ogon { namespace launcher {
 
 		if (!response.SerializeToString(&encodedResponse)) {
 			// failed to serialize
-			WLog_Print(logger_ModuleCommunication, WLOG_ERROR, "error serializing stopModuleResponse");
+			WLog_Print(logger_ModuleCommunication, WLOG_ERROR, "error serializing startModuleResponse");
 			return REMOTE_CLIENT_ERROR;
 		}
 
@@ -611,7 +612,7 @@ namespace ogon { namespace launcher {
 		ogon::module::PropertyBoolResponse response;
 
 		if (!response.ParseFromString(payload)) {
-			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing startModuleResponse");
+			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing PropertyBoolResponse");
 			return REMOTE_CLIENT_ERROR;
 		}
 
@@ -627,7 +628,7 @@ namespace ogon { namespace launcher {
 		ogon::module::PropertyNumberResponse response;
 
 		if (!response.ParseFromString(payload)) {
-			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing startModuleResponse");
+			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing PropertyNumberResponse");
 			return REMOTE_CLIENT_ERROR;
 		}
 
@@ -643,7 +644,7 @@ namespace ogon { namespace launcher {
 		ogon::module::PropertyStringResponse response;
 
 		if (!response.ParseFromString(payload)) {
-			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing startModuleResponse");
+			WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "error deserializing PropertyStringResponse");
 			return REMOTE_CLIENT_ERROR;
 		}
 
