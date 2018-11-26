@@ -55,10 +55,18 @@ This set contains the RDP listener and the session manager.
 
 Install some required packages:
 
+Ubunt < 18.10, Debian < buster
 ```console
 sudo apt-get install libprotobuf-dev libprotoc-dev protobuf-compiler protobuf-c-compiler \
 	libpam0g-dev libboost-dev libdbus-1-dev automake libpam-systemd ca-certificates \
 	libprotobuf-c0-dev ssl-cert
+```
+For  Ubuntu 18.10(+) and Debian buster+ use:
+
+```console
+sudo apt-get install libprotobuf-dev libprotoc-dev protobuf-compiler protobuf-c-compiler \
+  libpam0g-dev libboost-dev libdbus-1-dev automake libpam-systemd ca-certificates \
+  libprotobuf-c-dev ssl-cert
 ```
 
 ### Building
@@ -207,11 +215,11 @@ sudo apt-get install autoconf automake xutils-dev libtool libpixman-1-dev x11pro
 ```
 
 ```
-# Debian jessie / Ubuntu 14.04
+# Debian jessie / Ubuntu 14.04 / Ubuntu 18.04
 sudo apt-get install libxfont-dev
 ```
 ```
-# Debian stretch/ Ubuntu 16.04+
+# Debian stretch/ Ubuntu 16.04
 sudo apt-get install libxfont1-dev
 ```
 
@@ -221,6 +229,16 @@ In case you are trying to build under Debian Jessie you will need to compile a m
 ```console
 git clone git://anongit.freedesktop.org/xorg/lib/libxtrans -b xtrans-1.3.5
 cd libxtrans && mkdir -p output && cd output
+../autogen.sh --prefix=/opt/ogon
+make && sudo make install
+cd ../..
+```
+
+For Ubuntu >= 16.04 you also need a backport of libxfont
+```console
+apt install libfontenc-dev
+git clone https://gitlab.freedesktop.org/xorg/lib/libxfont.git --branch libXfont-1.5-branch
+cd libxfont/ && mkdir -p output && cd output
 ../autogen.sh --prefix=/opt/ogon
 make && sudo make install
 cd ../..
