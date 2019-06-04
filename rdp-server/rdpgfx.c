@@ -58,6 +58,10 @@ BOOL WTSVirtualChannelWrite(HANDLE ch, PCHAR data, ULONG length, PULONG pWritten
 #define RDPGFX_WIRETOSURFACE_1_HEADER_SIZE 25
 #define RDPGFX_WIRETOSURFACE_2_HEADER_SIZE 21
 
+#ifndef RDPGFX_CAPVERSION_101
+#define RDPGFX_CAPVERSION_101 0x000A0100
+#endif
+
 #ifndef RDPGFX_CAPVERSION_104
 #define RDPGFX_CAPVERSION_104 0x000A0400
 #endif
@@ -114,14 +118,17 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 		}
 		Stream_Read_UINT32(s, version);
 		Stream_Read_UINT32(s, capsDataLength);
+
 		length -= 8;
 		if (length < capsDataLength) {
 			return FALSE;
 		}
 		if (capsDataLength >= 4) {
 			Stream_Read_UINT32(s, flags);
+			Stream_Seek(s, capsDataLength - 4);
 		} else {
 			flags = 0;
+			Stream_Seek(s, capsDataLength);
 		}
 		length -= capsDataLength;
 
@@ -202,12 +209,17 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 					rdpgfx->h264Supported = rdpgfx->avc444Supported;
 					rdpgfx->avc444v2Supported  = FALSE;
 					break;
+				case RDPGFX_CAPVERSION_101:
+					rdpgfx->h264Supported = TRUE;
+					rdpgfx->avc444Supported = TRUE;
+					rdpgfx->avc444v2Supported = TRUE;
+					break;
 				case RDPGFX_CAPVERSION_102:
 				case RDPGFX_CAPVERSION_103:
 				case RDPGFX_CAPVERSION_104:
 					rdpgfx->avc444Supported = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 					rdpgfx->h264Supported = rdpgfx->avc444Supported;
-					rdpgfx->avc444v2Supported  = rdpgfx->avc444Supported;
+					rdpgfx->avc444v2Supported = rdpgfx->avc444Supported;
 					break;
 
 				default:
