@@ -8,7 +8,7 @@ set(${EXTERNAL_PROJECT}_EXT ".tar.gz")
 set(${EXTERNAL_PROJECT}_FILE "${${EXTERNAL_PROJECT}_NAME}${${EXTERNAL_PROJECT}_EXT}")
 set(${EXTERNAL_PROJECT}_URL "http://archive.apache.org/dist/thrift/${${EXTERNAL_PROJECT}_VERSION}/${${EXTERNAL_PROJECT}_FILE}")
 set(${EXTERNAL_PROJECT}_HASH "SHA1=bdf159ef455c6d3c71e95dba15a6d05f6aaca2a9")
-set(${EXTERNAL_PROJECT}_CONFIGURE --without-python --without-java --without-c_glib --with-pic --without-csharp --without-haskell --without-go --without-d --without-qt4 --without-qt5 --without-perl --without-erlang --without-php --without-ruby --without-haxe --without-nodejs --disable-tests --disable-tutorial --prefix=${EXTERNAL_PROJECTS_BASE}/Install/${EXTERNAL_PROJECT} CPPFLAGS=-DFORCE_BOOST_SMART_PTR)
+set(${EXTERNAL_PROJECT}_CONFIGURE --without-python --without-java --without-c_glib --with-pic --without-csharp --without-haskell --without-go --without-d --without-qt4 --without-qt5 --without-perl --without-erlang --without-php --without-ruby --without-haxe --without-nodejs --disable-tests --disable-tutorial --prefix=${EXTERNAL_PROJECTS_BASE}/Install/${EXTERNAL_PROJECT} CPPFLAGS=-DFORCE_BOOST_SMART_PTR CXXFLAGS=-Wno-unused-variable)
 set(${EXTERNAL_PROJECT}_UPDATE "")
 set(${EXTERNAL_PROJECT}_MAKE "")
 
