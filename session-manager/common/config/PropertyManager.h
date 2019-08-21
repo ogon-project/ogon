@@ -66,7 +66,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 
 		bool saveProperties(const std::string &filename);
 		bool loadProperties(const std::string &filename);
-		bool checkConfigFile(const std::string &filename);
+		static bool checkConfigFile(const std::string &filename);
 
 	private:
 		bool parsePropertyGlobal(const std::string &parentPath, const boost::property_tree::ptree &tree,

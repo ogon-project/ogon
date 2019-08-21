@@ -48,7 +48,7 @@ static HANDLE gMainEvent;
 char *g_configFileName = 0;
 static wLog *logger_sessionManager = WLog_Get("ogon.sessionmanager");
 
-void checkConfigFile(std::string checkConfigFileName) __attribute__ ((noreturn));
+int checkConfigFile(std::string checkConfigFileName);
 void killProcess(char *pid_file)  __attribute__ ((noreturn));
 
 static void reloadConfig(int /*signal*/) {
@@ -337,15 +337,12 @@ void killProcess(char *pid_file) {
 }
 
 
-void checkConfigFile(std::string checkConfigFileName) {
-
-	ogon::sessionmanager::config::PropertyManager propertyManager;
-
-	if (propertyManager.checkConfigFile(checkConfigFileName)) {
+int checkConfigFile(std::string checkConfigFileName) {
+	if (ogon::sessionmanager::config::PropertyManager::checkConfigFile(checkConfigFileName)) {
 		std::cout << "No syntax error detected in config file " << checkConfigFileName << std::endl;
-		exit(0);
+		return 0;
 	}
-	exit(1);
+	return 1;
 }
 
 void checkPidFile(char *pid_file) {
@@ -503,6 +500,11 @@ int main(int argc, char **argv) {
 
 	parseCommandLine(argc, argv, no_daemon, kill_process, checkConfigFileName, wlog_appender_type);
 
+	if (checkConfigFileName.size()) {
+		exit(checkConfigFile(checkConfigFileName));
+	}
+
+
 	sprintf_s(pid_file, 255, "%s/%s", OGON_PID_PATH, PIDFILE);
 
 	if (!kill_process && PathFileExistsA(pid_file)) {
@@ -520,7 +522,7 @@ int main(int argc, char **argv) {
 	}
 #endif
 
-	if (!no_daemon && !kill_process && !checkConfigFileName.size()) {
+	if (!no_daemon && !kill_process) {
 		checkPidFile(pid_file);
 		daemonizeCode(pid_file);
 	}
@@ -530,10 +532,6 @@ int main(int argc, char **argv) {
 
 	if (kill_process) {
 		killProcess(pid_file);
-	}
-
-	if (checkConfigFileName.size()) {
-		checkConfigFile(checkConfigFileName);
 	}
 
 	if (!(gMainEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
