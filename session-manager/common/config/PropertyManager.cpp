@@ -366,7 +366,6 @@ namespace ogon { namespace sessionmanager { namespace config {
 
 	bool PropertyManager::checkConfigFile(const std::string &filename) {
 		boost::property_tree::ptree pt;
-		CSGuard guard(&mCSection);
 		try {
 			boost::property_tree::read_ini(filename, pt);
 		} catch (boost::property_tree::file_parser_error &e) {
