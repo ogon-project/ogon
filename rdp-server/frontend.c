@@ -1023,7 +1023,7 @@ static BOOL ogon_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UIN
 	ogon_connection *conn = (ogon_connection *)input->context;
 	ogon_backend_connection* backend = conn->shadowing->backend;
 
-	if ((conn->front.inputFilter & INPUT_FILTER_KEYBOARD) || !backend || !backend->client.ScancodeKeyboardEvent) {
+	if ((conn->front.inputFilter & INPUT_FILTER_KEYBOARD) || !backend || !backend->client.UnicodeKeyboardEvent) {
 		return TRUE;
 	}
 
