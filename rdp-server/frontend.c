@@ -1419,6 +1419,10 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 
+	settings->UnicodeInput = TRUE;
+	settings->HasHorizontalWheel = TRUE;
+	settings->HasExtendedMouseEvent = TRUE;
+
 	peer->Capabilities = ogon_peer_capabilities;
 	peer->PostConnect = ogon_peer_post_connect;
 	peer->Activate = ogon_peer_activate;
