@@ -58,19 +58,32 @@ void app_context_uninit() {
 long app_context_get_connectionid() {
 	ogon_connection *connection = NULL;
 	long connection_id;
+
 	ListDictionary_Lock(g_app_context->connections);
-try_next_id:
-	g_app_context->connectionId++;
-	if (g_app_context->connectionId <= 0) {
-		g_app_context->connectionId = 1;
-	}
-	connection_id = g_app_context->connectionId;
-	connection = ListDictionary_GetItemValue(g_app_context->connections, (void*) connection_id);
-	if (connection) {
-		goto try_next_id;
-	}
+
+	do {
+		g_app_context->connectionId++;
+		if (g_app_context->connectionId <= 0) {
+			g_app_context->connectionId = 1;
+		}
+		connection_id = g_app_context->connectionId;
+		connection = ListDictionary_GetItemValue(g_app_context->connections, (void*) connection_id);
+	} while (connection);
+
 	ListDictionary_Unlock(g_app_context->connections);
 	return connection_id;
+}
+
+BOOL app_context_get_connection_stats(long id, UINT64 *inBytes, UINT64 *outBytes, UINT64 *inPackets, UINT64 *outPackets) {
+	ogon_connection *connection;
+
+	ListDictionary_Lock(g_app_context->connections);
+	connection = ListDictionary_GetItemValue(g_app_context->connections, (void*) id);
+	if (connection) {
+		freerdp_get_stats(connection->context.rdp, inBytes, outBytes, inPackets, outPackets);
+	}
+	ListDictionary_Unlock(g_app_context->connections);
+	return connection != NULL;
 }
 
 BOOL app_context_add_connection(ogon_connection *connection) {

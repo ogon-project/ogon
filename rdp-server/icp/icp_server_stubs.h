@@ -36,5 +36,6 @@ int otsapiStartRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **p
 int otsapiStopRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse);
 int message(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
 int icpLogonInfo(LONG tag, pbRPCPayload *pbrequest, pbRPCPayload **pbresponse);
+int icpConnectionStats(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
 
 #endif /* _OGON_RDPSRV_ICPSERVERSTUBS_H_ */

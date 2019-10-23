@@ -372,3 +372,17 @@ out_fail:
 	return PBRPC_SUCCESS;
 }
 
+int icpConnectionStats(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse)
+{
+	OGON_UNUSED(tag);
+	ICP_SERVER_STUB_SETUP(ConnectionStats, connection_stats);
+
+	response.success = app_context_get_connection_stats(request->connectionid, &response.inbytes, &response.outbytes,
+			&response.inpackets, &response.outpackets);
+
+	ICP_SERVER_STUB_RESPOND(ConnectionStats, connection_stats);
+
+	return PBRPC_SUCCESS;
+}
+
+

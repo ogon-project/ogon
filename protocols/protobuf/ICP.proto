@@ -20,6 +20,7 @@ enum MSGTYPE {
 	Message = 16;
 	LogonInfo = 17;
 	ReconnectUser = 18;
+	ConnectionStats = 19;
 }
 
 message IsChannelAllowedRequest {
@@ -215,4 +216,14 @@ message LogonInfoResponse {
 	required bool success = 1;
 }
 
+message ConnectionStatsRequest {
+	required uint32 connectionId = 1;
+}
 
+message ConnectionStatsResponse {
+	required bool success = 1;
+	required uint64 inBytes = 2;
+	required uint64 outBytes = 3;
+	required uint64 inPackets = 4;
+	required uint64 outPackets = 5;
+}
