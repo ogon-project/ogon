@@ -34,8 +34,8 @@ void GetUnixTimeAsFileTime(time_t t, LPFILETIME lpSystemTimeAsFileTime)
 	time64.QuadPart = t + 11644473600LL; /* Seconds since January 1, 1601 */
 	time64.QuadPart *= 10000000; /* Convert timestamp to tenths of a microsecond */
 
-	lpSystemTimeAsFileTime->dwLowDateTime = time64.LowPart;
-	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
+	lpSystemTimeAsFileTime->dwLowDateTime = time64.u.LowPart;
+	lpSystemTimeAsFileTime->dwHighDateTime = time64.u.HighPart;
 }
 
 time_t to_time_t(boost::posix_time::ptime t)
@@ -51,8 +51,8 @@ __uint64 convertFileTimeToint64(const FILETIME &fileTime)
 {
 	ULARGE_INTEGER lv_Large ;
 
-	lv_Large.LowPart  = fileTime.dwLowDateTime;
-	lv_Large.HighPart = fileTime.dwHighDateTime;
+	lv_Large.u.LowPart  = fileTime.dwLowDateTime;
+	lv_Large.u.HighPart = fileTime.dwHighDateTime;
 
 	return lv_Large.QuadPart ;
 }
