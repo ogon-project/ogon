@@ -51,6 +51,8 @@ typedef BOOL (*pfn_rdpgfx_server_start_frame)(rdpgfx_server_context *context, RD
 typedef BOOL (*pfn_rdpgfx_server_end_frame)(rdpgfx_server_context *context, RDPGFX_END_FRAME_PDU *end_frame);
 typedef BOOL (*pfn_rdpgfx_server_reset_graphics)(rdpgfx_server_context *context, RDPGFX_RESET_GRAPHICS_PDU *reset_graphics);
 typedef BOOL (*pfn_rdpgfx_server_map_surface_to_output)(rdpgfx_server_context *context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU *map_surface_to_output);
+typedef BOOL (*pfn_rdpgfx_server_surface_to_cache)(rdpgfx_server_context *context, RDPGFX_SURFACE_TO_CACHE_PDU *surface_to_cache);
+typedef BOOL (*pfn_rdpgfx_server_cache_to_surface)(rdpgfx_server_context *context, RDPGFX_CACHE_TO_SURFACE_PDU *cache_to_surface);
 
 typedef void (*pfn_rdpgfx_server_open_result)(rdpgfx_server_context* context, rdpgfx_server_open_result result);
 typedef void (*pfn_rdpgfx_server_frame_acknowledge)(rdpgfx_server_context* context, RDPGFX_FRAME_ACKNOWLEDGE_PDU* frame_acknowledge);
@@ -119,6 +121,14 @@ struct _rdpgfx_server_context
 	 * Map a surface to a rectangular area of the graphics output buffer.
 	 */
 	pfn_rdpgfx_server_map_surface_to_output MapSurfaceToOutput;
+	/**
+	 * Transfer surface data to cache slot.
+	 */
+	pfn_rdpgfx_server_surface_to_cache SurfaceToCache;
+	/**
+	 * Transfer cache data to surface.
+	 */
+	pfn_rdpgfx_server_cache_to_surface CacheToSurface;
 
 	/*** Callbacks registered by the server. ***/
 	/**

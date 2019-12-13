@@ -779,6 +779,69 @@ static BOOL rdpgfx_server_map_surface_to_output(rdpgfx_server_context* rdpgfx,
 	return result;
 }
 
+static BOOL rdpgfx_server_surface_to_cache(rdpgfx_server_context* rdpgfx,
+	RDPGFX_SURFACE_TO_CACHE_PDU* surface_to_cache)
+{
+	wStream *s;
+	BOOL result;
+
+	if (!(s = Stream_New(NULL, 30))) {
+		return FALSE;
+        }
+
+	Stream_Write_UINT8(s, RDPGFX_SINGLE); /* descriptor (1 byte) */
+	Stream_Write_UINT8(s, PACKET_COMPR_TYPE_RDP8); /* RDP8_BULK_ENCODED_DATA.header (1 byte) */
+
+	Stream_Write_UINT16(s, RDPGFX_CMDID_SURFACETOCACHE); /* RDPGFX_HEADER.cmdId (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* RDPGFX_HEADER.flags (2 bytes) */
+	Stream_Write_UINT32(s, 28); /* RDPGFX_HEADER.pduLength (4 bytes) */
+	Stream_Write_UINT16(s, surface_to_cache->surfaceId); /* surfaceId (2 bytes) */
+	Stream_Write_UINT64(s, surface_to_cache->cacheKey); /* cacheKey (8 bytes) */
+	Stream_Write_UINT16(s, surface_to_cache->cacheSlot); /* cacheSlot (2 bytes) */
+	Stream_Write_UINT16(s, surface_to_cache->rectSrc.left); /* rectSrc (8 bytes) */
+	Stream_Write_UINT16(s, surface_to_cache->rectSrc.top);
+	Stream_Write_UINT16(s, surface_to_cache->rectSrc.right);
+	Stream_Write_UINT16(s, surface_to_cache->rectSrc.bottom);
+
+	result = WTSVirtualChannelWrite(rdpgfx->rdpgfx_channel, (PCHAR) Stream_Buffer(s), (ULONG) Stream_GetPosition(s), NULL);
+	Stream_Free(s, TRUE);
+
+	return result;
+}
+
+static BOOL rdpgfx_server_cache_to_surface(rdpgfx_server_context* rdpgfx,
+	RDPGFX_CACHE_TO_SURFACE_PDU* cache_to_surface)
+{
+	wStream *s;
+	BOOL result;
+	UINT16 i;
+	UINT32 pdusz = cache_to_surface->destPtsCount * 4 + 14;
+
+	if (!(s = Stream_New(NULL, pdusz + 2))) {
+		return FALSE;
+	}
+
+	Stream_Write_UINT8(s, RDPGFX_SINGLE); /* descriptor (1 byte) */
+	Stream_Write_UINT8(s, PACKET_COMPR_TYPE_RDP8); /* RDP8_BULK_ENCODED_DATA.header (1 byte) */
+
+	Stream_Write_UINT16(s, RDPGFX_CMDID_CACHETOSURFACE); /* RDPGFX_HEADER.cmdId (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* RDPGFX_HEADER.flags (2 bytes) */
+	Stream_Write_UINT32(s, pdusz); /* RDPGFX_HEADER.pduLength (4 bytes) */
+	Stream_Write_UINT16(s, cache_to_surface->cacheSlot); /* cacheSlot (2 bytes) */
+	Stream_Write_UINT16(s, cache_to_surface->surfaceId); /* surfaceId (2 bytes) */
+	Stream_Write_UINT16(s, cache_to_surface->destPtsCount); /* destPtsCount (2 bytes) */
+
+	for (i = 0; i < cache_to_surface->destPtsCount; i++) {
+		Stream_Write_UINT16(s, cache_to_surface->destPts[i].x); /* destPts[].x (2 bytes) */
+		Stream_Write_UINT16(s, cache_to_surface->destPts[i].y); /* destPts[].y (2 bytes) */
+	}
+
+	result = WTSVirtualChannelWrite(rdpgfx->rdpgfx_channel, (PCHAR) Stream_Buffer(s), (ULONG) Stream_GetPosition(s), NULL);
+	Stream_Free(s, TRUE);
+
+	return result;
+}
+
 static void rdpgfx_server_close(rdpgfx_server_context* rdpgfx) {
 	if (rdpgfx->rdpgfx_channel) {
 		virtual_manager_close_internal_virtual_channel(rdpgfx->rdpgfx_channel);
@@ -811,6 +874,8 @@ rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm) {
 	rdpgfx->EndFrame = rdpgfx_server_end_frame;
 	rdpgfx->ResetGraphics = rdpgfx_server_reset_graphics;
 	rdpgfx->MapSurfaceToOutput = rdpgfx_server_map_surface_to_output;
+	rdpgfx->SurfaceToCache = rdpgfx_server_surface_to_cache;
+	rdpgfx->CacheToSurface = rdpgfx_server_cache_to_surface;
 
 	return rdpgfx;
 }
