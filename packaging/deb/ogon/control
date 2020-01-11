@@ -18,14 +18,33 @@ Build-Depends:
  libsystemd-dev,
  libboost-dev,
  protobuf-compiler,
- libthrift-dev (>= 1.0.0~dev),
- thrift-compiler (>= 1.0.0~dev),
+ thrift-compiler,
  dh-systemd (>= 1.5),
  libdbus-1-dev,
  libssl-dev,
- libxau-dev
+ libxau-dev,
+ winpr-utils,
+ xsltproc,
+ libssl-dev,
+ libx11-dev,
+ libxext-dev,
+ libxinerama-dev,
+ libxcursor-dev,
+ libxdamage-dev,
+ libxv-dev,
+ libxkbfile-dev,
+ libasound2-dev,
+ libcups2-dev,
+ libxml2,
+ libxml2-dev,
+ libxrandr-dev,
+ libgstreamer1.0-dev,
+ libgstreamer-plugins-base1.0-dev,
+ libxi-dev,
+ libgstreamer-plugins-base1.0-dev,
+ libopenh264-dev (>= 2.0.0),
 
-Package: libogon-backend0
+Package: libogon-backend1
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -37,14 +56,14 @@ Description: ogon - backend library
  This package contains the backend library that provides
  an interface for communication with the services.
 
-Package: libogon-backend0-dbg
+Package: libogon-backend1-dbg
 Architecture: any
 Priority: extra
 Section: debug
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
- libogon-backend0 (= ${binary:Version})
+ libogon-backend1 (= ${binary:Version})
 Description: ogon - backend library
  ogon Remote Desktop Services are a set of services and
  utilities to create a fully featured RDP server.
@@ -56,7 +75,7 @@ Package: ogon-core
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends},
- ssl-cert
+ ssl-cert, ogon-core (= ${binary:Version}),
 Description: ogon - core services and files
  ogon Remote Desktop Services are a set of services and
  utilities to create a fully featured RDP server.
@@ -64,15 +83,33 @@ Description: ogon - core services and files
  This package contains the base files as well as the session
  manager and rdp server.
 
+Package: ogon-all
+Architecture: any
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends},
+ ssl-cert, ogon-core (= ${binary:Version}),
+ ogon-apps,
+ ogon-channels,
+ ogon-x-backend,
+ ogon-greeter-qt,
+ libgmpopenh264-5,
+ pulseaudio-ogon,
+ ogon-platform-qt,
+Description: ogon - core services and files
+ ogon Remote Desktop Services are a set of services and
+ utilities to create a fully featured RDP server.
+ .
+ This package contains all dependencies needed to run ogon.
+
 Package: ogon-dev
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
- libogon-backend0 (= ${binary:Version}),
+ libogon-backend1 (= ${binary:Version}),
  ogon-core (= ${binary:Version}),
  freerdp2-dev,
- winrp2-dev
+ winpr-utils
 Description: ogon - core services and files
  ogon Remote Desktop Services are a set of services and
  utilities to create a fully featured RDP server.
