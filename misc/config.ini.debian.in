@@ -48,6 +48,11 @@ session_maxYRes_number=1200
 session_xres_number=1024
 session_yres_number=768
 
+# Set path for .Xauthority files to outside home
+# # This may be required for NFS homes secured by Kerberos,
+# # where user root is unable to access users home
+#module_xsession_xauthoritypath_string=/tmp
+
 # allow root to have full permissions for wtsapi
 [user_root]
 permission_level_string=FULL
