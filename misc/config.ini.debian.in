@@ -41,9 +41,9 @@ session_singleSession_bool=true
 session_reconnect_bool=true
 ## Timeout the session after 60 minutes
 session_timeout_number=60
-## set the maximum allowed resolution
-session_maxXRes_number=1920
-session_maxYRes_number=1200
+## set the maximum allowed resolution (RDPv6: 4096x2048)
+session_maxXRes_number=4096
+session_maxYRes_number=2048
 ## set the default resolution to use
 session_xres_number=1024
 session_yres_number=768
