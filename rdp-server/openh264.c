@@ -33,8 +33,8 @@
 #include <winpr/sysinfo.h>
 #include <freerdp/primitives.h>
 
-#include "../3rdparty/openh264/codec_api.h"
-#include "../3rdparty/openh264/codec_ver.h"
+#include "wels/codec_api.h"
+#include "wels/codec_ver.h"
 
 #include "../common/global.h"
 #include "openh264.h"
