@@ -1,6 +1,5 @@
 usr/share/ogon
-usr/lib/*/cmake/ogon1/*.cmake
-usr/lib/*/cmake/ogon-backend1/*.cmake
+usr/lib/*/cmake/*
 usr/lib/*/*.so
 usr/lib/*/pkgconfig/*
-usr/include/ogon1
+usr/include/ogon0

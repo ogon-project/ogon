@@ -1,10 +1,5 @@
-etc/dbus-1/system.d
-etc/ogon/config.ini
 usr/sbin/ogon-*
 usr/bin/ogon-*
-usr/lib/*/ogon1/*.so
-usr/lib/*/ogon1/modules/*.so
-usr/lib/*/ogon1/auth/*.so
-etc/dbus-1/*
+etc/dbus-1/system.d
 etc/ogon
-etc/pam.d/ogon
+usr/lib/*/ogon0
