@@ -48,6 +48,8 @@ static void ringbuffer_reset(RingBuffer *rb) {
 	ringbuffer_commit_read_bytes(rb, ringbuffer_used(rb));
 }
 
+static BOOL dvc_send_close(registered_virtual_channel *dvc);
+
 registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(ogon_vcm *vcm,
 	const char *name, UINT16 type)
 {
@@ -998,9 +1000,14 @@ static int handle_vc_named_pipe_event(int mask, int fd, HANDLE handle, void *dat
 
 
 out_shutdown:
-	vc_disconnect_client_part(channel);
+	virtual_manager_close_dynamic_virtual_channel_common(channel);
+	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) {
+		if (!dvc_send_close(channel)) {
+			WLog_ERR(TAG, "error while sending close in DVC");
+		}
+	}
+	vc_free(channel);
 	return -1;
-
 }
 
 
