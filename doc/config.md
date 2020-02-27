@@ -210,6 +210,12 @@ If found and set to true a AVC444-capable client will receive an additional chro
 standard H.264 frame. This mode reduces blur effects and improves the readability for certain text colors.
 Note: This setting should only be enabled for highspeed LAN connections.
 
+### ogon_restrictAVC444_bool
+
+Restrict the usage of AVC444 to clients that announce the RDPGFX_CAPS_FLAG_AVC_THINCLIENT flag.
+
+Default: false
+
 ### ogon_bitrate_number
 
 Is the bitrate which should be used (only applies to H.264 for now).

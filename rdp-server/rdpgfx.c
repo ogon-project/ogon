@@ -58,12 +58,46 @@ BOOL WTSVirtualChannelWrite(HANDLE ch, PCHAR data, ULONG length, PULONG pWritten
 #define RDPGFX_WIRETOSURFACE_1_HEADER_SIZE 25
 #define RDPGFX_WIRETOSURFACE_2_HEADER_SIZE 21
 
+#ifndef RDPGFX_CAPS_FLAG_AVC_THINCLIENT
+#define RDPGFX_CAPS_FLAG_AVC_THINCLIENT 0x00000040
+#endif
+
+#ifndef RDPGFX_CAPVERSION_81
+#define RDPGFX_CAPVERSION_81 0x00080105
+#endif
+
+#ifndef RDPGFX_CAPVERSION_10
+#define RDPGFX_CAPVERSION_10 0x000A0002
+#endif
+
 #ifndef RDPGFX_CAPVERSION_101
 #define RDPGFX_CAPVERSION_101 0x000A0100
 #endif
 
+#ifndef RDPGFX_CAPVERSION_102
+#define RDPGFX_CAPVERSION_102 0x000A0200
+#endif
+
+#ifndef RDPGFX_CAPVERSION_103
+#define RDPGFX_CAPVERSION_103 0x000A0301
+#endif
+
 #ifndef RDPGFX_CAPVERSION_104
 #define RDPGFX_CAPVERSION_104 0x000A0400
+#endif
+
+#ifndef RDPGFX_CAPVERSION_105
+#define RDPGFX_CAPVERSION_105 0x000A0502
+#endif
+
+#define RDPGFX_CAPVERSION_106_WRONG 0x000A0601
+
+#ifndef RDPGFX_CAPVERSION_106
+#define RDPGFX_CAPVERSION_106 0x000A0600
+#endif
+
+#if RDPGFX_CAPVERSION_106 != 0x000A0600
+#error RDPGFX_CAPVERSION_106 IS INCORRECTLY DEFINED
 #endif
 
 static BOOL rdpgfx_server_send_capabilities(rdpgfx_server_context* rdpgfx, wStream *s) {
@@ -105,6 +139,7 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 	UINT32 version;
 	UINT16 capsSetCount;
 	UINT32 capsDataLength;
+	BOOL avcThinClient = FALSE;
 
 	if (length < 2) {
 		return FALSE;
@@ -132,6 +167,14 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 		}
 		length -= capsDataLength;
 
+		if (version == RDPGFX_CAPVERSION_106_WRONG) {
+			/* Due to an error in the MS-RDPEGFX protocol documentation RDPGFX_CAPVERSION_106 was incorrectly
+			 * defined in FreeRDP and is therefore still used by many clients.
+			 */
+			version = RDPGFX_CAPVERSION_106;
+			WLog_DBG(TAG, "rdpgfx: FIXING INCORRECT VALUE FOR RDPGFX_CAPSET_VERSION106 (0x%08"PRIX32" -> 0x%08"PRIX32")",
+			         RDPGFX_CAPVERSION_106_WRONG, RDPGFX_CAPVERSION_106);
+		}
 #if 0
 		switch (version) {
 			case RDPGFX_CAPVERSION_8:
@@ -180,6 +223,7 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 				/**
 				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing the
 				 * MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 * Note: RDPGFX_CAPVERSION_103 implies RDPGFX_CAPS_FLAG_SMALL_CACHE !!
 				 */
 				break;
 			case RDPGFX_CAPVERSION_104:
@@ -193,10 +237,38 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 				 *    same frame as other codecs.
 				 */
 				break;
+			case RDPGFX_CAPVERSION_105:
+				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION105 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
+				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
+				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				WLog_DBG(TAG, "rdpgfx: - AVC_THINCLIENT = %s", flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing:
+				 * 1. The MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 * 2. The MPEG-4 AVC/H.264 Codec in YUV420 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message in the
+				 *    same frame as other codecs.
+				 * If the RDPGFX_CAPS_FLAG_AVC_THINCLIENT flag is set, the cient indicates that it prefers the
+				 * MPEG-4 AVC/H.264 Codec in YUV444 mode. If this flag is set RDPGFX_CAPS_FLAG_AVC_DISABLED must not be set.
+				 */
+				break;
+			case RDPGFX_CAPVERSION_106:
+				WLog_DBG(TAG, "rdpgfx: RDPGFX_CAPSET_VERSION106 (0x%08"PRIX32") flags=0x%08"PRIX32"", version, flags);
+				WLog_DBG(TAG, "rdpgfx: - SMALL_CACHE    = %s", flags & RDPGFX_CAPS_FLAG_SMALL_CACHE  ? "yes" : "no");
+				WLog_DBG(TAG, "rdpgfx: - AVC_DISABLED   = %s", flags & RDPGFX_CAPS_FLAG_AVC_DISABLED  ? "yes" : "no");
+				WLog_DBG(TAG, "rdpgfx: - AVC_THINCLIENT = %s", flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT  ? "yes" : "no");
+				/**
+				 * If the RDPGFX_CAPS_FLAG_AVC_DISABLED flag is not set, the client MUST be capable of processing:
+				 * 1. The MPEG-4 AVC/H.264 Codec in YUV444 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message.
+				 * 2. The MPEG-4 AVC/H.264 Codec in YUV420 mode in the RDPGFX_WIRE_TO_SURFACE_PDU_1 message in the
+				 *    same frame as other codecs.
+				 * If the RDPGFX_CAPS_FLAG_AVC_THINCLIENT flag is set, the cient indicates that it prefers the
+				 * MPEG-4 AVC/H.264 Codec in YUV444 mode. If this flag is set RDPGFX_CAPS_FLAG_AVC_DISABLED must not be set.
+				 */
+				break;
 		}
 #endif
 
-		if (version >= RDPGFX_CAPVERSION_8 && version <= RDPGFX_CAPVERSION_104  && version > rdpgfx->version) {
+		if (version >= RDPGFX_CAPVERSION_8 && version <= RDPGFX_CAPVERSION_106  && version > rdpgfx->version) {
 			switch (version) {
 				case RDPGFX_CAPVERSION_8:
 					break;
@@ -217,9 +289,12 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 				case RDPGFX_CAPVERSION_102:
 				case RDPGFX_CAPVERSION_103:
 				case RDPGFX_CAPVERSION_104:
+				case RDPGFX_CAPVERSION_105:
+				case RDPGFX_CAPVERSION_106:
 					rdpgfx->avc444Supported = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 					rdpgfx->h264Supported = rdpgfx->avc444Supported;
 					rdpgfx->avc444v2Supported = rdpgfx->avc444Supported;
+					avcThinClient = flags & RDPGFX_CAPS_FLAG_AVC_THINCLIENT;
 					break;
 
 				default:
@@ -232,6 +307,13 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 
 	if (rdpgfx->version == 0) {
 		return FALSE;
+	}
+
+	/* If configurerd in ogon, restrict use of AVC444 to clients
+	 * that send the RDPGFX_CAPS_FLAG_AVC_THINCLIENT flag
+	 */
+	if (rdpgfx->avc444Supported && rdpgfx->avc444Restricted) {
+		rdpgfx->avc444Supported = rdpgfx->avc444v2Supported = avcThinClient;
 	}
 
 	return TRUE;

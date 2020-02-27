@@ -1382,11 +1382,13 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	peer->autodetect->RTTMeasureResponse = ogon_bwmgmt_client_rtt_measure_response;
 
 #ifdef WITH_OPENH264
-	if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.disableGraphicsPipelineH264", &boolValue)) {
-		front->rdpgfxH264Forbidden = boolValue;
-	}
-	if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.enableFullAVC444", &boolValue)) {
-		front->rdpgfxH264EnableFullAVC444 = boolValue;
+	if (!front->rdpgfxForbidden) {
+		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.disableGraphicsPipelineH264", &boolValue)) {
+			front->rdpgfxH264Forbidden = boolValue;
+		}
+		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.enableFullAVC444", &boolValue)) {
+			front->rdpgfxH264EnableFullAVC444 = boolValue;
+		}
 	}
 #else
 	front->rdpgfxH264Forbidden = TRUE;
@@ -1453,6 +1455,12 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	front->rdpgfx->data = conn;
 	front->rdpgfx->OpenResult = ogon_rdpgfx_open_result;
 	front->rdpgfx->FrameAcknowledge = ogon_rdpgfx_frame_acknowledge;
+
+	if (!front->rdpgfxForbidden) {
+		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.restrictAVC444", &boolValue)) {
+			front->rdpgfx->avc444Restricted = boolValue;
+		}
+	}
 
 	conn->frontConnections = LinkedList_New();
 	if (!conn->frontConnections)
