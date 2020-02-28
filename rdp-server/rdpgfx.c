@@ -335,6 +335,23 @@ static BOOL rdpgfx_server_recv_frameack(rdpgfx_server_context *rdpgfx, wStream *
 	return TRUE;
 }
 
+static BOOL rdpgfx_server_recv_qoe_frameack(rdpgfx_server_context *rdpgfx, wStream *s, UINT32 length) {
+	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe_frame_acknowledge;
+
+	if (length < 12) {
+		return FALSE;
+	}
+
+	Stream_Read_UINT32(s, qoe_frame_acknowledge.frameId);
+	Stream_Read_UINT32(s, qoe_frame_acknowledge.timestamp);
+	Stream_Read_UINT16(s, qoe_frame_acknowledge.timeDiffSE);
+	Stream_Read_UINT16(s, qoe_frame_acknowledge.timeDiffEDR);
+
+	IFCALL(rdpgfx->QoeFrameAcknowledge, rdpgfx, &qoe_frame_acknowledge);
+
+	return TRUE;
+}
+
 static BOOL rdpgfx_server_ogon_deleted_callback(void *context, HRESULT creationStatus) {
 	rdpgfx_server_context *rdpgfx = context;
 
@@ -435,10 +452,10 @@ static BOOL rdpgfx_server_ogon_receive_callback(void *context, const BYTE *data,
 				}
 				break;
 
-			case 0x0016:
-				/* undocumented command id (as of March 2015) which is always sent by Microsoft's
-				 * iOS Client directly after it sends the RDPGFX_FRAME_ACKNOWLEDGE_PDU
-				 */
+			case RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE:
+				if (!rdpgfx_server_recv_qoe_frameack(rdpgfx, s, pduLength)) {
+					goto err;
+				}
 				break;
 
 			default:
