@@ -2,8 +2,8 @@ syntax="proto2";
 package ogon.pbrpc;
 
 message VersionInfo {
-	required uint32 major = 1;
-	required uint32 minor = 2;
+	required uint32 vmajor = 1;
+	required uint32 vminor = 2;
 	optional string cookie = 3;
 }
 

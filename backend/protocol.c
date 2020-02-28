@@ -122,8 +122,8 @@ static BOOL ogon_read_version(wStream *s, ogon_msg_version* msg) {
 		return FALSE;
 	}
 
-	msg->versionMajor = proto->major;
-	msg->versionMinor = proto->minor;
+	msg->versionMajor = proto->vmajor;
+	msg->versionMinor = proto->vminor;
 	if (proto->cookie) {
 		msg->cookie = strdup(proto->cookie);
 		if (!msg->cookie) {
@@ -141,8 +141,8 @@ static BOOL ogon_read_version(wStream *s, ogon_msg_version* msg) {
 static int ogon_prepare_version(ogon_msg_version *msg, Ogon__Backend__VersionReply *target) {
 	ogon__backend__version_reply__init(target);
 
-	target->major = msg->versionMajor;
-	target->minor = msg->versionMinor;
+	target->vmajor = msg->versionMajor;
+	target->vminor = msg->versionMinor;
 	target->cookie = msg->cookie;
 
 	return ogon__backend__version_reply__get_packed_size(target);

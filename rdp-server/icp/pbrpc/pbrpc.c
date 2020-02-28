@@ -408,8 +408,8 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 	}
 
 	ogon__pbrpc__version_info__init(&versionInfo);
-	versionInfo.major = OGON_PROTOCOL_VERSION_MAJOR;
-	versionInfo.minor = OGON_PROTOCOL_VERSION_MINOR;
+	versionInfo.vmajor = OGON_PROTOCOL_VERSION_MAJOR;
+	versionInfo.vminor = OGON_PROTOCOL_VERSION_MINOR;
 
 	if (!(message = pbrpc_message_new())) {
 		WLog_ERR(TAG, "error while creating a new pbrpc message, disconnecting!");
@@ -464,16 +464,16 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 		goto error_out;
 	}
 
-	if (message->versioninfo->major != OGON_PROTOCOL_VERSION_MAJOR) {
+	if (message->versioninfo->vmajor != OGON_PROTOCOL_VERSION_MAJOR) {
 		WLog_ERR(TAG, "error, ogon-session-manager (protocol %"PRIu32".%"PRIu32") is not compatible with ogon(%u.%u)!",
-			message->versioninfo->major, message->versioninfo->minor,
+			message->versioninfo->vmajor, message->versioninfo->vminor,
 			OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR);
 		context->transport->close(context->transport);
 		goto error_out;
 	}
 
 	WLog_DBG(TAG, "Version information received from session-manager: %"PRIu32".%"PRIu32"",
-			message->versioninfo->major, message->versioninfo->minor);
+			message->versioninfo->vmajor, message->versioninfo->vminor);
 
 	ogon__pbrpc__rpcbase__free_unpacked(message, NULL);
 	context->isConnected = TRUE;
