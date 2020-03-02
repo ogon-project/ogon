@@ -56,6 +56,7 @@ typedef BOOL (*pfn_rdpgfx_server_cache_to_surface)(rdpgfx_server_context *contex
 
 typedef void (*pfn_rdpgfx_server_open_result)(rdpgfx_server_context* context, rdpgfx_server_open_result result);
 typedef void (*pfn_rdpgfx_server_frame_acknowledge)(rdpgfx_server_context* context, RDPGFX_FRAME_ACKNOWLEDGE_PDU* frame_acknowledge);
+typedef void (*pfn_rdpgfx_server_qoe_frame_acknowledge)(rdpgfx_server_context* context, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoe_frame_acknowledge);
 
 struct _rdpgfx_server_context
 {
@@ -140,6 +141,10 @@ struct _rdpgfx_server_context
 	 * A frame is acknowledged by the client.
 	 */
 	pfn_rdpgfx_server_frame_acknowledge FrameAcknowledge;
+	/**
+	 * Optional message to enable Quality of Exferience (QoE) metrics.
+	 */
+	pfn_rdpgfx_server_qoe_frame_acknowledge QoeFrameAcknowledge;
 };
 
 rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);

@@ -1347,6 +1347,44 @@ static void ogon_rdpgfx_frame_acknowledge(rdpgfx_server_context *rdpgfx, RDPGFX_
 		ogon_update_frame_acknowledge(&conn->context, frame_acknowledge->frameId);
 }
 
+static void ogon_rdpgfx_qoe_frame_acknowledge(rdpgfx_server_context *rdpgfx, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU *qoe_frame_acknowledge)
+{
+	/* Note:
+	 * Ogon currently makes no use of this message.
+	 * Here is the info form MS-RDPEGFX:
+	 *
+	 * The optional RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU message is sent by the client
+	 * to enable the calculation of Quality of Experience (QoE) metrics.
+	 * This message is sent solely for informational and debugging purposes.
+	 *
+	 * timestamp (4 bytes): A 32-bit unsigned integer that specifies the timestamp
+	 * (in milliseconds) when the client started decoding the RDPGFX_START_FRAME_PDU message.
+	 * The value of the first timestamp sent by the client implicitly defines the origin
+	 * for all subsequent timestamps. The server is responsible for handling roll-over of the timestamp.
+	 *
+	 * timeDiffSE (2 bytes): A 16-bit unsigned integer that specifies the time, in
+	 * milliseconds, that elapsed between the decoding of the RDPGFX_START_FRAME_PDU and
+	 * RDPGFX_END_FRAME_PDU messages. If the elapsed time is greater than 65 seconds,
+	 * then this field SHOULD be set to 0x0000.
+	 *
+	 * timeDiffEDR (2 bytes): A 16-bit unsigned integer that specifies the time, in milliseconds,
+	 * that elapsed between the decoding of the RDPGFX_END_FRAME_PDU message and the completion of the
+	 * rendering operation for the commands contained in the logical graphics frame. If the elapsed
+	 * time is greater than 65 seconds, then this field SHOULD be set to 0x0000.
+	 */
+#if 1
+        OGON_UNUSED(rdpgfx);
+        OGON_UNUSED(qoe_frame_acknowledge);
+#else
+	ogon_connection *conn = (ogon_connection*) rdpgfx->data;
+	ogon_front_connection *front = &conn->front;
+
+	WLog_DBG(TAG, "%s: frameId=%"PRIu32" timestamp=%"PRIu32" timeDiffSE=%"PRIu16" timeDiffEDR=%"PRIu16"",
+	               __FUNCTION__, qoe_frame_acknowledge->frameId, qoe_frame_acknowledge->timestamp,
+	               qoe_frame_acknowledge->timeDiffSE, qoe_frame_acknowledge->timeDiffEDR);
+#endif
+}
+
 BOOL ogon_connection_init_front(ogon_connection *conn)
 {
 	rdpInput *input;
@@ -1455,6 +1493,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	front->rdpgfx->data = conn;
 	front->rdpgfx->OpenResult = ogon_rdpgfx_open_result;
 	front->rdpgfx->FrameAcknowledge = ogon_rdpgfx_frame_acknowledge;
+	front->rdpgfx->QoeFrameAcknowledge = ogon_rdpgfx_qoe_frame_acknowledge;
 
 	if (!front->rdpgfxForbidden) {
 		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.restrictAVC444", &boolValue)) {
