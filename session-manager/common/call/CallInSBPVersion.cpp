@@ -59,8 +59,8 @@ namespace ogon { namespace sessionmanager { namespace call {
 			return false;
 		}
 		mSessionId = req.sessionid();
-		mVersionMajor = req.major();
-		mVersionMinor = req.minor();
+		mVersionMajor = req.vmajor();
+		mVersionMinor = req.vminor();
 
 		return true;
 	}
@@ -68,8 +68,8 @@ namespace ogon { namespace sessionmanager { namespace call {
 	bool CallInSBPVersion::encodeResponse() {
 		// encode protocol buffers
 		VersionInfoResponse resp;
-		resp.set_major(OGON_PROTOCOL_VERSION_MAJOR);
-		resp.set_minor(OGON_PROTOCOL_VERSION_MINOR);
+		resp.set_vmajor(OGON_PROTOCOL_VERSION_MAJOR);
+		resp.set_vminor(OGON_PROTOCOL_VERSION_MINOR);
 
 		if (!resp.SerializeToString(&mEncodedResponse)) {
 			// failed to serialize

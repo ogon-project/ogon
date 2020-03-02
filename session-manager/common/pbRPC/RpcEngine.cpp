@@ -324,9 +324,9 @@ namespace ogon { namespace pbrpc {
 			}
 
 			WLog_Print(logger_RPCEngine, WLOG_DEBUG, "received ogon version information %" PRIu32 ".%" PRIu32 "",
-						mpbRPC.versioninfo().major(), mpbRPC.versioninfo().minor());
+						mpbRPC.versioninfo().vmajor(), mpbRPC.versioninfo().vminor());
 
-			UINT32 majorversion = mpbRPC.versioninfo().major();
+			UINT32 majorversion = mpbRPC.versioninfo().vmajor();
 
 			std::string serialized;
 
@@ -335,8 +335,8 @@ namespace ogon { namespace pbrpc {
 			mpbRPC.set_tag(callID);
 			mpbRPC.set_msgtype(-1);
 			VersionInfo *info = mpbRPC.mutable_versioninfo();
-			info->set_major(OGON_PROTOCOL_VERSION_MAJOR);
-			info->set_minor(OGON_PROTOCOL_VERSION_MINOR);
+			info->set_vmajor(OGON_PROTOCOL_VERSION_MAJOR);
+			info->set_vminor(OGON_PROTOCOL_VERSION_MINOR);
 
 			mpbRPC.set_status(RPCBase_RPCSTATUS_SUCCESS);
 			mpbRPC.SerializeToString(&serialized);

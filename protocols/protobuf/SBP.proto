@@ -9,13 +9,13 @@ enum MSGTYPE {
 
 message VersionInfoRequest {
 	required uint32 sessionId = 1;
-	required uint32 major = 2;
-	required uint32 minor = 3;
+	required uint32 vmajor = 2;
+	required uint32 vminor = 3;
 }
 
 message VersionInfoResponse {
-	required uint32 major = 2;
-	required uint32 minor = 3;
+	required uint32 vmajor = 2;
+	required uint32 vminor = 3;
 }
 
 message AuthenticateUserRequest {
