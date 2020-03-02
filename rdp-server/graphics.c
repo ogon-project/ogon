@@ -197,7 +197,7 @@ int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn, BYTE *data,
 	wStream *s;
 	UINT32 i;
 	RFX_MESSAGE *message;
-	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
+	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu = { 0 };
 	RFX_RECT r;
 	ogon_backend_connection *backend = conn->backend;
 	ogon_front_connection *frontend = &conn->front;
@@ -264,7 +264,7 @@ int ogon_send_gfx_rfx_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	UINT32 i;
 	RFX_MESSAGE *message;
 	BYTE *buf;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
 	RFX_RECT r;
 	ogon_backend_connection *backend = conn->backend;
 	ogon_front_connection *frontend = &conn->front;
@@ -339,7 +339,7 @@ int ogon_send_gfx_debug_bitmap(ogon_connection *conn) {
 	ogon_bitmap_encoder *encoder = frontend->encoder;
 	BYTE *encodedData = NULL;
 	UINT32 encodedSize;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
 	UINT32 scanLine = encoder->desktopWidth * 4;
 
 	if (!(encodedData = freerdp_bitmap_compress_planar(encoder->debug_context,
@@ -409,7 +409,7 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	BYTE *encodedData;
 	UINT32 encodedSize;
 	RDP_RECT desktopRect;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
 	wStream *s;
 	BOOL optimizable = FALSE;
 	UINT32 maxFrameRate = (UINT32)conn->fps;
@@ -571,7 +571,7 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	 */
 
 	wStream *s;
-	SURFACE_BITS_COMMAND cmd;
+	SURFACE_BITS_COMMAND cmd = { 0 };
 	RFX_MESSAGE* message;
 	UINT32 messageSize;
 
@@ -602,6 +602,7 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	cmd.bmp.bpp = 32;
 	cmd.bmp.width = encoder->desktopWidth;
 	cmd.bmp.height = encoder->desktopHeight;
+	cmd.bmp.flags = 0;
 	cmd.skipCompression = TRUE;
 
 	s = encoder->stream;
@@ -661,7 +662,7 @@ int ogon_send_bitmap_bits(ogon_connection *conn, BYTE *data, RDP_RECT *rects,
 	ogon_bmp_context *bmp = encoder->bmpContext;
 	UINT32 updatePduSize, maxPduSize, maxRectSize, maxDataSize;
 	UINT32 i, x, y, nx, ny, numBitmaps, newMaxSize, nextSize;
-	BITMAP_UPDATE bitmapUpdate;
+	BITMAP_UPDATE bitmapUpdate = { 0 };
 	RDP_RECT *pr;
 	RDP_RECT r;
 	BYTE *src;
@@ -1067,17 +1068,17 @@ static inline void ogon_send_frame_marker(ogon_connection *conn, BOOL begin) {
 	if (front->rdpgfxConnected) {
 		/* under gfx frame markers must be supported */
 		if (begin) {
-			RDPGFX_START_FRAME_PDU pdu;
+			RDPGFX_START_FRAME_PDU pdu = { 0 };
 			pdu.frameId = front->nextFrameId;
 			pdu.timestamp = 0;
 			front->rdpgfx->StartFrame(front->rdpgfx, &pdu);
 		} else {
-			RDPGFX_END_FRAME_PDU pdu;
+			RDPGFX_END_FRAME_PDU pdu = { 0 };
 			pdu.frameId = front->nextFrameId;
 			front->rdpgfx->EndFrame(front->rdpgfx, &pdu);
 		}
 	} else if (settings->SurfaceFrameMarkerEnabled && front->codecMode != CODEC_MODE_BMP) {
-		SURFACE_FRAME_MARKER sfm;
+		SURFACE_FRAME_MARKER sfm = { 0 };
 		sfm.frameId = front->nextFrameId;
 		if (begin) {
 			sfm.frameAction = SURFACECMD_FRAMEACTION_BEGIN;

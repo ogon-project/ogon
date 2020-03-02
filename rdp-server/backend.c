@@ -590,9 +590,9 @@ BOOL ogon_new_pointer_to_mono_color_pointer(POINTER_NEW_UPDATE *pointerNew, BOOL
 
 
 void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_pointer *msg) {
-	POINTER_NEW_UPDATE pointerNew;
-	POINTER_COLOR_UPDATE* pointerColor;
-	POINTER_CACHED_UPDATE pointerCached;
+	POINTER_CACHED_UPDATE pointerCached = { 0 };
+	POINTER_NEW_UPDATE pointerNew = { 0 };
+	POINTER_COLOR_UPDATE* pointerColor = &(pointerNew.colorPtrAttr);
 	BOOL isRdesktop = FALSE;
 	char *clientProductId = connection->context.settings->ClientProductId;
 	rdpPointerUpdate* pointer = connection->context.peer->update->pointer;
@@ -601,8 +601,6 @@ void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_point
 	 * Note: As msg values got already validated in ogon_server_set_pointer()
 	 * there is no need to reverify them here
 	 */
-
-	pointerColor = &(pointerNew.colorPtrAttr);
 
 	pointerColor->cacheIndex = 0;
 	pointerColor->xPos = msg->xPos;
@@ -768,7 +766,7 @@ static int ogon_server_set_system_pointer(ogon_connection *connection,
 		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
 
 		if (!msg->clientId || (frontConnection->id == msg->clientId)) {
-			POINTER_SYSTEM_UPDATE pointer_system;
+			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 			rdpPointerUpdate* pointer = frontConnection->context.peer->update->pointer;
 
 			pointer_system.type = msg->ptrType;
@@ -790,7 +788,7 @@ static int ogon_server_beep(ogon_connection *connection, ogon_msg_beep *msg) {
 
 	LinkedList_Enumerator_Reset(connection->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
-		PLAY_SOUND_UPDATE playSound;
+		PLAY_SOUND_UPDATE playSound = { 0 };
 		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
 		pPlaySound playSoundCall = frontConnection->context.peer->update->PlaySound;
 

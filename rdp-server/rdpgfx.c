@@ -320,7 +320,7 @@ static BOOL rdpgfx_server_recv_capabilities(rdpgfx_server_context *rdpgfx, wStre
 }
 
 static BOOL rdpgfx_server_recv_frameack(rdpgfx_server_context *rdpgfx, wStream *s, UINT32 length) {
-	RDPGFX_FRAME_ACKNOWLEDGE_PDU frame_acknowledge;
+	RDPGFX_FRAME_ACKNOWLEDGE_PDU frame_acknowledge = { 0 };
 
 	if (length < 12) {
 		return FALSE;

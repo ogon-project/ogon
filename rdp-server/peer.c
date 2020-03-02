@@ -570,7 +570,7 @@ static BOOL process_new_shadowing_frontend(ogon_connection *conn, wMessage *msg)
 
 	/* reset the last pointer */
 	if (srcConn->backend->lastSetSystemPointer != backend->lastSetSystemPointer) {
-		POINTER_SYSTEM_UPDATE pointer_system;
+		POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 		pointer_system.type = backend->lastSetSystemPointer;
 		pointer->PointerSystem(&srcConn->context, &pointer_system);
 	}
@@ -598,7 +598,7 @@ static BOOL process_rewire_original_backend(ogon_connection *conn, wMessage *msg
 	ogon_front_connection *front = &conn->front;
 	ogon_backend_connection *backend = conn->backend;
 	rdpSettings *settings = conn->context.settings;
-	POINTER_SYSTEM_UPDATE pointer_system;
+	POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 	rdpPointerUpdate* pointer = conn->context.peer->update->pointer;
 
 	BOOL ret = FALSE;
