@@ -631,7 +631,7 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 		ogon_bitmap_encoder* encoder = front->encoder;
 		ogon_backend_connection *backend;
 		rdpPointerUpdate *pointer = client->update->pointer;
-		POINTER_SYSTEM_UPDATE systemPointer;
+		POINTER_SYSTEM_UPDATE systemPointer = { 0 };
 
 		backend = conn->shadowing->backend;
 
@@ -1038,7 +1038,7 @@ static BOOL ogon_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 	ogon_connection *conn = (ogon_connection*) input->context;
 	ogon_backend_connection* backend = (ogon_backend_connection *)conn->shadowing->backend;
 	ogon_connection *connection = conn->shadowing;
-	POINTER_POSITION_UPDATE pointerUpdate;
+	POINTER_POSITION_UPDATE pointerUpdate = { 0 };
 
 	if ((conn->front.inputFilter & INPUT_FILTER_MOUSE) || !backend || !backend->client.MouseEvent) {
 		return TRUE;
@@ -1184,7 +1184,7 @@ static BOOL ogon_update_frame_acknowledge(rdpContext *context, UINT32 frameId)
 BOOL ogon_rdpgfx_shutdown(ogon_connection *conn)
 {
 	ogon_front_connection *front = &conn->front;
-	RDPGFX_DELETE_SURFACE_PDU delete_surface;
+	RDPGFX_DELETE_SURFACE_PDU delete_surface = { 0 };
 	if (front->rdpgfxConnected) {
 		WLog_DBG(TAG, "shutting down graphics pipeline channel");
 		if (front->rdpgfxOutputSurface) {
@@ -1203,9 +1203,9 @@ BOOL ogon_rdpgfx_init_output(ogon_connection *conn)
 	ogon_bitmap_encoder *encoder = front->encoder;
 	UINT32 width, height;
 
-	RDPGFX_RESET_GRAPHICS_PDU reset_graphics;
-	RDPGFX_CREATE_SURFACE_PDU create_surface;
-	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output;
+	RDPGFX_RESET_GRAPHICS_PDU reset_graphics = { 0 };
+	RDPGFX_CREATE_SURFACE_PDU create_surface = { 0 };
+	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output = { 0 };
 
 	if (!front->rdpgfxConnected || !encoder) {
 		return TRUE;
@@ -1237,7 +1237,7 @@ BOOL ogon_rdpgfx_init_output(ogon_connection *conn)
 
 #if 0
 	{
-		RDPGFX_SOLID_FILL_PDU solidfill;
+		RDPGFX_SOLID_FILL_PDU solidfill = { 0 };
 		RECTANGLE_16 fillRect;
 		solidfill.surfaceId = front->rdpgfxOutputSurface;
 		solidfill.fillPixel.B = 0xFF;
