@@ -671,6 +671,13 @@ static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
 		flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 	}
 
+	/**
+	 * dynamic channels are always in show protocol mode
+	 */
+	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) {
+		flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+	}
+
 	if ((flags & CHANNEL_FLAG_SHOW_PROTOCOL) && (channel->channel_id != channel->vcm->drdynvc_channel_id)) {
 		/**
 		 * if CHANNEL_FLAG_SHOW_PROTOCOL is specified write each PDU with headers directly to the pipe
