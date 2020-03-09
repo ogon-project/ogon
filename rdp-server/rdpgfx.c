@@ -336,7 +336,7 @@ static BOOL rdpgfx_server_recv_frameack(rdpgfx_server_context *rdpgfx, wStream *
 }
 
 static BOOL rdpgfx_server_recv_qoe_frameack(rdpgfx_server_context *rdpgfx, wStream *s, UINT32 length) {
-	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe_frame_acknowledge;
+	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe_frame_acknowledge = { 0 };
 
 	if (length < 12) {
 		return FALSE;
@@ -348,6 +348,44 @@ static BOOL rdpgfx_server_recv_qoe_frameack(rdpgfx_server_context *rdpgfx, wStre
 	Stream_Read_UINT16(s, qoe_frame_acknowledge.timeDiffEDR);
 
 	IFCALL(rdpgfx->QoeFrameAcknowledge, rdpgfx, &qoe_frame_acknowledge);
+
+	return TRUE;
+}
+
+static BOOL rdpgfx_server_recv_cache_import_offer(rdpgfx_server_context *rdpgfx, wStream *s, UINT32 length) {
+	RDPGFX_CACHE_IMPORT_OFFER_PDU cache_import_offer = { 0 };
+	UINT16 index;
+
+	if (length < 2) {
+		return FALSE;
+	}
+	Stream_Read_UINT16(s, cache_import_offer.cacheEntriesCount);
+	length -= 2;
+
+	if (cache_import_offer.cacheEntriesCount >= 5462) {
+		/* See MS-RDPEGFX 2.2.2.16 */
+		return FALSE;
+	}
+
+	if (length < cache_import_offer.cacheEntriesCount * 12) {
+		return FALSE;
+	}
+
+	cache_import_offer.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)calloc(
+		cache_import_offer.cacheEntriesCount, sizeof(RDPGFX_CACHE_ENTRY_METADATA));
+
+	if (!cache_import_offer.cacheEntries) {
+		return FALSE;
+	}
+
+	for (index = 0; index < cache_import_offer.cacheEntriesCount; index++) {
+                Stream_Read_UINT64(s, cache_import_offer.cacheEntries[index].cacheKey);
+                Stream_Read_UINT32(s, cache_import_offer.cacheEntries[index].bitmapLength);
+	}
+
+	IFCALL(rdpgfx->CacheImportOffer, rdpgfx, &cache_import_offer);
+
+	free(cache_import_offer.cacheEntries);
 
 	return TRUE;
 }
@@ -454,6 +492,12 @@ static BOOL rdpgfx_server_ogon_receive_callback(void *context, const BYTE *data,
 
 			case RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE:
 				if (!rdpgfx_server_recv_qoe_frameack(rdpgfx, s, pduLength)) {
+					goto err;
+				}
+				break;
+
+			case RDPGFX_CMDID_CACHEIMPORTOFFER:
+				if (!rdpgfx_server_recv_cache_import_offer(rdpgfx, s, pduLength)) {
 					goto err;
 				}
 				break;
@@ -941,6 +985,36 @@ static BOOL rdpgfx_server_cache_to_surface(rdpgfx_server_context* rdpgfx,
 	return result;
 }
 
+static BOOL rdpgfx_server_cache_import_reply(rdpgfx_server_context* rdpgfx,
+	RDPGFX_CACHE_IMPORT_REPLY_PDU* cache_import_reply)
+{
+	wStream *s;
+	BOOL result;
+	UINT16 i;
+	UINT32 pdusz = cache_import_reply->importedEntriesCount * 2 + 10;
+
+	if (!(s = Stream_New(NULL, pdusz + 2))) {
+		return FALSE;
+	}
+
+	Stream_Write_UINT8(s, RDPGFX_SINGLE); /* descriptor (1 byte) */
+	Stream_Write_UINT8(s, PACKET_COMPR_TYPE_RDP8); /* RDP8_BULK_ENCODED_DATA.header (1 byte) */
+
+	Stream_Write_UINT16(s, RDPGFX_CMDID_CACHEIMPORTREPLY); /* RDPGFX_HEADER.cmdId (2 bytes) */
+	Stream_Write_UINT16(s, 0); /* RDPGFX_HEADER.flags (2 bytes) */
+	Stream_Write_UINT32(s, pdusz); /* RDPGFX_HEADER.pduLength (4 bytes) */
+	Stream_Write_UINT16(s, cache_import_reply->importedEntriesCount); /* importedEntriesCount (2 bytes) */
+
+	for (i = 0; i < cache_import_reply->importedEntriesCount; i++) {
+		Stream_Write_UINT16(s, cache_import_reply->cacheSlots[i]); /* cacheSlots[i] (2 bytes) */
+	}
+
+	result = WTSVirtualChannelWrite(rdpgfx->rdpgfx_channel, (PCHAR) Stream_Buffer(s), (ULONG) Stream_GetPosition(s), NULL);
+	Stream_Free(s, TRUE);
+
+	return result;
+}
+
 static void rdpgfx_server_close(rdpgfx_server_context* rdpgfx) {
 	if (rdpgfx->rdpgfx_channel) {
 		virtual_manager_close_internal_virtual_channel(rdpgfx->rdpgfx_channel);
@@ -975,6 +1049,7 @@ rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm) {
 	rdpgfx->MapSurfaceToOutput = rdpgfx_server_map_surface_to_output;
 	rdpgfx->SurfaceToCache = rdpgfx_server_surface_to_cache;
 	rdpgfx->CacheToSurface = rdpgfx_server_cache_to_surface;
+	rdpgfx->CacheImportReply = rdpgfx_server_cache_import_reply;
 
 	return rdpgfx;
 }

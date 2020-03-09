@@ -53,10 +53,12 @@ typedef BOOL (*pfn_rdpgfx_server_reset_graphics)(rdpgfx_server_context *context,
 typedef BOOL (*pfn_rdpgfx_server_map_surface_to_output)(rdpgfx_server_context *context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU *map_surface_to_output);
 typedef BOOL (*pfn_rdpgfx_server_surface_to_cache)(rdpgfx_server_context *context, RDPGFX_SURFACE_TO_CACHE_PDU *surface_to_cache);
 typedef BOOL (*pfn_rdpgfx_server_cache_to_surface)(rdpgfx_server_context *context, RDPGFX_CACHE_TO_SURFACE_PDU *cache_to_surface);
+typedef BOOL (*pfn_rdpgfx_server_cache_import_reply)(rdpgfx_server_context* context, RDPGFX_CACHE_IMPORT_REPLY_PDU* cache_import_reply);
 
 typedef void (*pfn_rdpgfx_server_open_result)(rdpgfx_server_context* context, rdpgfx_server_open_result result);
 typedef void (*pfn_rdpgfx_server_frame_acknowledge)(rdpgfx_server_context* context, RDPGFX_FRAME_ACKNOWLEDGE_PDU* frame_acknowledge);
 typedef void (*pfn_rdpgfx_server_qoe_frame_acknowledge)(rdpgfx_server_context* context, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoe_frame_acknowledge);
+typedef void (*pfn_rdpgfx_server_cache_import_offer)(rdpgfx_server_context* context, RDPGFX_CACHE_IMPORT_OFFER_PDU* cache_import_offer);
 
 struct _rdpgfx_server_context
 {
@@ -131,6 +133,10 @@ struct _rdpgfx_server_context
 	 * Transfer cache data to surface.
 	 */
 	pfn_rdpgfx_server_cache_to_surface CacheToSurface;
+	/**
+	 * Tell client about imported cache metadata.
+	 */
+	pfn_rdpgfx_server_cache_import_reply CacheImportReply;
 
 	/*** Callbacks registered by the server. ***/
 	/**
@@ -145,6 +151,10 @@ struct _rdpgfx_server_context
 	 * Optional message to enable Quality of Exferience (QoE) metrics.
 	 */
 	pfn_rdpgfx_server_qoe_frame_acknowledge QoeFrameAcknowledge;
+	/**
+	 * Client offers the use of its static bitmap cache.
+	 */
+	pfn_rdpgfx_server_cache_import_offer CacheImportOffer;
 };
 
 rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);

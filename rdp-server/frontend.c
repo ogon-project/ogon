@@ -1385,6 +1385,37 @@ static void ogon_rdpgfx_qoe_frame_acknowledge(rdpgfx_server_context *rdpgfx, RDP
 #endif
 }
 
+static void ogon_rdpgfx_cache_import_offer(rdpgfx_server_context *rdpgfx, RDPGFX_CACHE_IMPORT_OFFER_PDU *cache_import_offer)
+{
+	ogon_connection *conn = (ogon_connection*) rdpgfx->data;
+	ogon_front_connection *front = &conn->front;
+	RDPGFX_CACHE_IMPORT_REPLY_PDU cache_import_reply = { 0 };
+#if 1
+	OGON_UNUSED(cache_import_offer);
+#else
+	int i;
+
+	WLog_DBG(TAG, "%s: cacheEntriesCount=%"PRIu16"", __FUNCTION__, cache_import_offer->cacheEntriesCount);
+	for (i = 0; i < cache_import_offer->cacheEntriesCount; i++) {
+		WLog_DBG(TAG, "%s: cacheEntry[%"PRIu16"].cacheKey: 0x%"PRIx64"",
+			 __FUNCTION__, i, cache_import_offer->cacheEntries[i].cacheKey);
+		WLog_DBG(TAG, "%s: cacheEntry[%"PRIu16"].bitmapLength: %"PRIu32"",
+			 __FUNCTION__, i, cache_import_offer->cacheEntries[i].bitmapLength);
+	}
+#endif
+
+	/* Note:
+	 * Ogon currently isn't interested in this data, but we must tell the client
+	 * that we haven't imported anything
+	 */
+
+	cache_import_reply.importedEntriesCount = 0;
+
+	if (!front->rdpgfx->CacheImportReply(front->rdpgfx, &cache_import_reply)) {
+		WLog_ERR(TAG, "%s: CacheImportReply FAILED", __FUNCTION__);
+	}
+}
+
 BOOL ogon_connection_init_front(ogon_connection *conn)
 {
 	rdpInput *input;
@@ -1494,6 +1525,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	front->rdpgfx->OpenResult = ogon_rdpgfx_open_result;
 	front->rdpgfx->FrameAcknowledge = ogon_rdpgfx_frame_acknowledge;
 	front->rdpgfx->QoeFrameAcknowledge = ogon_rdpgfx_qoe_frame_acknowledge;
+	front->rdpgfx->CacheImportOffer = ogon_rdpgfx_cache_import_offer;
 
 	if (!front->rdpgfxForbidden) {
 		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.restrictAVC444", &boolValue)) {
