@@ -468,6 +468,17 @@ static BOOL rdpgfx_server_ogon_receive_callback(void *context, const BYTE *data,
 		switch (cmdId) {
 			case RDPGFX_CMDID_CAPSADVERTISE:
 				if (rdpgfx->capsReceived) {
+					/**
+					 * This is possible according to MS-RDPEGFX 3.2.5.18 but only allowed
+					 * if the initial advertised version is >= RDPGFX_CAPVERSION_103
+					 * However, ogon currently does not support resetting the egfx channel.
+					 */
+					if (rdpgfx->version < RDPGFX_CAPVERSION_103) {
+						WLog_ERR(TAG, "rdpgfx: error, invalid repeated caps advertise pdu message received");
+					} else {
+						/* TODO: reset rdpgfx state according to egfx spec */
+						WLog_ERR(TAG, "rdpgfx: repeated caps advertise pdu messages are currently not supported.");
+					}
 					goto err;
 				}
 
