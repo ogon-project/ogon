@@ -65,7 +65,7 @@ set(OGON_MODULE_LIB_PATH "${OGON_APP_LIB_PATH}/modules")
 set(OGON_AUTH_MODULE_LIB_PATH "${OGON_APP_LIB_PATH}/auth")
 
 if(WITH_OPENH264)
-	set(OGON_OPENH264_LIBRARY "${OGON_APP_LIB_PATH}/libogon-openh264.so")
+    find_library(OGON_OPENH264_LIBRARY NAMES ogon-openh264 openh264 HINTS ${OGON_APP_LIB_PATH})
 endif()
 
 include(ogonCompilerFlags)
