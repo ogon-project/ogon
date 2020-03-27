@@ -139,6 +139,7 @@ static COMMAND_LINE_ARGUMENT_A ogon_session_manager_args[] = {
 	{ "version", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print version" },
 	{ "checkconfig", COMMAND_LINE_VALUE_REQUIRED, "<configfile>", "", NULL, -1, NULL, "config file to check" },
 	{ "log", COMMAND_LINE_VALUE_REQUIRED, "<syslog> or <journald>", "", NULL, -1, NULL, "Log type to use" },
+	{ "loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", NULL, -1, NULL, "logging level"},
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print build configuration"},
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
@@ -160,10 +161,12 @@ void printhelp(const char *bin) {
 	printhelprow(NULL, "--checkconfig=<filename>", "checks the given config file");
 	printhelprow(NULL, "--version","print the version");
 	printhelprow(NULL, "--log=<system> syslog or journald", "log type to use");
+	printhelprow(NULL, "--loglevel=<level>", "level for logging");
 	printhelprow(NULL, "--buildconfig", "Print build configuration");
 }
 
-void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, std::string &checkConfigFileName, unsigned &wlog_appender_type) {
+void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, std::string &checkConfigFileName,
+		unsigned &wlog_appender_type, DWORD &log_level) {
 
 	DWORD flags;
 	int status = 0;
@@ -230,6 +233,20 @@ void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, 
 				exit(1);
 			}
 		}
+		CommandLineSwitchCase(arg, "loglevel") {
+			if (!strcasecmp(arg->Value, "debug")) {
+				log_level = WLOG_DEBUG;
+			} else if (!strcasecmp(arg->Value, "info")) {
+				log_level = WLOG_INFO;
+			} else if (!strcasecmp(arg->Value, "warn")) {
+				log_level = WLOG_WARN;
+			} else if (!strcasecmp(arg->Value, "error")) {
+				log_level = WLOG_ERROR;
+			} else {
+				fprintf(stderr, "unknown logging level '%s'\n", arg->Value);
+				exit(1);
+			}
+		}
 		CommandLineSwitchCase(arg, "h") {
 			printhelp(argv[0]);
 			exit(0);
@@ -242,7 +259,7 @@ void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, 
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
-void initWLog(unsigned wlog_appender_type) {
+void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLog *wlog_root;
 	wLogLayout *layout;
 	wLogAppender *appender;
@@ -289,6 +306,11 @@ void initWLog(unsigned wlog_appender_type) {
 
 		if (!WLog_Layout_SetPrefixFormat(wlog_root, layout, prefixFormat)) {
 			fprintf(stderr, "Failed to set the wlog output format\n");
+			exit(1);
+		}
+
+		if (!WLog_SetLogLevel(wlog_root, logLevel)) {
+			fprintf(stderr, "Failed to set the logger level\n");
 			exit(1);
 		}
 	} else {
@@ -494,11 +516,12 @@ int main(int argc, char **argv) {
 	char pid_file[256];
 	std::string checkConfigFileName;
 	unsigned wlog_appender_type;
+	DWORD logLevel = WLOG_ERROR;
 #ifndef WIN32
 	sigset_t set;
 #endif
 
-	parseCommandLine(argc, argv, no_daemon, kill_process, checkConfigFileName, wlog_appender_type);
+	parseCommandLine(argc, argv, no_daemon, kill_process, checkConfigFileName, wlog_appender_type, logLevel);
 
 	if (checkConfigFileName.size()) {
 		exit(checkConfigFile(checkConfigFileName));
@@ -528,7 +551,7 @@ int main(int argc, char **argv) {
 	}
 	
 	APP_CONTEXT.init();
-	initWLog(wlog_appender_type);
+	initWLog(wlog_appender_type, logLevel);
 
 	if (kill_process) {
 		killProcess(pid_file);

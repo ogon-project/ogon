@@ -80,6 +80,7 @@ COMMAND_LINE_ARGUMENT_A ogon_args[] = {
 	{ "version", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print the version" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", "3389", NULL, -1, NULL, "listening port" },
 	{ "log", COMMAND_LINE_VALUE_REQUIRED, "<backend>", "", NULL, -1, NULL, "logging backend (syslog or journald)" },
+	{ "loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", NULL, -1, NULL, "logging level"},
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print build configuration"},
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
@@ -102,6 +103,7 @@ static void printhelp(const char *bin) {
 	printhelprow(NULL, "--nodaemon", "run in foreground");
 	printhelprow(NULL, "--port=<number>", "listening port (default: 3389)");
 	printhelprow(NULL, "--log=<backend>", "logging backend (syslog or journald)");
+	printhelprow(NULL, "--loglevel=<level>", "level for logging");
 	printhelprow(NULL, "--buildconfig", "Print build configuration");
 }
 
@@ -148,9 +150,9 @@ static void signal_handler_internal(int signal) {
 
 	free(pname);
 
-        if ((DWORD)pid == GetCurrentProcessId()) {
+	if ((DWORD)pid == GetCurrentProcessId()) {
 		WLog_INFO(TAG, "signal has been sent from my own process!");
-        }
+	}
 
 	switch (signal) {
 		/* these signals trigger a shutdown */
@@ -329,7 +331,7 @@ void session_manager_connection_lost() {
 	app_context_stop_all_connections();
 }
 
-static void initializeWLog(unsigned wlog_appender_type) {
+static void initializeWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLog *wlog_root;
 	wLogLayout *layout;
 	wLogAppender *appender;
@@ -375,12 +377,17 @@ static void initializeWLog(unsigned wlog_appender_type) {
 		goto fail;
 	}
 
+	if (!WLog_SetLogLevel(wlog_root, logLevel)) {
+		fprintf(stderr, "Failed to set the logger level\n");
+		goto fail;
+	}
 	return;
 fail:
 	exit(1);
 }
 
-static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_process, unsigned *wlog_appender_type) {
+static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_process,
+		unsigned *wlog_appender_type, DWORD *log_level) {
 	DWORD flags;
 	int status = 0;
 	COMMAND_LINE_ARGUMENT_A *arg;
@@ -446,11 +453,24 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 			} else if (!strcmp(arg->Value, "journald")) {
 				*wlog_appender_type = WLOG_APPENDER_JOURNALD;
 			} else {
-				fprintf(stderr, "unkown logging backend '%s'\n", arg->Value);
+				fprintf(stderr, "unknown logging backend '%s'\n", arg->Value);
 				fprintf(stderr, "valid options are 'syslog' and 'journald'\n");
 				exit(1);
 			}
-
+		}
+		CommandLineSwitchCase(arg, "loglevel") {
+			if (!strcasecmp(arg->Value, "debug")) {
+				*log_level = WLOG_DEBUG;
+			} else if (!strcasecmp(arg->Value, "info")) {
+				*log_level = WLOG_INFO;
+			} else if (!strcasecmp(arg->Value, "warn")) {
+				*log_level = WLOG_WARN;
+			} else if (!strcasecmp(arg->Value, "error")) {
+				*log_level = WLOG_ERROR;
+			} else {
+				fprintf(stderr, "unknown logging level '%s'\n", arg->Value);
+				exit(1);
+			}
 		}
 		CommandLineSwitchEnd(arg)
 	}
@@ -605,6 +625,7 @@ int main(int argc, char** argv) {
 	char pid_file[256];
 	int ret = 0;
 	unsigned wlog_appender_type = WLOG_APPENDER_CONSOLE;
+	DWORD log_level = WLOG_ERROR;
 
 #ifndef WIN32
 	sigset_t set;
@@ -613,7 +634,7 @@ int main(int argc, char** argv) {
 
 	no_daemon = kill_process = 0;
 
-	parseCommandLine(argc, argv, &no_daemon, &kill_process, &wlog_appender_type);
+	parseCommandLine(argc, argv, &no_daemon, &kill_process, &wlog_appender_type, &log_level);
 
 	sprintf_s(pid_file, 255, "%s/%s", OGON_PID_PATH, PIDFILE);
 
@@ -644,7 +665,7 @@ int main(int argc, char** argv) {
 		daemonizeCode(pid_file);
 	}
 
-	initializeWLog(wlog_appender_type);
+	initializeWLog(wlog_appender_type, log_level);
 
 	WLog_INFO(TAG, "ogon-rdp-server %s (commit %s) started", OGON_VERSION_FULL, GIT_REVISION);
 	WLog_INFO(TAG, "protocol version %d.%d", OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR);
