@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# rdp clipboard
+RDPCLIP=@OGON_BIN_PATH@/rdpclip
+if [ -x "$RDPCLIP" ]; then
+        "$RDPCLIP" --log=syslog &
+	# Options:
+	#	--log=[syslog|journald|console]
+fi
+
+# rdp device redirector
+RDPDR=@OGON_BIN_PATH@/rdpdr
+if [ -x "$RDPDR" ]; then
+        "$RDPDR" "--mountpointrule={HOME}/rdpfiles/{CLIENTNAME}/{DEVICENAME}/" --log=syslog &
+	# Options:
+	#	--log=[syslog|journald|console]
+fi
+
+# rdp audio
+PULSE=@OGON_BIN_PATH@/pulseaudio
+if [ -x "$PULSE" ] && [ ! -z "$OGON_SID" ]; then
+        export PULSE_RUNTIME_PATH="/tmp/.rdpsnd-$OGON_SID/"
+        export PULSE_STATE_PATH="$PULSE_RUNTIME_PATH"
+        export HOME="$PULSE_RUNTIME_PATH"
+        $PULSE --start --log-target=syslog
+	# Options:
+	#	--log-target=[auto|syslog|stderr|file:PATH|newfile:PATH]
+	#	--log-level=debug
+
+        # if not configured to use x11 publish the following can be used
+        #if [ $? -eq 0 ] && [ x"$DISPLAY" != x ] ;then
+        #        /usr/bin/ogon-pactl load-module module-x11-publish "display=$DISPLAY"
+        #fi
+fi
+
