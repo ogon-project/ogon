@@ -70,7 +70,7 @@
 	} \
 	else \
 	{ \
-		ret = PBRPC_BAD_REQEST_DATA; \
+		ret = PBRPC_BAD_REQUEST_DATA; \
 	}
 
 void dummyCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
