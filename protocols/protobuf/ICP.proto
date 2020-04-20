@@ -18,6 +18,7 @@ enum MSGTYPE {
 	OtsApiStopRemoteControl = 14;
 	RemoteControlEnded = 15;
 	Message = 16;
+	PropertyBulk = 17;
 }
 
 message IsChannelAllowedRequest {
@@ -183,4 +184,33 @@ message MessageRequest {
 
 message MessageResponse {
 	required uint32 result = 1;
+}
+
+enum EnumPropertyType {
+	PROP_BOOL = 0;
+	PROP_NUMBER = 1;
+	PROP_STRING = 2;
+}
+
+message PropertyBulkRequest {
+	required uint32 connectionId = 1;
+	repeated PropertyReq properties = 2;
+}
+
+message PropertyReq {
+	required EnumPropertyType propertyType = 1;
+	required string propertyPath = 2;
+}
+
+
+message PropertyValue {
+	required bool success = 1;
+
+	optional string stringValue = 2;
+	optional bool boolValue = 3;
+	optional int32 intValue = 4;
+}
+
+message PropertyBulkResponse {
+	repeated PropertyValue results = 1;
 }

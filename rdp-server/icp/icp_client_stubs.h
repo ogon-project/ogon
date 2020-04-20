@@ -43,4 +43,39 @@ int ogon_icp_get_property_number(UINT32 connectionId, char *path, INT32 *value);
 int ogon_icp_get_property_string(UINT32 connectionId, char *path, char **value);
 int ogon_icp_RemoteControlEnded(UINT32 spyId, UINT32 spiedId);
 
+/** @brief the type of property */
+typedef enum {
+	PROPERTY_BOOL,
+	PROPERTY_NUMBER,
+	PROPERTY_STRING
+} PropertyType;
+
+/** @brief a property to request to the SM */
+typedef struct {
+	/** request
+	 * @{ */
+	char *path;
+	PropertyType propertyType;
+	/** @} */
+
+	/** result
+	 * @{ */
+	BOOL success;
+	union {
+			BOOL boolValue;
+			INT32 intValue;
+			char *stringValue;
+	} v;
+	/** @} */
+} PropertyItem;
+
+#define PROPERTY_ITEM_INIT_BOOL(K, V) { .path = K, .propertyType = PROPERTY_BOOL, .success = TRUE, .v = { .boolValue = V } }
+#define PROPERTY_ITEM_INIT_INT(K, V) { .path = K, .propertyType = PROPERTY_NUMBER, .success = TRUE, .v = { .intValue = V } }
+#define PROPERTY_ITEM_INIT_STRING(K) { .path = K, .propertyType = PROPERTY_STRING, .success = FALSE, .v = { .stringValue = NULL } }
+
+void ogon_PropertyItem_free(PropertyItem *items);
+
+int ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items);
+
+
 #endif /* _OGON_RDPSRV_ICPCLIENTSTUBS_H_ */

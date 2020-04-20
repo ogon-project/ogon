@@ -408,8 +408,8 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 	}
 
 	ogon__pbrpc__version_info__init(&versionInfo);
-	versionInfo.vmajor = OGON_PROTOCOL_VERSION_MAJOR;
-	versionInfo.vminor = OGON_PROTOCOL_VERSION_MINOR;
+	versionInfo.vmajor = context->localVersionMajor;
+	versionInfo.vminor = context->localVersionMinor;
 
 	if (!(message = pbrpc_message_new())) {
 		WLog_ERR(TAG, "error while creating a new pbrpc message, disconnecting!");
@@ -455,7 +455,7 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 	free(msg);
 
 	if (!message->isresponse) {
-		WLog_ERR(TAG, "error, was not versionInfo reply packet!");
+		WLog_ERR(TAG, "error, there was no versionInfo reply packet!");
 		goto error_out;
 	}
 
@@ -474,6 +474,8 @@ static BOOL pbrpc_connect(pbRPCContext* context, DWORD timeout)
 
 	WLog_DBG(TAG, "Version information received from session-manager: %"PRIu32".%"PRIu32"",
 			message->versioninfo->vmajor, message->versioninfo->vminor);
+	context->remoteVersionMajor = message->versioninfo->vmajor;
+	context->remoteVersionMinor = message->versioninfo->vminor;
 
 	ogon__pbrpc__rpcbase__free_unpacked(message, NULL);
 	context->isConnected = TRUE;
@@ -530,6 +532,9 @@ static void pbrpc_mainloop(pbRPCContext* context)
 			if (!firstLoop) {
 				if (context->disconnectedCb)
 					context->disconnectedCb();
+
+				context->remoteVersionMajor = 0;
+				context->remoteVersionMinor = 0;
 			}
 
 			firstLoop = FALSE;
@@ -585,8 +590,10 @@ static void pbrpc_mainloop(pbRPCContext* context)
 	}
 }
 
-int pbrpc_server_start(pbRPCContext* context)
+int pbrpc_server_start(pbRPCContext* context, UINT32 vmajor, UINT32 vminor)
 {
+	context->localVersionMajor = vmajor;
+	context->localVersionMinor = vminor;
 	context->isConnected = FALSE;
 	context->runLoop = TRUE;
 	context->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)pbrpc_mainloop, context, 0, NULL);

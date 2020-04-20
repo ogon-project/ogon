@@ -440,6 +440,159 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 	return PBRPC_SUCCESS;
 }
 
+
+static int ogon_icp_get_property_bulk_fallback(UINT32 connectionId, PropertyItem *items) {
+	PropertyItem *pItem;
+	size_t nbSuccess = 0, nbFails = 0;
+	int status;
+
+	for (pItem = items; pItem->path; pItem++) {
+
+
+		switch (pItem->propertyType) {
+		case PROPERTY_BOOL:
+			status = ogon_icp_get_property_bool(connectionId, pItem->path, &pItem->v.boolValue);
+			break;
+		case PROPERTY_NUMBER:
+			status = ogon_icp_get_property_number(connectionId, pItem->path, &pItem->v.intValue);
+			break;
+		case PROPERTY_STRING:
+			status = ogon_icp_get_property_string(connectionId, pItem->path, &pItem->v.stringValue);
+			break;
+		}
+
+		pItem->success = (status == PBRPC_SUCCESS);
+		if (!pItem->success) {
+			WLog_ERR(TAG, "bulkProperty fallback: error retrieving property %s(type=%d) status=%d", pItem->path,
+					pItem->propertyType, status);
+		} else {
+			nbSuccess++;
+		}
+	}
+
+	/* if we had no success ans some fails, return the last status that may be relevant */
+	return (!nbSuccess && nbFails) ? status : PBRPC_SUCCESS;
+}
+
+
+void ogon_PropertyItem_free(PropertyItem *items) {
+
+	for ( ; items->path; items++) {
+		if (items->propertyType == PROPERTY_STRING)
+			free(items->v.stringValue);
+	}
+}
+
+#define MAX_PROPERTIES_NB 30
+static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items) {
+	size_t i, nitems = 0;
+	PropertyItem *propertyItem;
+	Ogon__Icp__PropertyReq *protobufReq;
+	Ogon__Icp__PropertyValue *protobufValue;
+	Ogon__Icp__PropertyReq *propertyReqPtr[MAX_PROPERTIES_NB];
+	Ogon__Icp__PropertyReq propertyRequests[MAX_PROPERTIES_NB];
+
+	ICP_CLIENT_STUB_SETUP(PropertyBulk, property_bulk);
+
+	request.connectionid = connectionId;
+	request.properties = propertyReqPtr;
+
+	for (i = 0, propertyItem = items; propertyItem->path && i < MAX_PROPERTIES_NB; propertyItem++, i++) {
+		request.properties[i] = protobufReq = &propertyRequests[i];
+
+		ogon__icp__property_req__init(protobufReq);
+		protobufReq->propertypath = propertyItem->path;
+
+		switch (propertyItem->propertyType) {
+		case PROPERTY_BOOL:
+			protobufReq->propertytype = OGON__ICP__ENUM_PROPERTY_TYPE__PROP_BOOL;
+			break;
+		case PROPERTY_NUMBER:
+			protobufReq->propertytype = OGON__ICP__ENUM_PROPERTY_TYPE__PROP_NUMBER;
+			break;
+		case PROPERTY_STRING:
+			protobufReq->propertytype = OGON__ICP__ENUM_PROPERTY_TYPE__PROP_STRING;
+			break;
+		default:
+			break;
+		}
+	}
+	request.n_properties = nitems = i;
+	WLog_DBG(TAG, "sending %d property requests", nitems);
+
+	if (propertyItem->path) {
+		WLog_ERR(TAG, "too many property requests, max=%d", MAX_PROPERTIES_NB);
+		return PBRPC_FAILED;
+	}
+
+	ICP_CLIENT_STUB_CALL(PropertyBulk, property_bulk);
+	if (ret != 0)
+		return ret;
+
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBulk, property_bulk);
+
+	if (!response || response->n_results != nitems) {
+		return PBRPC_BAD_RESPONSE;
+	}
+
+	propertyItem = items;
+	for (i = 0; i < nitems; propertyItem++, i++) {
+		protobufValue = response->results[i];
+		propertyItem->success = protobufValue->success;
+		if (!propertyItem->success)
+			continue;
+
+		switch (propertyItem->propertyType) {
+		case PROPERTY_BOOL:
+			if (!protobufValue->has_boolvalue)
+				propertyItem->success = false;
+			else
+				propertyItem->v.boolValue = protobufValue->boolvalue;
+			break;
+		case PROPERTY_NUMBER:
+			if (!protobufValue->has_intvalue)
+				propertyItem->success = false;
+			else
+				propertyItem->v.intValue = protobufValue->intvalue;
+			break;
+		case PROPERTY_STRING:
+			if (!protobufValue->stringvalue)
+				propertyItem->success = false;
+			else {
+				propertyItem->v.stringValue = _strdup(protobufValue->stringvalue);
+				if (!propertyItem->v.stringValue) {
+					WLog_ERR(TAG, "unable to strdup a string property result");
+					propertyItem->success = false;
+				}
+			}
+			break;
+		}
+	}
+
+	ICP_CLIENT_STUB_CLEANUP(PropertyBulk, property_bulk);
+
+	return PBRPC_SUCCESS;
+}
+
+int ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items) {
+	UINT32 vmajor, vminor;
+	void *icp;
+
+	icp = ogon_icp_get_context();
+	if (!ogon_icp_get_protocol_version(icp, &vmajor, &vminor)) {
+		WLog_ERR(TAG, "ogon_icp_get_property_bulk: pbrpc transport not connected");
+		return PBRCP_TRANSPORT_ERROR;
+	}
+
+	/* PropertyBulk only available starting at 1.1 */
+	if (vmajor * 1000 + vminor < 1001) {
+		return ogon_icp_get_property_bulk_fallback(connectionId, items);
+	}
+
+	return real_ogon_icp_get_property_bulk(connectionId, items);
+}
+
+
 int ogon_icp_RemoteControlEnded(UINT32 spyId, UINT32 spiedId)
 {
 	int retVal = -1;

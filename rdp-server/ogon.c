@@ -696,7 +696,7 @@ int main(int argc, char** argv) {
 		goto fail_app_context;
 	}
 
-	if (ogon_icp_start(g_term_event) < 0) {
+	if (ogon_icp_start(g_term_event, OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR) < 0) {
 		WLog_ERR(TAG, "error creating ICP server");;
 		ret = 1;
 		goto fail_icp_start;

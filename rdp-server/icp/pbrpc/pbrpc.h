@@ -43,6 +43,10 @@ struct  pbrpc_context
 	wListDictionary* transactions;
 	wQueue* writeQueue;
 	BOOL isConnected;
+	UINT32 localVersionMajor;
+	UINT32 localVersionMinor;
+	UINT32 remoteVersionMajor;
+	UINT32 remoteVersionMinor;
 	BOOL runLoop;
 	LONG tag;
 	pbRPCMethod* methods;
@@ -88,7 +92,7 @@ typedef void (*pbRpcResponseCallback)(UINT32 reason, Ogon__Pbrpc__RPCBase* respo
 
 pbRPCContext* pbrpc_server_new(pbRPCTransportContext* transport, HANDLE shutdown);
 void pbrpc_server_free(pbRPCContext* context);
-int pbrpc_server_start(pbRPCContext* context);
+int pbrpc_server_start(pbRPCContext* context, UINT32 vmajor, UINT32 vminor);
 int pbrpc_server_stop(pbRPCContext* context);
 void pbrpc_register_methods(pbRPCContext* context, pbRPCMethod* methods);
 

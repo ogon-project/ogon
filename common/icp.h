@@ -31,9 +31,10 @@
 
 #include <winpr/synch.h>
 
-int ogon_icp_start(HANDLE shutdown);
+int ogon_icp_start(HANDLE shutdown, UINT32 vmajor, UINT32 vminor);
 int ogon_icp_shutdown();
 void *ogon_icp_get_context();
+BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor);
 
 typedef void (*disconnected_callback)();
 void ogon_icp_set_disconnect_cb(disconnected_callback cb);
