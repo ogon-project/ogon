@@ -42,7 +42,7 @@
 	request = ogon__icp__##expanded ##_request__unpack(NULL, pbrequest->dataLen, (uint8_t*)pbrequest->data);\
 	if (!request) \
 	{ \
-		return PBRPC_BAD_REQEST_DATA; \
+		return PBRPC_BAD_REQUEST_DATA; \
 	}
 
 #define ICP_SERVER_STUB_RESPOND(camel, expanded) \

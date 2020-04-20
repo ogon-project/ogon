@@ -73,7 +73,7 @@ typedef enum pbrpc_status
 	PBRPC_SUCCESS = 0,              /* everything is fine */
 	PBRPC_FAILED = 1,               /* request failed optional error string might be set */
 	PBRPC_NOTFOUND = 2,             /* method was not found on server */
-	PBRPC_BAD_REQEST_DATA = 100,    /* request couldn't be serialized */
+	PBRPC_BAD_REQUEST_DATA = 100,   /* request couldn't be serialized */
 	PBRPC_BAD_RESPONSE = 101,       /* response couldn't be  unserialized */
 	PBRCP_TRANSPORT_ERROR = 102,    /* problem with transport */
 	PBRCP_CALL_TIMEOUT = 103,       /* call timed out */
