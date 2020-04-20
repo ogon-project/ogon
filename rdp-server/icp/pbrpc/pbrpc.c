@@ -190,7 +190,7 @@ static int pbrpc_process_response(pbRPCContext* context, Ogon__Pbrpc__RPCBase *r
 static int pbrpc_process_message_out(pbRPCContext* context, Ogon__Pbrpc__RPCBase *msg)
 {
 	int ret;
-	char msgLen = ogon__pbrpc__rpcbase__get_packed_size(msg);
+	int msgLen = ogon__pbrpc__rpcbase__get_packed_size(msg);
 	char *buf = malloc(msgLen);
 	if (!buf)
 		return -1;
