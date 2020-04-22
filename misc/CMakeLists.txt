@@ -4,6 +4,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ogon-session-manager.init.in ${CMAKE_
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ogon-rdp-server.init.in ${CMAKE_CURRENT_BINARY_DIR}/ogon-rdp-server.init)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.ini.debian.in ${CMAKE_CURRENT_BINARY_DIR}/config.ini.debian)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ogon-start-vc.sh.in ${CMAKE_CURRENT_BINARY_DIR}/ogon-start-vc.sh)
+install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/ogon-start-vc.sh" DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 install(PROGRAMS "ogonXsession" DESTINATION ${OGON_CFG_PATH})
 install(PROGRAMS "ogon_cleanup.sh" DESTINATION ${OGON_CFG_PATH})
 
