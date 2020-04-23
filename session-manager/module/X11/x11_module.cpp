@@ -528,18 +528,24 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 		return NULL;
 	}
 
-	tmpLen = GetEnvironmentVariableEBA(module->envBlock, "HOME", NULL, 0);
-	if (tmpLen) {
-		if (!(cwd = (char *) malloc(tmpLen))) {
-			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": couldn't allocate cwd", SessionId);
-			return NULL;
-		}
-		GetEnvironmentVariableEBA(module->envBlock, "HOME", cwd, tmpLen);
+	if (getPropertyStringWrapper(module->baseConfigPath, &gConfig,
+	                             module->sessionId, "xauthoritypath", buf, sizeof(buf))) {
+		WLog_Print(gModuleLog, WLOG_DEBUG, "config: xAuthorityPath = %s", buf);
+		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon", buf);
 	} else {
-		cwd = strdup(result_pwd->pw_dir);
+		tmpLen = GetEnvironmentVariableEBA(module->envBlock, "HOME", NULL, 0);
+		if (tmpLen) {
+			if (!(cwd = (char *) malloc(tmpLen))) {
+				WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": couldn't allocate cwd", SessionId);
+				return NULL;
+			}
+			GetEnvironmentVariableEBA(module->envBlock, "HOME", cwd, tmpLen);
+		} else {
+			cwd = strdup(result_pwd->pw_dir);
+		}
+		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon", cwd);
 	}
 
-	sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon", cwd);
 
 	if (!SetEnvironmentVariableEBA(&module->envBlock, "XAUTHORITY", xauthFileName)) {
 		goto out_fail;
