@@ -324,6 +324,22 @@ namespace ogon { namespace sessionmanager { namespace session {
 			}
 		}
 
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_CONFIG_PATH", "/etc/ogon/pulse/")) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_CONFIG_PATH in the environment block", mSessionID);
+			return false;
+		}
+
+		sprintf_s(envstr, sizeof(envstr), "/tmp/.rdpsnd-%" PRIu32 "", mSessionID);
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_RUNTIME_PATH", envstr)) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_RUNTIME_PATH in the environment block", mSessionID);
+			return false;
+		}
+
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_STATE_PATH", envstr)) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_STATE_PATH in the environment block", mSessionID);
+			return false;
+		}
+
 		mUserUID = pwnam->pw_uid;
 		mGroupUID = pwnam->pw_gid;
 
