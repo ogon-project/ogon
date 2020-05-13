@@ -284,6 +284,10 @@ If true the ogon-process-launcher is used to start modules.
 
 If specified the launcher will log into this file, otherwise no debug output will be generated.
 
+### module_xsession_xauthoritypath_string
+
+Path to save .Xauthority files. This is helpful in cases like krb5 authenticated NFS homes where even root cannot access user homes.
+
 ## Module Greeter
 
 module_greeter_modulename_string=Qt
