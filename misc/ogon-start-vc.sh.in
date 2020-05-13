@@ -17,11 +17,16 @@ if [ -x "$RDPDR" ]; then
 fi
 
 # rdp audio
-PULSE=@OGON_BIN_PATH@/pulseaudio
+if [ -x @OGON_BIN_PATH@/pulseaudio ]; then
+	PULSE=@OGON_BIN_PATH@/pulseaudio
+else
+	PULSE=/usr/bin/pulseaudio
+fi
 if [ -x "$PULSE" ] && [ ! -z "$OGON_SID" ]; then
-        export PULSE_RUNTIME_PATH="/tmp/.rdpsnd-$OGON_SID/"
-        export PULSE_STATE_PATH="$PULSE_RUNTIME_PATH"
-        export HOME="$PULSE_RUNTIME_PATH"
+	# Exported by launcher:
+        #	PULSE_CONFIG_PATH
+        #	PULSE_RUNTIME_PATH
+        #	PULSE_STATE_PATH
         $PULSE --start --log-target=syslog
 	# Options:
 	#	--log-target=[auto|syslog|stderr|file:PATH|newfile:PATH]
