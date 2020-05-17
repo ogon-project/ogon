@@ -47,6 +47,8 @@
 
 #include "Session.h"
 
+#include <ogon/build-config.h>
+
 #define STD_PATH  "/usr/local/bin:/usr/bin:/bin"
 
 namespace ogon { namespace sessionmanager { namespace session {
@@ -266,7 +268,10 @@ namespace ogon { namespace sessionmanager { namespace session {
 	bool Session::generateEnvBlockAndModify(const std::string &clientName, const std::string &clientAddress) {
 
 		struct passwd* pwnam;
-		char envstr[256];
+		char envstr[MAX_PATH +1]  = {0};
+		std::string defaultmodule;
+		std::string tmppath;
+		std::string pulseconfigpath;
 
 		if (mUsername.length() == 0) {
 			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": no username!", mSessionID);
@@ -304,6 +309,32 @@ namespace ogon { namespace sessionmanager { namespace session {
 			return false;
 		}
 
+		configNS::PropertyManager *propertyManager = APP_CONTEXT.getPropertyManager();
+
+		std::string queryStringDefaultModule = std::string("module");
+
+		if (!propertyManager->getPropertyString(mSessionID, queryStringDefaultModule, defaultmodule)) {
+			defaultmodule = "xsession";
+		}
+		WLog_Print(logger_Session, WLOG_DEBUG, "s %" PRIu32 ": defaultmodule = %s", mSessionID, defaultmodule.c_str());
+
+		std::string configBaseName = std::string("module.") + defaultmodule;
+		std::string queryStringTmpPath = configBaseName + std::string(".tmppath");
+
+		WLog_Print(logger_Session, WLOG_DEBUG, "s %" PRIu32 ": moduleconfigname = %s", mSessionID, mModuleConfigName.c_str());
+
+		if (!propertyManager->getPropertyString(mSessionID, queryStringTmpPath, tmppath)) {
+			tmppath="/tmp";
+		}
+		WLog_Print(logger_Session, WLOG_DEBUG, "s %" PRIu32 ": tmppath = %s", mSessionID, tmppath.c_str());
+
+		std::string queryStringPAPath = configBaseName + std::string(".paconfpath");
+
+		if (!propertyManager->getPropertyString(mSessionID, queryStringPAPath, pulseconfigpath)) {
+			pulseconfigpath = std::string(OGON_CFG_PATH) + std::string("/pulse");
+		}
+		WLog_Print(logger_Session, WLOG_DEBUG, "s %" PRIu32 ": pulseaudio config path = %s", mSessionID, pulseconfigpath.c_str());
+
 		sprintf_s(envstr, sizeof(envstr), "%" PRIu32 "", mSessionID);
 		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "OGON_SID", envstr)) {
 			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set OGON_SID in the environment block", mSessionID);
@@ -322,6 +353,22 @@ namespace ogon { namespace sessionmanager { namespace session {
 				WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set OGON_SESSION_CLIENT_ADDRESS in the environment block", mSessionID);
 				return false;
 			}
+		}
+
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_CONFIG_PATH", pulseconfigpath.c_str())) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_CONFIG_PATH in the environment block", mSessionID);
+			return false;
+		}
+
+		sprintf_s(envstr, sizeof(envstr), "%s/.rdpsnd-%" PRIu32 "", tmppath.c_str(), mSessionID);
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_RUNTIME_PATH", envstr)) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_RUNTIME_PATH in the environment block", mSessionID);
+			return false;
+		}
+
+		if (!SetEnvironmentVariableEBA(&mpEnvBlock, "PULSE_STATE_PATH", envstr)) {
+			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": failed to set PULSE_STATE_PATH in the environment block", mSessionID);
+			return false;
 		}
 
 		mUserUID = pwnam->pw_uid;
