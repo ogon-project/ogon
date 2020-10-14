@@ -73,7 +73,7 @@ Depends:
  libogon-backend1 (= ${binary:Version}),
  ogon-core (= ${binary:Version}),
  freerdp2-dev,
- winrp2-dev
+ libwinpr2-dev
 Description: ogon - core services and files
  ogon Remote Desktop Services are a set of services and
  utilities to create a fully featured RDP server.
