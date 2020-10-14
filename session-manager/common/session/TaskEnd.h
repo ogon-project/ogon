@@ -43,7 +43,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		bool mSuccess;
 	};
 
-	typedef boost::shared_ptr<TaskEnd> TaskEndPtr;
+	typedef std::shared_ptr<TaskEnd> TaskEndPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 

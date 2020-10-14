@@ -46,7 +46,7 @@ namespace ogon { namespace sessionmanager { namespace otsapi {
 		bool mDisconnected;
 	};
 
-	typedef boost::shared_ptr<TaskDisconnect> TaskDisconnectPtr;
+	typedef std::shared_ptr<TaskDisconnect> TaskDisconnectPtr;
 
 } /*otsapi*/ } /*sessionmanager*/ } /*ogon*/
 

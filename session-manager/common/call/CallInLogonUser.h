@@ -47,7 +47,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		virtual bool encodeResponse();
 		virtual bool prepare();
 		virtual bool doStuff();
-		boost::shared_ptr<CallInLogonUser> shared_from_this();
+		std::shared_ptr<CallInLogonUser> shared_from_this();
 		void updateResult(uint32_t result, std::string pipeName, long maxHeight, long maxWidth, std::string backendCookie,
 						  std::string ogonCookie);
 
@@ -80,7 +80,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		std::string mBackendCookie;
 	};
 
-	typedef boost::shared_ptr<CallInLogonUser> CallInLogonUserPtr;
+	typedef std::shared_ptr<CallInLogonUser> CallInLogonUserPtr;
 
 	FACTORY_REGISTER_DWORD(CallFactory, CallInLogonUser, ogon::icp::LogonUser);
 

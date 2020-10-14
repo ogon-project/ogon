@@ -46,7 +46,7 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
-using boost::shared_ptr;
+using std::shared_ptr;
 
 namespace ogon{ namespace sessionmanager{ namespace otsapi {
 
@@ -73,7 +73,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		CloseHandle(mhStarted);
 	}
 
-	void OTSApiServer::setServer(boost::shared_ptr<apache::thrift::server::TServer> server) {
+	void OTSApiServer::setServer(std::shared_ptr<apache::thrift::server::TServer> server) {
 		mServer = server;
 	}
 

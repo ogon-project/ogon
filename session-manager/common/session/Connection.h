@@ -28,7 +28,7 @@
 #include <list>
 
 #include <winpr/synch.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <config/PropertyLevel.h>
 #include <call/CallIn.h>
 
@@ -100,7 +100,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		std::list<callNS::CallInPtr> mQueuedCalls;
 	};
 
-	typedef boost::shared_ptr<Connection> ConnectionPtr;
+	typedef std::shared_ptr<Connection> ConnectionPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 

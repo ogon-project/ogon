@@ -72,7 +72,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		UINT32 mResult;
 	};
 
-	typedef boost::shared_ptr<CallOutMessage> CallOutMessagePtr;
+	typedef std::shared_ptr<CallOutMessage> CallOutMessagePtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

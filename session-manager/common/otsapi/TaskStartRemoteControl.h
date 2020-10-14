@@ -27,7 +27,7 @@
 
 #include <task/InformableTask.h>
 #include <session/SessionAccessor.h>
-#include <boost/enable_shared_from_this.hpp>
+#include <memory>
 
 namespace ogon { namespace sessionmanager { namespace otsapi {
 
@@ -35,7 +35,7 @@ namespace ogon { namespace sessionmanager { namespace otsapi {
  * @brief
  */
 class TaskStartRemoteControl: public taskNS::InformableTask, sessionNS::SessionAccessor,
-		public boost::enable_shared_from_this<TaskStartRemoteControl>
+		public std::enable_shared_from_this<TaskStartRemoteControl>
 {
 	public:
 		TaskStartRemoteControl(UINT32 sessionID, UINT32 targetSession, BYTE HotkeyVk, INT16 HotkeyModifiers, DWORD flags, UINT32 timeout);
@@ -64,7 +64,7 @@ class TaskStartRemoteControl: public taskNS::InformableTask, sessionNS::SessionA
 		DWORD mFlags;
 };
 
-typedef boost::shared_ptr<TaskStartRemoteControl> TaskStartRemoteControlPtr;
+typedef std::shared_ptr<TaskStartRemoteControl> TaskStartRemoteControlPtr;
 
 
 } /*otsapi*/ } /*sessionmanager*/ } /*ogon*/

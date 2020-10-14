@@ -53,7 +53,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 		HANDLE mhStop;
 	};
 
-	typedef boost::shared_ptr<ThreadTask> ThreadTaskPtr;
+	typedef std::shared_ptr<ThreadTask> ThreadTaskPtr;
 
 } /*task*/ } /*sessionmanager*/ } /*ogon*/
 

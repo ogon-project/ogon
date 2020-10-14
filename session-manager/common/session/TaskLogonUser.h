@@ -82,7 +82,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 	};
 
-	typedef boost::shared_ptr<TaskLogonUser> TaskLogonUserPtr;
+	typedef std::shared_ptr<TaskLogonUser> TaskLogonUserPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 

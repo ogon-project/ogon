@@ -11,6 +11,7 @@ if (NOT THRIFT_FOUND)
 	include(ThriftExternalProject)
 else()
 	set(THRIFT_EXTERNAL FALSE)
+    include_directories(${THRIFT_INCLUDE_DIR})
 endif()
 
 # required for latest versions of boost
@@ -30,7 +31,7 @@ if (THRIFT_EXTERNAL)
 endif()
 target_link_libraries(otsapi-thrift ${THRIFT_STATIC_LIB} ${OPENSSL_LIBRARIES})
 set_property(TARGET otsapi-thrift PROPERTY COMPILE_FLAGS "-fPIC")
-	
+
 set(OTSAPI_SRC
 	common/otsapi/OTSApiHandler.cpp common/otsapi/OTSApiServer.cpp
 	common/otsapi/TaskDisconnect.cpp
@@ -42,7 +43,7 @@ set(OTSAPI_SRC
 include_directories(${DBUS_INCLUDE_DIR})
 
 find_package(Boost REQUIRED)
-include_directories( ${Boost_INCLUDE_DIR} ${DBUS_ARCH_INCLUDE_DIR}) 
+include_directories( ${Boost_INCLUDE_DIR} ${DBUS_ARCH_INCLUDE_DIR})
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
@@ -50,7 +51,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/gen)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(ICP_SOURCES 
+set(ICP_SOURCES
 	common/call/Call.cpp
 	common/call/CallIn.cpp
 	common/call/CallOut.cpp
@@ -69,7 +70,7 @@ set(ICP_SOURCES
 	common/call/CallInPropertyNumber.cpp
 	common/call/CallInPropertyString.cpp
 	common/call/CallOutDisconnectUserSession.cpp
-	common/call/CallInSBPVersion.cpp	
+	common/call/CallInSBPVersion.cpp
 	common/call/TaskCallInLogonUser.cpp
 	common/call/TaskAuthenticateUser.cpp
 	common/call/TaskEndRemoteControl.cpp
@@ -81,8 +82,8 @@ set(ICP_SOURCES
 )
 
 set(${MODULE_PREFIX}_SRCS
-	main.cpp 
-	common/appcontext/ApplicationContext.cpp 
+	main.cpp
+	common/appcontext/ApplicationContext.cpp
 	common/session/SessionStore.cpp
 	common/session/Session.cpp
 	common/session/ConnectionStore.cpp
@@ -123,7 +124,7 @@ set(${MODULE_PREFIX}_SRCS
 	${MODULE_PROTOBUF_SRC}
 	${MODULE_PROTOBUF_HEADERS}
 	)
- 
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 if (THRIFT_EXTERNAL)
 	add_dependencies(${MODULE_NAME} thrift)
@@ -136,7 +137,7 @@ list(APPEND ${MODULE_PREFIX}_LIBS ${PROTOBUF_LIBRARY})
 list(APPEND ${MODULE_PREFIX}_LIBS winpr-tools)
 list(APPEND ${MODULE_PREFIX}_LIBS ${DBUS_LIBRARIES})
 list(APPEND ${MODULE_PREFIX}_LIBS ${CMAKE_THREAD_LIBS_INIT})
-	
+
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})

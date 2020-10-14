@@ -33,9 +33,8 @@
 #include <winpr/handle.h>
 #include <winpr/wtsapi.h>
 #include <winpr/wnd.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <ogon/module.h>
 
 
@@ -52,7 +51,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 	/**
 	 *	@brief
 	 */
-	class Session : public boost::enable_shared_from_this<Session> {
+	class Session : public std::enable_shared_from_this<Session> {
 		friend class SessionAccessor;
 		friend class SessionStore;
 
@@ -213,7 +212,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		moduleNS::Module *mCurrentAuthModule;
 	};
 
-	typedef boost::shared_ptr<Session> SessionPtr;
+	typedef std::shared_ptr<Session> SessionPtr;
 
 }/*session*/ } /*sessionmanager*/ } /*ogon*/
 

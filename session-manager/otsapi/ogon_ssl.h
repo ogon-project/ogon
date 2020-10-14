@@ -29,6 +29,7 @@
 #ifndef _OGON_SMGR_OTSAPISSL_H_
 #define _OGON_SMGR_OTSAPISSL_H_
 
+#include <memory>
 #include <thrift/transport/TSSLSocket.h>
 
 namespace apache { namespace thrift { namespace transport {
@@ -52,7 +53,7 @@ protected:
 	* Constructor.
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx): TSSLSocket(ctx) {
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx): TSSLSocket(ctx) {
 		firstProcessId = getpid();
 	};
 
@@ -62,7 +63,7 @@ protected:
 	* @param socket An existing socket
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket):
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, int socket):
 		TSSLSocket(ctx, socket) {
 		firstProcessId = getpid();
 	};
@@ -74,7 +75,7 @@ protected:
 	* @param port  Remote port number
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, std::string host,
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host,
 		int port): TSSLSocket(ctx, host, port)
 	{
 		firstProcessId = getpid();
@@ -100,8 +101,8 @@ public:
 	* Create an instance of TSSLSocket with a fresh new socket.
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket() {
-		stdcxx::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_));
+	virtual std::shared_ptr<TSSLSocket> createSocket() {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_));
 		ssl->server(server());
 		return ssl;
 	}
@@ -112,8 +113,8 @@ public:
 	* @param socket An existing socket.
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(int socket) {
-		stdcxx::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket));
+	virtual std::shared_ptr<TSSLSocket> createSocket(int socket) {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket));
 		ssl->server(server());
 		return ssl;
 	}
@@ -125,9 +126,9 @@ public:
 	* @param port  Remote port to be connected to
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(const std::string &host,
+	virtual std::shared_ptr<TSSLSocket> createSocket(const std::string &host,
 		int port) {
-		stdcxx::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port));
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port));
 		ssl->server(server());
 		return ssl;
 	}

@@ -26,12 +26,11 @@
 
 #include <string>
 #include <stdint.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <memory>
 
 namespace ogon { namespace sessionmanager { namespace call {
 
-	class Call: public boost::enable_shared_from_this<Call> {
+	class Call: public std::enable_shared_from_this<Call> {
 	public:
 		Call();
 		virtual ~Call();
@@ -59,7 +58,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		std::string mErrorDescription;
 	};
 
-	typedef boost::shared_ptr<Call> CallPtr;
+	typedef std::shared_ptr<Call> CallPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

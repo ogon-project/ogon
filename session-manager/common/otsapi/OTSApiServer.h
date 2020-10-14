@@ -25,7 +25,7 @@
 #define _OGON_SMGR_OTSAPI_OTSAPISERVER_H_
 
 #include <winpr/synch.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <thrift/server/TServer.h>
 #include <thrift/transport/TSSLSocket.h>
 
@@ -43,17 +43,17 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		void setPort(DWORD port);
 		DWORD getPort();
 
-		void setServer(boost::shared_ptr<apache::thrift::server::TServer> server);
+		void setServer(std::shared_ptr<apache::thrift::server::TServer> server);
 		CRITICAL_SECTION * getCritSection();
 		void setSuccess(bool success);
 
 	private:
-		static boost::shared_ptr<apache::thrift::transport::TSSLSocketFactory>
+		static std::shared_ptr<apache::thrift::transport::TSSLSocketFactory>
 			getSSLSocketFactory(std::string certFile, std::string keyFile);
 
 		CRITICAL_SECTION	mCSection;
 		HANDLE	mhStarted;
-		boost::shared_ptr<apache::thrift::server::TServer>	mServer;
+		std::shared_ptr<apache::thrift::server::TServer>	mServer;
 		HANDLE	mServerThread;
 		DWORD	mPort;
 		bool	mSuccess;

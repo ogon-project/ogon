@@ -61,7 +61,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool mSuccess;
 	};
 
-	typedef boost::shared_ptr<CallOutOtsStartRemoteControl> CallOutOtsStartRemoteControlPtr;
+	typedef std::shared_ptr<CallOutOtsStartRemoteControl> CallOutOtsStartRemoteControlPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

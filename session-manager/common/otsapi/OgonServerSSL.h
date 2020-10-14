@@ -39,7 +39,7 @@ protected:
 	* Constructor.
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx): TSSLSocket(ctx) {
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx): TSSLSocket(ctx) {
 	};
 
 	/**
@@ -48,7 +48,7 @@ protected:
 	* @param socket An existing socket
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket):
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, int socket):
 		TSSLSocket(ctx, socket) {
 	};
 
@@ -59,12 +59,12 @@ protected:
 	* @param port  Remote port number
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, std::string host,
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host,
 		int port): TSSLSocket(ctx, host, port) {
 	};
 
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener)
 			: TSSLSocket(ctx, interruptListener) {
 	};
 
@@ -74,7 +74,7 @@ protected:
 	* @param socket An existing socket
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, int socket, std::shared_ptr<THRIFT_SOCKET> interruptListener)
 			: TSSLSocket(ctx, socket, interruptListener) {
 	};
 
@@ -85,8 +85,8 @@ protected:
 	* @param port  Remote port number
 	*/
 
-	OgonSSLSocket(boost::shared_ptr<SSLContext> ctx, std::string host,
-					 int port, boost::shared_ptr<THRIFT_SOCKET> interruptListener)
+	OgonSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host,
+					 int port, std::shared_ptr<THRIFT_SOCKET> interruptListener)
 			: TSSLSocket(ctx, host, port, interruptListener) {
 	};
 
@@ -109,14 +109,14 @@ public:
 	* Create an instance of TSSLSocket with a fresh new socket.
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket() {
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_));
+	virtual std::shared_ptr<TSSLSocket> createSocket() {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_));
 		ssl->server(server());
 		return ssl;
 	}
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(boost::shared_ptr<THRIFT_SOCKET> interruptListener) {
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, interruptListener));
+	virtual std::shared_ptr<TSSLSocket> createSocket(std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, interruptListener));
 		ssl->server(server());
 		return ssl;
 	}
@@ -127,14 +127,14 @@ public:
 	* @param socket An existing socket.
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(int socket) {
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket));
+	virtual std::shared_ptr<TSSLSocket> createSocket(int socket) {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket));
 		ssl->server(server());
 		return ssl;
 	}
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(int socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener) {
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket, interruptListener));
+	virtual std::shared_ptr<TSSLSocket> createSocket(int socket, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, socket, interruptListener));
 		ssl->server(server());
 		return ssl;
 	}
@@ -146,18 +146,18 @@ public:
 	* @param port  Remote port to be connected to
 	*/
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(const std::string &host,
+	virtual std::shared_ptr<TSSLSocket> createSocket(const std::string &host,
 		int port) {
 
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port));
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port));
 		ssl->server(server());
 		return ssl;
 	}
 
-	virtual boost::shared_ptr<TSSLSocket> createSocket(const std::string &host,
-		int port, boost::shared_ptr<THRIFT_SOCKET> interruptListener) {
+	virtual std::shared_ptr<TSSLSocket> createSocket(const std::string &host,
+		int port, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
 
-		boost::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port, interruptListener));
+		std::shared_ptr<TSSLSocket> ssl(new OgonSSLSocket(ctx_, host, port, interruptListener));
 		ssl->server(server());
 		return ssl;
 	}

@@ -34,7 +34,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		virtual bool isThreaded();
 	};
 
-	typedef boost::shared_ptr<TaskSessionTimeout> TaskSessionTimeoutPtr;
+	typedef std::shared_ptr<TaskSessionTimeout> TaskSessionTimeoutPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 

@@ -26,6 +26,7 @@
 
 #include <call/Call.h>
 #include <winpr/wtypes.h>
+#include <memory>
 
 namespace ogon { namespace sessionmanager { namespace call {
 
@@ -42,7 +43,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 
 		virtual bool encodeResponse() = 0;
 		std::string getEncodedResponse() const;
-		boost::shared_ptr<CallIn> shared_from_this();
+		std::shared_ptr<CallIn> shared_from_this();
 
 		virtual bool prepare() {return true;};
 		virtual bool doStuff() = 0;
@@ -51,7 +52,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool putInSessionExecutor_sesId(UINT32 sessionId);
 	};
 
-	typedef boost::shared_ptr<CallIn> CallInPtr;
+	typedef std::shared_ptr<CallIn> CallInPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

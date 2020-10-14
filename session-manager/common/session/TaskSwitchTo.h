@@ -45,7 +45,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		UINT32 mResult;
 	};
 
-	typedef boost::shared_ptr<TaskSwitchTo> TaskSwitchToPtr;
+	typedef std::shared_ptr<TaskSwitchTo> TaskSwitchToPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 
