@@ -18,7 +18,7 @@ set(THRIFT_LIB_PATHS
 	/usr/local/lib
 	/opt/local/lib)
 
-find_library(THRIFT_LIBRARY NAMES "libthrift${CMAKE_STATIC_LIBRARY_SUFFIX}" HINTS ${THRIFT_LIB_PATHS})
+find_library(THRIFT_LIBRARY NAMES "thrift" HINTS ${THRIFT_LIB_PATHS})
 
 find_program(THRIFT_COMPILER thrift
 	$ENV{THRIFT_HOME}/bin
