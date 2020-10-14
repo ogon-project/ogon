@@ -46,7 +46,7 @@ override_dh_install:
 	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-session-manager.init debian/ogon-core.ogon-session-manager.init
 	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-rdp-server.init debian/ogon-core.ogon-rdp-server.init
 	cp misc/pam.d/ogon.debian debian/ogon-core.ogon.pam
-	cp misc/config.ini.debian $(DESTDIR)/etc/ogon/config.ini
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/config.ini.debian $(DESTDIR)/etc/ogon/config.ini
 	dh_install --fail-missing
 
 override_dh_strip:
