@@ -57,12 +57,12 @@ override_dh_clean:
 	dh_clean
 
 override_dh_systemd_enable:
-	  dh_systemd_enable -p ogon-core debian/ogon-rdp-server.service
-	  dh_systemd_enable -p ogon-core debian/ogon-session-manager.service
+	  dh_systemd_enable -p ogon-core debian/ogon-core.ogon-rdp-server.service
+	  dh_systemd_enable -p ogon-core debian/ogon-core.ogon-session-manager.service
 
 override_dh_systemd_start:
-	dh_systemd_start -p ogon-core debian/ogon-rdp-server.service
-	dh_systemd_start -p ogon-core debian/ogon-session-manager.service
+	dh_systemd_start -p ogon-core debian/ogon-core.ogon-rdp-server.service
+	dh_systemd_start -p ogon-core debian/ogon-core.ogon-session-manager.service
 
 override_dh_installpam:
 	dh_installpam -p ogon-core --name ogon

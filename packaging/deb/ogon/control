@@ -26,7 +26,7 @@ Build-Depends:
  libssl-dev,
  libxau-dev
 
-Package: libogon-backend0
+Package: libogon-backend1
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -38,14 +38,14 @@ Description: ogon - backend library
  This package contains the backend library that provides
  an interface for communication with the services.
 
-Package: libogon-backend0-dbg
+Package: libogon-backend1-dbg
 Architecture: any
 Priority: extra
 Section: debug
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
- libogon-backend0 (= ${binary:Version})
+ libogon-backend1 (= ${binary:Version})
 Description: ogon - backend library
  ogon Remote Desktop Services are a set of services and
  utilities to create a fully featured RDP server.
@@ -70,7 +70,7 @@ Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends:
  ${misc:Depends},
- libogon-backend0 (= ${binary:Version}),
+ libogon-backend1 (= ${binary:Version}),
  ogon-core (= ${binary:Version}),
  freerdp2-dev,
  winrp2-dev

@@ -7,8 +7,8 @@ tmp
 ogon-core-dbg/
 ogon-core/
 ogon-dev/
-libogon-backend0-dbg/
-libogon-backend0/
+libogon-backend1-dbg/
+libogon-backend1/
 
 *.debhelper
 *.pam
