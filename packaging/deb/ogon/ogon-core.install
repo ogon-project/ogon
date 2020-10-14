@@ -2,4 +2,4 @@ usr/sbin/ogon-*
 usr/bin/ogon-*
 etc/dbus-1/system.d
 etc/ogon
-usr/lib/*/ogon0
+usr/lib/*/ogon1
