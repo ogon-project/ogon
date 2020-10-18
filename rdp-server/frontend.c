@@ -1480,7 +1480,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	peer->autodetect->BandwidthMeasureResults = ogon_bwmgmt_client_bandwidth_measure_results;
 	peer->autodetect->RTTMeasureResponse = ogon_bwmgmt_client_rtt_measure_response;
 
-#ifdef WITH_OPENH264
+#if defined(WITH_OPENH264) || defined(USE_FREERDP_H264)
 	if (!front->rdpgfxForbidden) {
 		if (reqs[INDEX_NO_H264].success) {
 			front->rdpgfxH264Forbidden = reqs[INDEX_NO_H264].v.boolValue;

@@ -241,7 +241,7 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 #endif
 		default:
 			WLog_ERR(TAG, "error, unsupported client color depth: %d", dstBitsPerPixel);
-			goto dst_format_fail;
+			goto fail;
 	}
 
 	encoder->dstBytesPerPixel = (dstBitsPerPixel + 7) / 8;
@@ -256,21 +256,21 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	encoder->scanLine = scanLine;
 
 	if (!(encoder->clientView = (BYTE *)_aligned_malloc(desktopHeight * scanLine, 256))) {
-		goto client_view_fail;
+		goto fail;
 	}
 
 	ogon_encoder_blank_client_view_area(encoder, NULL);
 
 	if (!(encoder->stream = Stream_New(NULL, 4096))) {
-		goto stream_fail;
+		goto fail;
 	}
 
 	if (!ogon_create_encoder_bmp_context(encoder)) {
-		goto bmp_context_fail;
+		goto fail;
 	}
 
 	if (!(encoder->rfx_context = rfx_context_new(TRUE))) {
-		goto rfx_context_fail;
+		goto fail;
 	}
 	encoder->rfx_context->mode = RLGR3;
 	encoder->rfx_context->width = desktopWidth;
@@ -287,15 +287,22 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	if (!(encoder->debug_context = freerdp_bitmap_planar_context_new(
 		PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE, desktopWidth, 8)))
 	{
-		goto debug_context_fail;
+		goto fail;
 	}
 
 	if (!(encoder->debug_buffer = calloc(desktopWidth * 8, 4))) {
-		goto debug_buffer_fail;
+		goto fail;
 	}
 
 	region16_init(&encoder->accumulatedDamage);
 
+#if defined(USE_FREERDP_H264)
+	encoder->fh264_context = h264_context_new(TRUE);
+	if (!encoder->fh264_context) {
+		WLog_DBG(TAG, "failed to initialize the freerdp H264 encoder");
+		/* don't fail, the codec library might not be installed */
+	}
+#endif
 #ifdef WITH_OPENH264
 	if (!(encoder->h264_context = ogon_openh264_context_new(
 		encoder->desktopWidth, encoder->desktopHeight, encoder->scanLine)))
@@ -307,32 +314,14 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 
 #ifdef WITH_ENCODER_STATS
 	if (!ogon_create_encoder_stopwatches(encoder)) {
-		goto stopwatch_fail;
+		goto fail;
 	}
 #endif
 
 	return encoder;
 
-#ifdef WITH_ENCODER_STATS
-stopwatch_fail:
-#ifdef WITH_OPENH264
-	ogon_openh264_context_free(encoder->h264_context);
-#endif
-	free(encoder->debug_buffer);
-#endif
-debug_buffer_fail:
-	freerdp_bitmap_planar_context_free(encoder->debug_context);
-debug_context_fail:
-	rfx_context_free(encoder->rfx_context);
-rfx_context_fail:
-	ogon_delete_encoder_bmp_context(encoder);
-bmp_context_fail:
-	Stream_Free(encoder->stream, TRUE);
-stream_fail:
-	_aligned_free(encoder->clientView);
-client_view_fail:
-dst_format_fail:
-	free(encoder);
+fail:
+	ogon_bitmap_encoder_free(encoder);
 out:
 	WLog_ERR(TAG, "encoder creation failed");
 	return NULL;
@@ -355,6 +344,9 @@ void ogon_bitmap_encoder_free(ogon_bitmap_encoder *encoder) {
 	free(encoder->debug_buffer);
 	freerdp_bitmap_planar_context_free(encoder->debug_context);
 
+#if defined(USE_FREERDP_H264)
+	h264_context_free(encoder->fh264_context);
+#endif
 #ifdef WITH_OPENH264
 	ogon_openh264_context_free(encoder->h264_context);
 #endif
