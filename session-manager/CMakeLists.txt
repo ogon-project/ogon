@@ -15,7 +15,6 @@ else()
 endif()
 
 # required for latest versions of boost
-add_definitions("-DFORCE_BOOST_SMART_PTR")
 include_directories(SYSTEM ${THRIFT_INCLUDE_DIR})
 set(THRIFT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen/otsapi)
 file(MAKE_DIRECTORY ${THRIFT_OUTPUT_DIR})
