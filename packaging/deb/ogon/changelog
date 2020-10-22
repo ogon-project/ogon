@@ -1,3 +1,9 @@
+ogon (1.0.0) UNRELEASED; urgency=low
+
+  * Updated to compile on debian bullseye.
+
+ -- ogon packaging team <ogon+package@thincast.com>  Wed, 14 Oct 2020 23:15:58 +0200
+
 ogon (0.0.1) UNRELEASED; urgency=low
 
   * Initial release.

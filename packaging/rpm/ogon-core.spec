@@ -79,14 +79,14 @@ Desktop Client.
 This package contains the ogon Remote Desktop Protocol (RDP)
 server and the ogon Session Manager.
 
-%package -n libogon-backend0
+%package -n libogon-backend1
 Summary: Remote Desktop Services - backend library
 %if !%{defined fedora}
 Group:          Development/Libraries/C and C++
 %else
 Group:          Development/Libraries
 %endif
-%description -n libogon-backend0
+%description -n libogon-backend1
 ogon Remote Desktop Services provide graphical remote access to
 desktop sessions and applications using the Remote Desktop Protocol
 (RDP) and supports most modern RDP protocol extensions, bitmap
@@ -107,7 +107,7 @@ This package contains the ogon backend library
 %package -n ogon-devel
 Summary: Remote Desktop Services - development support files
 Group:   Development/Productivity/Networking/Other
-Requires: libogon-backend0 = %{version}
+Requires: libogon-backend1 = %{version}
 Requires: freerdp2-devel
 %if !%{defined fedora}
 Group:          Development/Libraries/C and C++
@@ -192,7 +192,7 @@ ln -s /sbin/service %{buildroot}%{_sbindir}/ogon-rdp-server
 
 %files
 %defattr(-,root,root)
-%{_libdir}/ogon0
+%{_libdir}/ogon1
 %{_sbindir}/ogon-backend-launcher
 %{_sbindir}/ogon-get-openh264-codec
 %{_sbindir}/ogon-rdp-server
@@ -213,18 +213,18 @@ ln -s /sbin/service %{buildroot}%{_sbindir}/ogon-rdp-server
 %files -n ogon-devel
 %defattr(-,root,root)
 %{_libdir}/libogon-backend.so
-%{_includedir}/ogon0
-%{_libdir}/cmake/ogon-backend0
-%{_libdir}/cmake/ogon0
-%{_libdir}/pkgconfig/ogon-backend0.pc
-%{_libdir}/pkgconfig/ogon0.pc
-%{_datarootdir}/ogon/0
+%{_includedir}/ogon1
+%{_libdir}/cmake/ogon-backend1
+%{_libdir}/cmake/ogon1
+%{_libdir}/pkgconfig/ogon-backend1.pc
+%{_libdir}/pkgconfig/ogon1.pc
+%{_datarootdir}/ogon/1
 %dir %{_datarootdir}/ogon
 
-%files -n libogon-backend0
+%files -n libogon-backend1
 %defattr(-,root,root)
-%{_libdir}/libogon-backend.so.0
-%{_libdir}/libogon-backend.so.0.0.1
+%{_libdir}/libogon-backend.so.1
+%{_libdir}/libogon-backend.so.1.0.0
 
 %if %{defined suse_version}
 %pre -n ogon-core
@@ -259,7 +259,7 @@ ln -s /sbin/service %{buildroot}%{_sbindir}/ogon-rdp-server
 %systemd_postun_with_restart ogon-session-manager.service
 %endif
 
-%post -n libogon-backend0 -p /sbin/ldconfig
-%postun -n libogon-backend0 -p /sbin/ldconfig
+%post -n libogon-backend1 -p /sbin/ldconfig
+%postun -n libogon-backend1 -p /sbin/ldconfig
 
 %changelog

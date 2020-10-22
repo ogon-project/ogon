@@ -26,7 +26,7 @@
 
 #include <string>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <winpr/wtypes.h>
 
@@ -49,7 +49,7 @@ namespace ogon { namespace sessionmanager { namespace permission {
 		DWORD	mPermission;
 	};
 
-	typedef boost::shared_ptr<LogonPermission> LogonPermissionPtr;
+	typedef std::shared_ptr<LogonPermission> LogonPermissionPtr;
 
 } /*permission*/ } /*sessionmanager*/ } /*ogon*/
 

@@ -59,7 +59,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		uint32_t mResult;
 	};
 
-	typedef boost::shared_ptr<TaskAuthenticateUser> TaskAuthenticateUserPtr;
+	typedef std::shared_ptr<TaskAuthenticateUser> TaskAuthenticateUserPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

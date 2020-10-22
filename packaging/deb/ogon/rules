@@ -41,17 +41,17 @@ override_dh_auto_configure:
 	dh_auto_configure -- $(DEB_CMAKE_EXTRA_FLAGS)
 
 override_dh_install:
-	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-session-manager.service debian/ogon-core.ogon-session-manager.service
-	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-rdp-server.service debian/ogon-core.ogon-rdp-server.service
-	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-session-manager.init debian/ogon-core.ogon-session-manager.init
-	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-rdp-server.init debian/ogon-core.ogon-rdp-server.init
-	cp misc/pam.d/ogon.debian debian/ogon-core.ogon.pam
-	cp misc/config.ini.debian $(DESTDIR)/etc/ogon/config.ini
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-session-manager.service debian/ogon-session-manager.service
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-rdp-server.service debian/ogon-rdp-server.service
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-session-manager.init debian/ogon-session-manager.init
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/ogon-rdp-server.init debian/ogon-rdp-server.init
+	cp misc/pam.d/ogon.debian debian/ogon.pam
+	cp obj-$(DEB_HOST_GNU_TYPE)/misc/config.ini.debian $(DESTDIR)/etc/ogon/config.ini
 	dh_install --fail-missing
 
 override_dh_strip:
 	dh_strip -pogon-core --dbg-package=ogon-core-dbg
-	dh_strip -plibogon-backend0 --dbg-package=libogon-backend0-dbg
+	dh_strip -plibogon-backend1 --dbg-package=libogon-backend1-dbg
 
 override_dh_clean:
 	dh_clean

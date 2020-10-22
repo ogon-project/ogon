@@ -43,7 +43,7 @@ namespace ogon { namespace sessionmanager { namespace otsapi {
 		UINT32 mTimeOut;
 	};
 
-	typedef boost::shared_ptr<TaskStopRemoteControl> TaskStopRemoteControlPtr;
+	typedef std::shared_ptr<TaskStopRemoteControl> TaskStopRemoteControlPtr;
 
 } /*otsapi*/ } /*sessionmanager*/ } /*ogon*/
 

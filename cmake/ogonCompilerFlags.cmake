@@ -20,16 +20,21 @@ if(NOT EXPORT_ALL_SYMBOLS)
 	CheckCXXFlag("-fvisibility=hidden")
 endif()
 
-set(WARNING_FLAGS "-Waddress -Warray-bounds -Wchar-subscripts -Wformat -Wreturn-type -Wunused -Wunused-function  -Wunused-label -Wunused-parameter -Wunused-value  -Wunused-variable -Wunreachable-code -Wmissing-field-initializers -Wmissing-format-attribute -Wmissing-braces -Wnonnull -Wvolatile-register-var -Wstrict-aliasing -Wclobbered -Wempty-body -Wignored-qualifiers -Wmissing-parameter-type -Woverride-init -Wsign-compare -Wtype-limits -Wuninitialized -Wcast-qual -Wformat-security -Wimplicit-function-declaration -Wimplicit-int -Wmissing-noreturn -Wredundant-decls -Winline")
+set(C_WARNING_FLAGS "-Waddress -Warray-bounds -Wchar-subscripts -Wformat -Wreturn-type -Wunused -Wunused-function  -Wunused-label -Wunused-parameter -Wunused-value  -Wunused-variable -Wunreachable-code -Wmissing-field-initializers -Wmissing-format-attribute -Wmissing-braces -Wnonnull -Wvolatile-register-var -Wstrict-aliasing -Wclobbered -Wempty-body -Wignored-qualifiers -Wmissing-parameter-type -Woverride-init -Wsign-compare -Wtype-limits -Wuninitialized -Wcast-qual -Wformat-security -Wimplicit-function-declaration -Wimplicit-int -Wmissing-noreturn -Wredundant-decls -Winline")
+set(CXX_WARNING_FLAGS "-Waddress -Warray-bounds -Wchar-subscripts -Wformat -Wreturn-type -Wunused -Wunused-function  -Wunused-label -Wunused-parameter -Wunused-value  -Wunused-variable -Wunreachable-code -Wmissing-field-initializers -Wmissing-format-attribute -Wmissing-braces -Wnonnull -Wvolatile-register-var -Wstrict-aliasing -Wclobbered -Wempty-body -Wignored-qualifiers -Wsign-compare -Wtype-limits -Wuninitialized -Wcast-qual -Wformat-security -Wmissing-noreturn -Wredundant-decls -Winline")
 #disabled
 #-Wvariadic-macros - to much noise because of wlog ;(
 #-Wshadow thrift/protobuf generated files generate a log of noise
 #-Wunknown-pragmas - use clang pragmas where required to remove warnings where
 #                    where gcc creates warnings
-string(REPLACE " " ";" WARNING_FLAGS ${WARNING_FLAGS})
+string(REPLACE " " ";" C_WARNING_FLAGS ${C_WARNING_FLAGS})
+string(REPLACE " " ";" CXX_WARNING_FLAGS ${CXX_WARNING_FLAGS})
 
-foreach(FLAG ${WARNING_FLAGS})
+foreach(FLAG ${C_WARNING_FLAGS})
 	CheckCFlag(${FLAG})
+endforeach()
+
+foreach(FLAG ${CXX_WARNING_FLAGS})
 	CheckCXXFlag(${FLAG})
 endforeach()
 

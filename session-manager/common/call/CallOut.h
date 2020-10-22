@@ -50,7 +50,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		HANDLE mAnswer;
 	};
 
-	typedef boost::shared_ptr<CallOut> CallOutPtr;
+	typedef std::shared_ptr<CallOut> CallOutPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

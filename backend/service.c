@@ -327,7 +327,7 @@ BOOL ogon_check_pid_and_uid(int fd, BOOL checkUid, uid_t targetUid, BOOL checkPi
 
 BOOL ogon_check_peer_credentials(int fd) {
 	pid_t targetPid;
-	uid_t targetUid;
+	uid_t targetUid = 0;
 	char *endPtr;
 	BOOL checkUid = FALSE;
 	BOOL checkPid = FALSE;

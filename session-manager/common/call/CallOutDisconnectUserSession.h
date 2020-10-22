@@ -50,7 +50,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool mDisconnected;
 	};
 
-	typedef boost::shared_ptr<CallOutDisconnectUserSession> CallOutDisconnectUserSessionPtr;
+	typedef std::shared_ptr<CallOutDisconnectUserSession> CallOutDisconnectUserSessionPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

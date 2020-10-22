@@ -649,8 +649,8 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 	return TRUE;
 }
 
-static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel, const BYTE* data, int size, int flags, int totalSize)
-{
+static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
+		const BYTE *data, size_t size, UINT32 flags, size_t totalSize) {
 	UINT32 buffer[2];
 	wStream *buffer_stream;
 	BOOL ret = TRUE;
@@ -689,7 +689,7 @@ static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
 
 		Stream_Free(buffer_stream, FALSE);
 
-		if (!ringbuffer_write(&channel->pipe_xmit_buffer, data, (size_t) size)) {
+		if (!ringbuffer_write(&channel->pipe_xmit_buffer, data, size)) {
 			WLog_ERR(TAG, "unable to write packet payload in xmit buffer");
 			return FALSE;
 		}
@@ -702,14 +702,14 @@ static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
 		Stream_SetPosition(channel->receive_data, 0);
 	}
 
-	if (!Stream_EnsureRemainingCapacity(channel->receive_data, (size_t) size)) {
+	if (!Stream_EnsureRemainingCapacity(channel->receive_data, size)) {
 		WLog_ERR(TAG, "Stream re-allocation failed");
 		return FALSE;
 	}
-	Stream_Write(channel->receive_data, data, (size_t) size);
+	Stream_Write(channel->receive_data, data, size);
 
 	if (flags & CHANNEL_FLAG_LAST) {
-		if (Stream_GetPosition(channel->receive_data) != (size_t) totalSize)	{
+		if (Stream_GetPosition(channel->receive_data) != totalSize) {
 			WLog_ERR(TAG, "packet badly fragmented");
 			return FALSE;
 		}
@@ -718,7 +718,8 @@ static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
 			ret = wts_read_drdynvc_pdu(channel, channel->receive_data);
 		} else {
 			flush = TRUE;
-			if (!ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Buffer(channel->receive_data), (size_t) totalSize)) {
+			if (!ringbuffer_write(&channel->pipe_xmit_buffer,
+						Stream_Buffer(channel->receive_data), totalSize)) {
 				WLog_ERR(TAG, "unable to write packet payload in xmit buffer");
 				return FALSE;
 			}
@@ -733,8 +734,9 @@ out_flush:
 	return ret;
 }
 
-static int ogon_receiveFrontendChannelData(freerdp_peer *client, UINT16 channelId, const BYTE* data, int size, int flags, int totalSize)
-{
+static int ogon_receiveFrontendChannelData(freerdp_peer *client,
+		UINT16 channelId, const BYTE *data, size_t size, UINT32 flags,
+		size_t totalSize) {
 	registered_virtual_channel *channel;
 
 	channel = (registered_virtual_channel *)WTSChannelGetHandleById(client, channelId);

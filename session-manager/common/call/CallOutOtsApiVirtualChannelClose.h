@@ -55,7 +55,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool mSuccess;
 	};
 
-	typedef boost::shared_ptr<CallOutOtsApiVirtualChannelClose> CallOutOtsApiVirtualChannelClosePtr;
+	typedef std::shared_ptr<CallOutOtsApiVirtualChannelClose> CallOutOtsApiVirtualChannelClosePtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

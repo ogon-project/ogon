@@ -24,7 +24,7 @@
 #ifndef _OGON_SMGR_TASK_H_
 #define _OGON_SMGR_TASK_H_
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <winpr/synch.h>
 
 namespace ogon { namespace sessionmanager { namespace task {
@@ -39,7 +39,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 		virtual void abortTask(){};
 	};
 
-	typedef boost::shared_ptr<Task> TaskPtr;
+	typedef std::shared_ptr<Task> TaskPtr;
 
 } /*task*/ } /*sessionmanager*/ } /*ogon*/
 

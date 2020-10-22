@@ -356,7 +356,7 @@ namespace ogon { namespace pbrpc {
 			return CLIENT_ERROR;
 		}
 
-		callNS::CallInPtr createdCallIn = boost::dynamic_pointer_cast<callNS::CallIn>(createdCall);
+		callNS::CallInPtr createdCallIn = std::dynamic_pointer_cast<callNS::CallIn>(createdCall);
 		if (createdCallIn) {
 			// we got an CallIn object ... so handle it
 			createdCallIn->setEncodedRequest(mpbRPC.payload());
@@ -382,7 +382,7 @@ namespace ogon { namespace pbrpc {
 	int RpcEngine::send(ogon::sessionmanager::call::CallPtr call) {
 		std::string serialized;
 
-		callNS::CallInPtr callIn = boost::dynamic_pointer_cast<callNS::CallIn>(call);
+		callNS::CallInPtr callIn = std::dynamic_pointer_cast<callNS::CallIn>(call);
 
 		if (callIn) {
 			// this is a CallIn
@@ -414,7 +414,7 @@ namespace ogon { namespace pbrpc {
 			return sendInternal(serialized);
 		}
 
-		callNS::CallOutPtr callOut = boost::dynamic_pointer_cast<callNS::CallOut>(call);
+		callNS::CallOutPtr callOut = std::dynamic_pointer_cast<callNS::CallOut>(call);
 		if (callOut) {
 			// this is a CallOut
 			// create answer
@@ -549,7 +549,7 @@ namespace ogon { namespace pbrpc {
 	int RpcEngine::processOutgoingCall(ogon::sessionmanager::call::CallPtr call) {
 		int retVal;
 
-		callNS::CallOutPtr callOut = boost::dynamic_pointer_cast<callNS::CallOut>(call);
+		callNS::CallOutPtr callOut = std::dynamic_pointer_cast<callNS::CallOut>(call);
 		if (callOut) {
 			// this is a CallOut
 			callOut->encodeRequest();
@@ -566,7 +566,7 @@ namespace ogon { namespace pbrpc {
 
 		}
 
-		callNS::CallInPtr callIn = boost::dynamic_pointer_cast<callNS::CallIn>(call);
+		callNS::CallInPtr callIn = std::dynamic_pointer_cast<callNS::CallIn>(call);
 		if (callIn) {
 			// this is a async in call ... sending answer
 			callIn->encodeResponse();

@@ -37,7 +37,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		virtual void run();
 	};
 
-	typedef boost::shared_ptr<TaskShutdown> TaskShutdownPtr;
+	typedef std::shared_ptr<TaskShutdown> TaskShutdownPtr;
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/
 

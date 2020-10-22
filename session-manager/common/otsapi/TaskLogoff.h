@@ -47,7 +47,7 @@ namespace ogon { namespace sessionmanager { namespace otsapi {
 		bool mLoggedoff;
 	};
 
-	typedef boost::shared_ptr<TaskLogoff> TaskLogoffPtr;
+	typedef std::shared_ptr<TaskLogoff> TaskLogoffPtr;
 
 } /*otsapi*/ } /*sessionmanager*/ } /*ogon*/
 

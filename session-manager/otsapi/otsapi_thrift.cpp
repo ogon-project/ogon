@@ -79,8 +79,8 @@ typedef std::map<HANDLE , THandleInfo> THandleInfoMap;
 typedef std::pair<HANDLE, THandleInfo> THandleInfoPair;
 
 typedef struct {
-	boost::shared_ptr<TTransport> transport;
-	boost::shared_ptr<ogon::otsapiClient> client;
+	std::shared_ptr<TTransport> transport;
+	std::shared_ptr<ogon::otsapiClient> client;
 	std::string authToken;
 	bool authTokenScanned;
 	THandleInfoMap handleInfoMap;
@@ -119,16 +119,16 @@ static APIInitMgr gInitMgr;
 static BOOL connectClient(TSessionInfo *con, const std::string &host, DWORD port) {
 	try {
 		TSSLSocketFactory::setManualOpenSSLInitialization(true);
-		boost::shared_ptr<TSSLSocketFactory> factory(new OgonSSLSocketFactory());
+		std::shared_ptr<TSSLSocketFactory> factory(new OgonSSLSocketFactory());
 		factory->authenticate(false);
 
-		boost::shared_ptr<TSSLSocket> socket = factory->createSocket(host, port);
+		std::shared_ptr<TSSLSocket> socket = factory->createSocket(host, port);
 		socket->setConnTimeout(5 * 1000);
 
-		boost::shared_ptr<TTransport> transport(new TFramedTransport(socket));
-		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+		std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
+		std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 
-		boost::shared_ptr<ogon::otsapiClient> client(new ogon::otsapiClient(protocol));
+		std::shared_ptr<ogon::otsapiClient> client(new ogon::otsapiClient(protocol));
 
 		con->client = client;
 		con->transport = transport;

@@ -28,6 +28,7 @@
 #include "CallIn.h"
 #include <SBP.pb.h>
 #include <string>
+#include <memory>
 #include <winpr/handle.h>
 #include <appcontext/ApplicationContext.h>
 #include <session/TaskCallIn.h>
@@ -51,9 +52,9 @@ namespace ogon { namespace sessionmanager { namespace call {
 		return mEncodedResponse;
 	}
 
-	boost::shared_ptr<CallIn> CallIn::shared_from_this() {
+	std::shared_ptr<CallIn> CallIn::shared_from_this() {
 		CallPtr call = Call::shared_from_this();
-		return boost::dynamic_pointer_cast<CallIn>(call);
+		return std::dynamic_pointer_cast<CallIn>(call);
 	}
 
 	bool CallIn::putInSessionExecutor_conId(UINT32 connectionId) {

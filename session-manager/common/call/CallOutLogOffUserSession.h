@@ -50,7 +50,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool mLoggedOff;
 	};
 
-	typedef boost::shared_ptr<CallOutLogOffUserSession> CallOutLogOffUserSessionPtr;
+	typedef std::shared_ptr<CallOutLogOffUserSession> CallOutLogOffUserSessionPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

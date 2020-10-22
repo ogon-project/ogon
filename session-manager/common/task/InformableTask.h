@@ -62,7 +62,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 		HANDLE mhDone;
 	};
 
-	typedef boost::shared_ptr<InformableTask> InformableTaskPtr;
+	typedef std::shared_ptr<InformableTask> InformableTaskPtr;
 
 } /*task*/ } /*sessionmanager*/ } /*ogon*/
 

@@ -135,7 +135,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 				std::list<TaskPtr>::const_iterator iter;
 				for(iter = currentTasks.begin(); iter != currentTasks.end(); ++iter) {
 					TaskPtr currentTask = *iter;
-					ThreadTaskPtr threadTask = boost::dynamic_pointer_cast<ThreadTask>(currentTask);
+					ThreadTaskPtr threadTask = std::dynamic_pointer_cast<ThreadTask>(currentTask);
 					if (threadTask) {
 						// start Task as thread
 						threadTask->setHandles(mhStopThreads, mhTaskThreadStarted);

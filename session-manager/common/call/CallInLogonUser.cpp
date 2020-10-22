@@ -276,9 +276,9 @@ namespace ogon { namespace sessionmanager { namespace call {
 		return doStuff();
 	}
 
-	boost::shared_ptr<CallInLogonUser> CallInLogonUser::shared_from_this() {
+	std::shared_ptr<CallInLogonUser> CallInLogonUser::shared_from_this() {
 		CallPtr call = Call::shared_from_this();
-		return boost::dynamic_pointer_cast<CallInLogonUser>(call);
+		return std::dynamic_pointer_cast<CallInLogonUser>(call);
 	}
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/

@@ -61,7 +61,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		bool mSuccess;
 	};
 
-	typedef boost::shared_ptr<CallOutSwitchTo> CallOutSwitchToPtr;
+	typedef std::shared_ptr<CallOutSwitchTo> CallOutSwitchToPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 

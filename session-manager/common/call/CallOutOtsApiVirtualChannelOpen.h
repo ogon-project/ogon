@@ -59,7 +59,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 		DWORD mFlags;
 	};
 
-	typedef boost::shared_ptr<CallOutOtsApiVirtualChannelOpen> CallOutOtsApiVirtualChannelOpenPtr;
+	typedef std::shared_ptr<CallOutOtsApiVirtualChannelOpen> CallOutOtsApiVirtualChannelOpenPtr;
 
 } /*call*/ } /*sessionmanager*/ } /*ogon*/
 
