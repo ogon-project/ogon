@@ -130,6 +130,21 @@ The response:
 
 * success - true if value was found, otherwise false, also on error.
 
+### PropertyBulk
+
+(since protocol version 1.1)
+This message is sent to retrieve a set of properties from the Session Manager.
+
+The message contains:
+
+* connectionId - the connection identifier.
+* properties - an array of PropertyReq, each one containing the path and the type of the property
+
+The response:
+
+* results - an array of PropertyValue in the same order than the request. Each PropertyValue contains if
+the property was successfully found and the retrieved value
+
 
 ## Messages from the ogon Session Manager to the ogon RDP server.
 
@@ -286,6 +301,8 @@ MessageTypes so far:
 The response:
 
 * response - The returncodes used are taken from the Windows [MessageBox] return code definition.
+
+
 
 [Google protocol buffers]:https://developers.google.com/protocol-buffers/
 [MessageBox]:https://msdn.microsoft.com/en-us/library/ms645505%28v=vs.85%29.aspx

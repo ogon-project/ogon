@@ -130,34 +130,24 @@ out:
 	return key;
 }
 
-static int ogon_generate_certificate(ogon_connection *conn) {
-	char* cert_file = NULL;
-	char* key_file = NULL;
+static int ogon_generate_certificate(ogon_connection *conn, const char *cert_file, const char *key_file) {
 	rdpSettings *settings = conn->context.settings;
 
-	if (PBRPC_SUCCESS != ogon_icp_get_property_string(conn->id, "ssl.certificate", &cert_file)) {
-		return -1;
-	}
-
-	if (PBRPC_SUCCESS != ogon_icp_get_property_string(conn->id, "ssl.key", &key_file)) {
-		goto out_fail;
-	}
-
-	settings->CertificateFile = cert_file;
-	settings->PrivateKeyFile = key_file;
-
+	settings->CertificateFile = strdup(cert_file);
+	settings->PrivateKeyFile = strdup(key_file);
 	settings->RdpKeyFile = strdup(settings->PrivateKeyFile);
-	if (!settings->RdpKeyFile) {
+
+	if (!settings->CertificateFile || !settings->PrivateKeyFile || !settings->RdpKeyFile) {
 		goto out_fail;
 	}
 
 	return 0;
 
 out_fail:
-	free(settings->PrivateKeyFile);
-	settings->PrivateKeyFile = NULL;
 	free(settings->CertificateFile);
 	settings->CertificateFile = NULL;
+	free(settings->PrivateKeyFile);
+	settings->PrivateKeyFile = NULL;
 	return -1;
 }
 
@@ -1425,46 +1415,86 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 
 	freerdp_peer *peer = conn->context.peer;
-	BOOL boolValue = FALSE;
-	INT32 intValue = 0;
+	int res;
 
-	if (ogon_generate_certificate(conn) < 0)
+	PropertyItem reqs[] = {
+	/*0*/	PROPERTY_ITEM_INIT_STRING("ssl.certificate"),
+	/*1*/	PROPERTY_ITEM_INIT_STRING("ssl.key"),
+	/*2*/	PROPERTY_ITEM_INIT_BOOL("ogon.forceWeakRdpKey", FALSE),
+	/*3*/	PROPERTY_ITEM_INIT_BOOL("ogon.showDebugInfo", FALSE),
+	/*4*/	PROPERTY_ITEM_INIT_BOOL("ogon.disableGraphicsPipeline", FALSE),
+	/*5*/	PROPERTY_ITEM_INIT_INT("ogon.bitrate", 0),
+	/*6*/	PROPERTY_ITEM_INIT_BOOL("ogon.disableGraphicsPipelineH264", FALSE),
+	/*7*/	PROPERTY_ITEM_INIT_BOOL("ogon.enableFullAVC444", FALSE),
+	/*8*/   PROPERTY_ITEM_INIT_BOOL("ogon.restrictAVC444", FALSE),
+		PROPERTY_ITEM_INIT_INT(NULL, 0), /* last one */
+	};
+
+	enum {
+		INDEX_CERT = 0,
+		INDEX_KEY,
+		INDEX_FORCE_WEAK,
+		INDEX_SHOW_DEBUG,
+		INDEX_NO_EGFX,
+		INDEX_BITRATE,
+		INDEX_NO_H264,
+		INDEX_AVC444,
+		INDEX_RESTRICT_AVC444
+	};
+
+	res = ogon_icp_get_property_bulk(conn->id, reqs);
+	if (res != PBRPC_SUCCESS) {
+		WLog_ERR(TAG, "error retrieving properties by the bulk method (res=%d)", res);
+		ogon_PropertyItem_free(reqs);
 		return FALSE;
+	}
 
-	if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.forceWeakRdpKey", &boolValue)) {
-		if (boolValue) {
+	if (!reqs[INDEX_CERT].success) {
+		WLog_ERR(TAG, "unable to retrieve certificate file path (ssl.certificate path)");
+		ogon_PropertyItem_free(reqs);
+		return FALSE;
+	}
+
+	if (!reqs[INDEX_KEY].success) {
+		WLog_ERR(TAG, "unable to retrieve key file path (ssl.key)");
+		ogon_PropertyItem_free(reqs);
+		return FALSE;
+	}
+
+	if (ogon_generate_certificate(conn, reqs[INDEX_CERT].v.stringValue, reqs[INDEX_KEY].v.stringValue) < 0) {
+		ogon_PropertyItem_free(reqs);
+		return FALSE;
+	}
+
+	if (reqs[INDEX_FORCE_WEAK].success && reqs[INDEX_FORCE_WEAK].v.boolValue) {
 			free(settings->RdpKeyFile);
 			settings->RdpKeyFile = NULL;
 			settings->RdpServerRsaKey = ogon_generate_weak_rsa_key();
-		}
 	}
 
-	if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.showDebugInfo", &boolValue)) {
-		front->showDebugInfo = boolValue;
-	}
+	front->showDebugInfo = reqs[INDEX_SHOW_DEBUG].v.boolValue;
+	front->rdpgfxForbidden = reqs[INDEX_NO_EGFX].v.boolValue;
 
-	if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.disableGraphicsPipeline", &boolValue)) {
-		front->rdpgfxForbidden = boolValue;
-	}
+
 	peer->settings->NetworkAutoDetect = TRUE;
 	peer->autodetect->BandwidthMeasureResults = ogon_bwmgmt_client_bandwidth_measure_results;
 	peer->autodetect->RTTMeasureResponse = ogon_bwmgmt_client_rtt_measure_response;
 
 #ifdef WITH_OPENH264
 	if (!front->rdpgfxForbidden) {
-		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.disableGraphicsPipelineH264", &boolValue)) {
-			front->rdpgfxH264Forbidden = boolValue;
+		if (reqs[INDEX_NO_H264].success) {
+			front->rdpgfxH264Forbidden = reqs[INDEX_NO_H264].v.boolValue;
 		}
-		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.enableFullAVC444", &boolValue)) {
-			front->rdpgfxH264EnableFullAVC444 = boolValue;
+		if (reqs[INDEX_AVC444].success) {
+			front->rdpgfxH264EnableFullAVC444 = reqs[INDEX_AVC444].v.boolValue;
 		}
 	}
 #else
 	front->rdpgfxH264Forbidden = TRUE;
 #endif
 
-	if (PBRPC_SUCCESS == ogon_icp_get_property_number(conn->id, "ogon.bitrate", &intValue)) {
-		bwmgmt->configured_bitrate = (UINT32)intValue;
+	if (reqs[INDEX_BITRATE].success) { /* "ogon.bitrate" */
+		bwmgmt->configured_bitrate = (UINT32)reqs[INDEX_BITRATE].v.intValue;
 	}
 	if (bwmgmt->configured_bitrate) {
 		WLog_INFO(TAG, "Using fixed encoder bitrate (applies only for h264 for now) of %"PRIu32"", bwmgmt->configured_bitrate);
@@ -1472,6 +1502,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 		WLog_INFO(TAG, "Using bandwidth management to adjust encoder bitrate (applies only for h264 for now)");
 	}
 
+	ogon_PropertyItem_free(reqs);
 
 	peer->Initialize(peer);
 
@@ -1515,11 +1546,13 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 		return FALSE;
 	}
 	front->vcm = openVirtualChannelManager(conn);
-	if (!front->vcm)
+	if (!front->vcm) {
 		return FALSE;
+	}
 
-	if (!(front->rdpgfx = rdpgfx_server_context_new(front->vcm)))
+	if (!(front->rdpgfx = rdpgfx_server_context_new(front->vcm))) {
 		return FALSE;
+	}
 
 	front->rdpgfx->data = conn;
 	front->rdpgfx->OpenResult = ogon_rdpgfx_open_result;
@@ -1528,14 +1561,15 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	front->rdpgfx->CacheImportOffer = ogon_rdpgfx_cache_import_offer;
 
 	if (!front->rdpgfxForbidden) {
-		if (PBRPC_SUCCESS == ogon_icp_get_property_bool(conn->id, "ogon.restrictAVC444", &boolValue)) {
-			front->rdpgfx->avc444Restricted = boolValue;
+		if (reqs[INDEX_RESTRICT_AVC444].success) {
+			front->rdpgfx->avc444Restricted = reqs[INDEX_RESTRICT_AVC444].v.boolValue;
 		}
 	}
 
 	conn->frontConnections = LinkedList_New();
-	if (!conn->frontConnections)
+	if (!conn->frontConnections) {
 		return FALSE;
+	}
 
 	ogon_bwmgmt_init_buckets(conn, bwmgmt->configured_bitrate ? bwmgmt->configured_bitrate : 0);
 	return LinkedList_AddFirst(conn->frontConnections, conn);

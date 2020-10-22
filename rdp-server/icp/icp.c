@@ -49,7 +49,7 @@ static pbRPCMethod icpMethods[] =
 	{ 0, NULL }
 };
 
-int ogon_icp_start(HANDLE shutdown)
+int ogon_icp_start(HANDLE shutdown, UINT32 vmajor, UINT32 vminor)
 {
 	icpContext = malloc(sizeof(struct icp_context));
 	if (!icpContext)
@@ -64,7 +64,7 @@ int ogon_icp_start(HANDLE shutdown)
 		goto out_free_tpContext;
 
 	pbrpc_register_methods(icpContext->pbcontext, icpMethods);
-	pbrpc_server_start(icpContext->pbcontext);
+	pbrpc_server_start(icpContext->pbcontext, vmajor, vminor);
 	return 0;
 
 out_free_tpContext:
@@ -86,6 +86,18 @@ int ogon_icp_shutdown()
 void* ogon_icp_get_context()
 {
 	return icpContext->pbcontext;
+}
+
+BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor) {
+	pbRPCContext* pbrpc = (pbRPCContext *)context;
+
+	if (!context || !vmajor || !vminor || !pbrpc->isConnected) {
+		return FALSE;
+	}
+
+	*vmajor = pbrpc->remoteVersionMajor;
+	*vminor = pbrpc->remoteVersionMinor;
+	return TRUE;
 }
 
 void ogon_icp_set_disconnect_cb(disconnected_callback cb) {

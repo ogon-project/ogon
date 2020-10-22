@@ -68,6 +68,7 @@ set(ICP_SOURCES
 	common/call/CallInPropertyBool.cpp
 	common/call/CallInPropertyNumber.cpp
 	common/call/CallInPropertyString.cpp
+	common/call/CallInPropertyBulk.cpp
 	common/call/CallOutDisconnectUserSession.cpp
 	common/call/CallInSBPVersion.cpp
 	common/call/TaskCallInLogonUser.cpp
