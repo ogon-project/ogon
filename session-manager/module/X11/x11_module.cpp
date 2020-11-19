@@ -28,6 +28,9 @@
 #include "config.h"
 #endif
 
+#include <sstream>
+#include <string>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,19 +40,20 @@
 #include <errno.h>
 #endif
 
-#include <winpr/pipe.h>
-#include <winpr/path.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/wlog.h>
-#include <winpr/environment.h>
-#include <winpr/sysinfo.h>
-#include <ogon/backend.h>
-#include <list>
 #include <algorithm>
 #include <grp.h>
+#include <list>
+#include <ogon/backend.h>
 #include <pwd.h>
 #include <sys/poll.h>
+#include <winpr/environment.h>
+#include <winpr/path.h>
+#include <winpr/pipe.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include "x11_module.h"
 #include "../common/module_helper.h"
@@ -86,7 +90,7 @@ struct rds_module_x11 {
 	PROCESS_INFORMATION WMProcessInformation;
 	STARTUPINFO VCStartupInfo;
 	PROCESS_INFORMATION VCProcessInformation;
-	char *wmStop;
+	std::string wmStop;
 
 	unsigned int displayNum;
 };
@@ -94,7 +98,8 @@ struct rds_module_x11 {
 typedef struct rds_module_x11 rdsModuleX11;
 
 /* user, groups, environment, cwd, pipe , sessionId*/
-BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirectory, char *xauthorityfile) {
+BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
+		const char *lpCurrentDirectory, const char *xauthorityfile) {
 	BOOL ret = FALSE;
 	char buf[BUF_SIZE];
 	pid_t pid = 0;
@@ -107,7 +112,6 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 	BOOL restoreSigMask = FALSE;
 	int comm_fds[2];
 	struct pollfd pfd;
-	char lpCommandLine[BUF_SIZE];
 	long tmp;
 	unsigned int display_offset;
 	long xres, yres, colordepth;
@@ -160,26 +164,26 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 		return FALSE;
 	}
 
+	std::stringstream ss;
 	if (haveFontPath) {
-		sprintf_s(lpCommandLine, BUF_SIZE,
-				  "%s -displayfd %d:%u -geometry %ldx%ld -depth %d -dpi %u -fp %s",
-				  X11_BACKEND_NAME, comm_fds[1], display_offset, xres, yres, 24, dpi,
-				  fontPath);
+		ss << X11_BACKEND_NAME << " -displayfd " << comm_fds[1] << ":"
+		   << display_offset << " -geometry " << xres << "x" << yres
+		   << " -depth " << 24 << " -dpi " << dpi << " -fp " << fontPath;
 	} else {
-		sprintf_s(lpCommandLine, BUF_SIZE, "%s -displayfd %d:%u -geometry %ldx%ld -depth %d -dpi %u",
-				  X11_BACKEND_NAME, comm_fds[1], display_offset, xres, yres, 24, dpi);
+		ss << X11_BACKEND_NAME << " -displayfd " << comm_fds[1] << ":"
+		   << display_offset << " -geometry " << xres << "x" << yres
+		   << " -depth " << 24 << " -dpi " << dpi;
 	}
 
 	if (xauthorityfile) {
-		strncat(lpCommandLine, " -auth ", BUF_SIZE - strlen(lpCommandLine) - 1);
-		strncat(lpCommandLine, xauthorityfile, BUF_SIZE - strlen(lpCommandLine) - 1);
+		ss << " -auth " << xauthorityfile;
 	}
 
 	if (nokpcursor) {
-		strncat(lpCommandLine, " -nkc", BUF_SIZE - strlen(lpCommandLine) - 1);
+		ss << " -nkc";
 	}
 
-	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	pArgs = CommandLineToArgvA(ss.str().c_str(), &numArgs);
 	if (!pArgs) {
 		goto close_fds;
 	}
@@ -259,7 +263,11 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 		}
 
 		if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0) {
-			chdir(lpCurrentDirectory);
+			auto rc = chdir(lpCurrentDirectory);
+			if (rc != 0) {
+				WLog_Print(gModuleLog, WLOG_WARN, "chdir(%s) failed with %s",
+						lpCurrentDirectory, strerror(errno));
+			}
 		}
 
 		if (execvpe(pArgs[0], pArgs, envp) < 0) {
@@ -271,8 +279,10 @@ BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirec
 	/* parent code - get the display id from xorg */
 	pfd.fd = comm_fds[0];
 	pfd.events = POLLIN;
-	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": x backend started (pid %lu, cmd %s)",
-			   x11_module->commonModule.sessionId, (unsigned long) pid, lpCommandLine);
+	WLog_Print(gModuleLog, WLOG_DEBUG,
+			"s %" PRIu32 ": x backend started (pid %lu, cmd %s)",
+			x11_module->commonModule.sessionId, (unsigned long)pid,
+			ss.str().c_str());
 
 	ZeroMemory(buf, BUF_SIZE);
 	ticks_current = GetTickCount();
@@ -382,8 +392,6 @@ static RDS_MODULE_COMMON *x11_rds_module_new(void) {
 }
 
 static void x11_rds_module_free(RDS_MODULE_COMMON *module) {
-	rdsModuleX11 *x11 = (rdsModuleX11 *)module;
-	free(x11->wmStop);
 	free(module);
 }
 
@@ -482,7 +490,11 @@ static BOOL x11_rds_module_init_xauth(const char *xauthFileName, uid_t uid, gid_
 		return FALSE;
 	}
 
-	fchown(fd, uid, gid);
+	auto rc = fchown(fd, uid, gid);
+	if (rc != 0) {
+		WLog_Print(gModuleLog, WLOG_WARN, "fchown() failed with %s",
+				strerror(errno));
+	}
 
 	if ((fp = fdopen(fd, "w+")) == NULL) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "error opening xauth file descriptor");
@@ -507,7 +519,6 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 	DWORD SessionId;
 	rdsModuleX11 *x11;
 	char buf[BUF_SIZE];
-	char xauthFileName[BUF_SIZE];
 	char *pipeName = NULL;
 	char *cwd = NULL;
 	unsigned long tmpLen = 0;
@@ -522,7 +533,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 
 	SessionId = x11->commonModule.sessionId;
 
-
+	std::stringstream ss;
 	if (getpwnam_r(module->userName, &pw, buf, BUF_SIZE, &result_pwd) != 0 || result_pwd == NULL) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": getpwnam failed", SessionId);
 		return NULL;
@@ -531,7 +542,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 	if (getPropertyStringWrapper(module->baseConfigPath, &gConfig,
 	                             module->sessionId, "xauthoritypath", buf, sizeof(buf))) {
 		WLog_Print(gModuleLog, WLOG_DEBUG, "config: xAuthorityPath = %s", buf);
-		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon.%" PRIu32 "", buf, SessionId);
+		ss << buf << "/.Xauthority.ogon." << SessionId;
 	} else {
 		tmpLen = GetEnvironmentVariableEBA(module->envBlock, "HOME", NULL, 0);
 		if (tmpLen) {
@@ -543,19 +554,19 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 		} else {
 			cwd = strdup(result_pwd->pw_dir);
 		}
-		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon", cwd);
+		ss << cwd << "/.Xauthority.ogon";
 	}
 
-
-	if (!SetEnvironmentVariableEBA(&module->envBlock, "XAUTHORITY", xauthFileName)) {
+	if (!SetEnvironmentVariableEBA(
+				&module->envBlock, "XAUTHORITY", ss.str().c_str())) {
 		goto out_fail;
 	}
 
-	if (!x11_rds_module_init_xauth(xauthFileName, pw.pw_uid, pw.pw_gid)) {
+	if (!x11_rds_module_init_xauth(ss.str().c_str(), pw.pw_uid, pw.pw_gid)) {
 		goto out_fail;
 	}
 
-	if (!start_x_backend(x11, result_pwd, cwd, xauthFileName)) {
+	if (!start_x_backend(x11, result_pwd, cwd, ss.str().c_str())) {
 		goto out_fail;
 	}
 
@@ -584,11 +595,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 
 	if (getPropertyStringWrapper(module->baseConfigPath, &gConfig,
 	                             module->sessionId, "stopwm", buf, sizeof(buf))) {
-		if (!(x11->wmStop = (char *) malloc(strlen(buf) + 1))) {
-			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": couldn't allocate wmStop", SessionId);
-			goto out_fail;
-		}
-		strncpy(x11->wmStop, buf, strlen(buf) + 1);
+		x11->wmStop = std::string(buf, sizeof(buf));
 	}
 
 	if (!getPropertyStringWrapper(module->baseConfigPath, &gConfig,
@@ -632,7 +639,7 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 	RDS_MODULE_COMMON *commonModule = &x11->commonModule;
 	UINT32 sessionID = commonModule->sessionId;
 
-	if (!x11->wmStop) {
+	if (x11->wmStop.empty()) {
 		return;
 	}
 
@@ -648,22 +655,22 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 		GetEnvironmentVariableEBA(commonModule->envBlock, "HOME", cwd, tmpLen);
 	}
 
-	status = CreateProcessAsUserA(commonModule->userToken,
-	                              NULL, x11->wmStop,
-	                              NULL, NULL, FALSE, 0, commonModule->envBlock, cwd,
-	                              &StopInfo, &StopProcessInformation);
+	status = CreateProcessAsUserA(commonModule->userToken, NULL,
+			x11->wmStop.data(), NULL, NULL, FALSE, 0, commonModule->envBlock,
+			cwd, &StopInfo, &StopProcessInformation);
 
 	free(cwd);
 
 	if (!status) {
-		WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": problem starting [%s]", sessionID,
-		           x11->wmStop);
+		WLog_Print(gModuleLog, WLOG_DEBUG,
+				"s %" PRIu32 ": problem starting [%s]", sessionID,
+				x11->wmStop.c_str());
 		return;
 	}
 
 	WLog_Print(gModuleLog, WLOG_DEBUG,
-	           "s %" PRIu32 ": stopwm script [%s] started with pid %" PRIu32 ")",
-	           sessionID, x11->wmStop, StopProcessInformation.dwProcessId);
+			"s %" PRIu32 ": stopwm script [%s] started with pid %" PRIu32 ")",
+			sessionID, x11->wmStop.c_str(), StopProcessInformation.dwProcessId);
 
 	TerminateChildProcessAfterTimeout(StopProcessInformation.dwProcessId, 5000, NULL, sessionID);
 }
@@ -732,7 +739,9 @@ static char *x11_get_custom_info(RDS_MODULE_COMMON *module) {
 }
 
 int x11_module_init() {
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.x11");
 
 	if (!InitializeCriticalSectionAndSpinCount(&gStartCS, 0x00000400)) {

@@ -29,16 +29,19 @@
 #include <unistd.h>
 #endif
 
+#include <sstream>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pwd.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/environment.h>
 #include <winpr/pipe.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/environment.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include <ogon/backend.h>
 #include <ogon/module.h>
@@ -121,7 +124,6 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 	BOOL status;
 	char* pipeName;
 	long xres, yres,colordepth;
-	char lpCommandLine[256];
 	const char* endpoint = "Weston";
 	char cmd[256];
 	char buf[BUF_SIZE];
@@ -150,13 +152,17 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 		return NULL;
 	}
 
-	sprintf_s(lpCommandLine, sizeof(lpCommandLine),	"%s --backend=ogon-backend.so --session-id=%" PRIu32 " --width=%ld --height=%ld",
-			cmd, SessionId, xres, yres);
+	std::stringstream ss;
+	ss << cmd << " --backend=ogon-backend.so --session-id=" << SessionId
+	   << " --width=" << xres << " --height=" << yres;
 
-	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": Starting process with command line: %s", SessionId, lpCommandLine);
+	WLog_Print(gModuleLog, WLOG_DEBUG,
+			"s %" PRIu32 ": Starting process with command line: %s", SessionId,
+			ss.str().c_str());
 
-	status = CreateProcessAsUserA(module->userToken, NULL, lpCommandLine, NULL,
-			NULL, FALSE, 0, module->envBlock, pw.pw_dir,	&(weston->si), &(weston->pi));
+	status = CreateProcessAsUserA(module->userToken, NULL, ss.str().data(),
+			NULL, NULL, FALSE, 0, module->envBlock, pw.pw_dir, &(weston->si),
+			&(weston->pi));
 	if (!status) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not start weston application %s", SessionId, cmd);
 		goto out_create_process_error;
@@ -214,7 +220,9 @@ static char *weston_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int weston_module_init() {
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.weston");
 	return 0;
 }

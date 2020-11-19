@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <sstream>
+
 #include "PermissionManager.h"
 #include <winpr/wlog.h>
 #include <utils/CSGuard.h>
@@ -87,21 +89,21 @@ namespace ogon { namespace sessionmanager { namespace permission {
 	}
 
 	void PermissionManager::removeAuthTokens() {
-			struct dirent *next_file;
-			DIR *theFolder;
+		const char *session = "ogon.session.";
+		struct dirent *next_file;
+		DIR *theFolder;
 
-			char filepath[256];
+		theFolder = opendir("/tmp");
 
-			theFolder = opendir("/tmp");
+		while ((next_file = readdir(theFolder))) {
+			if (strncmp(next_file->d_name, session, strlen(session)) == 0) {
+				std::stringstream ss;
 
-			while ( (next_file = readdir(theFolder)) ) {
-				if (strncmp(next_file->d_name, "ogon.session.",
-					strlen("ogon.session.")) == 0) {
+				ss << "/tmp/" << next_file->d_name;
 
-					sprintf(filepath, "%s/%s", "/tmp", next_file->d_name);
-					remove(filepath);
-				}
+				remove(ss.str().c_str());
 			}
+		}
 			closedir(theFolder);
 	}
 

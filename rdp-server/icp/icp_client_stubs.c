@@ -444,7 +444,7 @@ int ogon_icp_get_property_string(UINT32 connectionId, char *path, char** value)
 static int ogon_icp_get_property_bulk_fallback(UINT32 connectionId, PropertyItem *items) {
 	PropertyItem *pItem;
 	size_t nbSuccess = 0, nbFails = 0;
-	int status;
+	int status = -1;
 
 	for (pItem = items; pItem->path; pItem++) {
 
