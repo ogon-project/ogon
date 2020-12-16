@@ -136,7 +136,6 @@ struct _ogon_front_connection {
 
 	BOOL showDebugInfo;
 
-	HANDLE frameTimer;
 	ogon_event_source *frameEventSource;
 
 	UINT32 pendingResizeWidth;

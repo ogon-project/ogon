@@ -61,6 +61,7 @@ struct _ogon_event_loop {
 	wLinkedList *rescheduled;
 	wLinkedList *cleanups;
 };
+typedef void (*ogon_source_dtor)(ogon_event_source *evsource);
 
 struct _ogon_event_source {
 	ogon_event_loop *eventloop;
@@ -71,6 +72,9 @@ struct _ogon_event_source {
 	HANDLE handle;
 	BOOL markedForRemove;
 	int rescheduleMask;
+	ogon_event_loop_timer_cb timer_cb;
+	void *timer_data;
+	ogon_source_dtor dtor;
 };
 
 ogon_event_loop *eventloop_create(void) {
@@ -131,6 +135,9 @@ static void treat_cleanups(ogon_event_loop *evloop) {
 	LinkedList_Enumerator_Reset(evloop->cleanups);
 	while(LinkedList_Enumerator_MoveNext(evloop->cleanups)) {
 		source = LinkedList_Enumerator_Current(evloop->cleanups);
+		if (source->dtor) {
+			source->dtor(source);
+		}
 		LinkedList_Remove(evloop->sources, source);
 
 		free(source);
@@ -216,6 +223,7 @@ static ogon_event_source *eventloop_add_handle_fd(ogon_event_loop *evloop, int m
 	ret->handle = handle;
 	ret->markedForRemove = FALSE;
 	ret->rescheduleMask = 0;
+	ret->dtor = NULL;
 
 	if (!LinkedList_AddFirst(evloop->sources, ret)) {
 		WLog_ERR(TAG, "error LinkedList_AddFirst");
@@ -258,6 +266,75 @@ fail_epoll_ctl:
 fail_add_list:
 	free(ret);
 	return NULL;
+}
+
+static void timer_source_dtor(ogon_event_source *src) {
+	if (src->handle) {
+		CloseHandle(src->handle);
+	}
+}
+
+static int timer_cb(int mask, int fd, HANDLE handle, void *data) {
+	OGON_UNUSED(handle);
+	int ret;
+	ogon_event_source *evsrc = (ogon_event_source *)data;
+
+	/* spurious notification */
+	if (!(mask & OGON_EVENTLOOP_READ))
+		return 0;
+
+	/* drain the timerFd */
+	do {
+		UINT64 expirations;
+
+		ret = read(fd, &expirations, sizeof(expirations));
+	} while (ret < 0 && errno == EINTR);
+
+	if (ret < 0) {
+		WLog_ERR(TAG, "error draining timerFd: %s", strerror(errno));
+		return 0;
+	}
+
+	/* then call the callback that has been set */
+	if (evsrc->timer_cb) {
+		evsrc->timer_cb(evsrc->timer_data);
+	}
+	return 0;
+}
+
+ogon_event_source *eventloop_add_timer(ogon_event_loop *evloop, UINT32 timeout,
+		ogon_event_loop_timer_cb cb, void *cb_data)
+{
+	ogon_event_source *ret;
+	LARGE_INTEGER due;
+	HANDLE h;
+
+	if (!cb) {
+		return NULL;
+	}
+
+	h = CreateWaitableTimer(NULL, TRUE, NULL);
+	if (!h || h == INVALID_HANDLE_VALUE) {
+		return NULL;
+	}
+
+	due.QuadPart = 0;
+	if (!SetWaitableTimer(h, &due, timeout, NULL, NULL, 0)) {
+		CloseHandle(h);
+		return NULL;
+	}
+
+	ret = eventloop_add_handle(evloop, OGON_EVENTLOOP_READ, h, timer_cb, NULL);
+	if (!ret) {
+		CloseHandle(h);
+		return NULL;
+	}
+
+	ret->data = ret; /* set the callback data to the eventSource itself */
+	ret->timer_cb = cb;
+	ret->timer_data = cb_data;
+	ret->dtor = timer_source_dtor;
+	return ret;
 }
 
 
@@ -379,6 +456,10 @@ BOOL eventloop_remove_source(ogon_event_source **sourceP) {
 	ogon_event_loop *evloop = source->eventloop;
 	BOOL ret = TRUE;
 
+	if (source->markedForRemove) {
+		goto out;
+	}
+
 #ifdef HAVE_EPOLL_H
 	if (epoll_ctl(evloop->epollfd, EPOLL_CTL_DEL, source->fd, 0) < 0) {
 		WLog_ERR(TAG, "error epoll_ctl failed with error %d", errno);
@@ -402,6 +483,8 @@ BOOL eventloop_remove_source(ogon_event_source **sourceP) {
 		 * source stays in memory until the eventloop is destroyed
 		 */
 	}
+
+out:
 	source->markedForRemove = TRUE;
 	*sourceP = 0;
 	return ret;

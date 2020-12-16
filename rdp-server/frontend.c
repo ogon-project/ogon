@@ -304,25 +304,9 @@ static inline void handle_progressive_updates(ogon_connection *conn) {
 	initiate_immediate_request(conn, front, FALSE);
 }
 
-static int handle_frame_timer_event(int mask, int fd, HANDLE handle, void *data) {
-	OGON_UNUSED(handle);
-	int ret;
-	UINT64 expirations;
+static void handle_frame_timer_event(void *data) {
 	ogon_connection *conn = (ogon_connection *)data;
 
-	/*WLog_DBG(TAG, "(%p)", conn);*/
-	if (!(mask & OGON_EVENTLOOP_READ))
-		return 0;
-
-	/* drain timerfd */
-	do {
-		ret = read(fd, &expirations, sizeof(expirations));
-	} while (ret < 0 && errno == EINTR);
-
-	if (ret < 0) {
-		WLog_ERR(TAG, "error draining timerfd, error=%s(%d)", strerror(errno), errno);
-		return 0;
-	}
 	LinkedList_Enumerator_Reset(conn->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(conn->frontConnections)) {
 		ogon_connection *c = (ogon_connection *)LinkedList_Enumerator_Current(conn->frontConnections);
@@ -364,15 +348,13 @@ static int handle_frame_timer_event(int mask, int fd, HANDLE handle, void *data)
 			ogon_state_set_event(front->state, OGON_EVENT_FRONTEND_BANDWIDTH_FAIL);
 		}
 	}
-
-	return 0;
 }
 
 BOOL ogon_frontend_install_frame_timer(ogon_connection *conn) {
 	ogon_front_connection *front = &conn->front;
 
-	front->frameEventSource = eventloop_add_handle(conn->runloop->evloop, OGON_EVENTLOOP_READ, front->frameTimer,
-												handle_frame_timer_event, conn);
+	front->frameEventSource = eventloop_add_timer(conn->runloop->evloop, (1000 / conn->fps),
+			handle_frame_timer_event, conn);
 	if (!front->frameEventSource) {
 		WLog_ERR(TAG, "unable to add frame timer in eventloop");
 		return FALSE;
@@ -578,7 +560,6 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 	rdpSettings* settings = client->settings;
 	ogon_connection *conn = (ogon_connection *)client->context;
 	ogon_front_connection *front = &conn->front;
-	LARGE_INTEGER due;
 	BOOL resizeClient = FALSE;
 
 	/**
@@ -742,18 +723,6 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 
 	if (!ogon_backend_initialize(conn, conn->backend, settings, settings->DesktopWidth, settings->DesktopHeight))	{
 		WLog_ERR(TAG, "error sending capabilities to backend [%s]", front->backendProps.serviceEndpoint);
-		goto out_fail;
-	}
-
-	front->frameTimer = CreateWaitableTimer(NULL, TRUE, NULL);
-	if (!front->frameTimer) {
-		WLog_ERR(TAG, "unable to create frame timer");
-		goto out_fail;
-	}
-
-	due.QuadPart = 0;
-	if (!SetWaitableTimer(front->frameTimer, &due, 1000 / conn->fps, NULL, NULL, 0)) {
-		WLog_ERR(TAG, "unable to program frame timer");
 		goto out_fail;
 	}
 
@@ -1588,11 +1557,6 @@ void frontend_destroy(ogon_front_connection *front)
 
 	if (front->frameEventSource)
 		eventloop_remove_source(&front->frameEventSource);
-
-	if (front->frameTimer) {
-		CloseHandle(front->frameTimer);
-		front->frameTimer = NULL;
-	}
 
 	if (front->encoder) {
 		ogon_bitmap_encoder_free(front->encoder);

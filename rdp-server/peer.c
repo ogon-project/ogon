@@ -266,7 +266,6 @@ static BOOL process_start_remote_control(ogon_connection *conn, wMessage *msg) {
 	ogon_front_connection *front = &conn->front;
 	int mask, fd, error;
 	ogon_source_state stateRdp;
-	ogon_source_state stateFrame;
 	BOOL closeConn;
 
 	if (conn->shadowing != conn) {
@@ -289,7 +288,6 @@ static BOOL process_start_remote_control(ogon_connection *conn, wMessage *msg) {
 
 	eventsource_store_state(front->rdpEventSource, &stateRdp);
 	eventloop_remove_source(&front->rdpEventSource);
-	eventsource_store_state(front->frameEventSource, &stateFrame);
 	eventloop_remove_source(&front->frameEventSource);
 	conn->backend->active = FALSE;
 
@@ -312,7 +310,7 @@ out_post_error:
 		closeConn = TRUE;
 	}
 
-	if (!(front->frameEventSource = eventloop_restore_source(conn->runloop->evloop, &stateFrame))) {
+	if (!ogon_frontend_install_frame_timer(conn)) {
 		WLog_ERR(TAG, "unable to restore frame timer event source");
 		closeConn = TRUE;
 	}
@@ -806,6 +804,7 @@ static int handle_command_queue_event(int mask, int fd, HANDLE handle, void *dat
 				WLog_ERR(TAG, "error processing VC disconnect");
 			}
 			break;
+
 		case NOTIFY_USER_MESSAGE:
 			if (!process_user_message(connection, &msg)) {
 				WLog_ERR(TAG, "error processing message");
@@ -860,7 +859,6 @@ typedef enum {
 	PRECONNECT_WAITING_MAGIC = 0,
 	PRECONNECT_WAITING_BLOB_LENGTH,
 	PRECONNECT_WAITING_BLOB_DATA,
-
 
 	PRECONNECT_LAUNCH_CONNECTION = 100,
 	PRECONNECT_ERROR = 101,
@@ -926,21 +924,9 @@ static void ogon_handle_rdpeps(ogon_preconnect_context *context) {
 	}
 }
 
-static int pre_connect_timeout_handler(int mask, int fd, HANDLE handle, void *data) {
+static void pre_connect_timeout_handler(void *data) {
 	ogon_preconnect_context *context = (ogon_preconnect_context *)data;
-	UINT64 expirations;
-	int ret;
-
-	OGON_UNUSED(mask);
-	OGON_UNUSED(handle);
-
-	WLog_ERR(TAG, "first packet not received in time from peer"); /* TODO: prints the address of the remote peer */
-	do {
-		ret = read(fd, &expirations, sizeof(expirations));
-	} while (ret < 0 && errno == EINTR);
-
 	context->state = PRECONNECT_TIMEOUT;
-	return 0;
 }
 
 static int pre_connect_handler(int mask, int fd, HANDLE handle, void *data) {
@@ -1188,8 +1174,6 @@ static int *connection_thread(void *args) {
 	ogon_connection *connection;
 	ogon_event_source *pre_eventsource, *timeout_eventsource;
 	ogon_preconnect_context preconnect_context;
-	HANDLE timeout_timer;
-	LARGE_INTEGER due;
 	ogon_connection_runloop *runloop = (ogon_connection_runloop *)args;
 	freerdp_peer *peer = runloop->peer;
 	char *keepaliveParams = NULL;
@@ -1209,24 +1193,10 @@ static int *connection_thread(void *args) {
 		goto error_event_source;
 	}
 
-	timeout_timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	if (!timeout_timer) {
-		WLog_ERR(TAG, "unable to create timeout timer");
-		close(peer->sockfd);
-		goto error_timeout_timer;
-	}
-
-	due.QuadPart = 0;
-	if (!SetWaitableTimer(timeout_timer, &due, PRE_BLOB_TIMEOUT * 1000, NULL, NULL, 0)) {
-		WLog_ERR(TAG, "unable to program timeout timer");
-		close(peer->sockfd);
-		goto error_set_timer;
-	}
-
-	timeout_eventsource = eventloop_add_handle(runloop->evloop, OGON_EVENTLOOP_READ, timeout_timer,
+	timeout_eventsource = eventloop_add_timer(runloop->evloop, PRECONNECT_TIMEOUT * 1000,
 			pre_connect_timeout_handler, &preconnect_context);
-	if (!pre_eventsource) {
-		WLog_ERR(TAG, "unable to add the peer in the eventloop");
+	if (!timeout_eventsource) {
+		WLog_ERR(TAG, "unable to create timeout timer");
 		close(peer->sockfd);
 		goto error_set_timer;
 	}
@@ -1245,7 +1215,6 @@ static int *connection_thread(void *args) {
 	if (preconnect_context.inStream) {
 		Stream_Free(preconnect_context.inStream, TRUE);
 	}
-	CloseHandle(timeout_timer);
 
 	if (preconnect_context.state != PRECONNECT_LAUNCH_CONNECTION) {
 		close(peer->sockfd);
@@ -1343,8 +1312,6 @@ static int *connection_thread(void *args) {
 	return 0;
 
 error_set_timer:
-	CloseHandle(timeout_timer);
-error_timeout_timer:
 	eventloop_remove_source(&pre_eventsource);
 error_event_source:
 	eventloop_destroy(&runloop->evloop);
