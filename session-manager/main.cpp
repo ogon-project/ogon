@@ -234,7 +234,9 @@ void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, 
 			}
 		}
 		CommandLineSwitchCase(arg, "loglevel") {
-			if (!strcasecmp(arg->Value, "debug")) {
+			if (!strcasecmp(arg->Value, "trace")) {
+				log_level = WLOG_TRACE;
+			} else if (!strcasecmp(arg->Value, "debug")) {
 				log_level = WLOG_DEBUG;
 			} else if (!strcasecmp(arg->Value, "info")) {
 				log_level = WLOG_INFO;
