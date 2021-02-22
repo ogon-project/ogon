@@ -741,8 +741,8 @@ static int ogon_receiveFrontendChannelData(freerdp_peer *client,
 
 	channel = (registered_virtual_channel *)WTSChannelGetHandleById(client, channelId);
 	if (!channel) {
-		WLog_ERR(TAG, "failed to get handle for channel with id (%"PRIu16")", channelId);
-		return FALSE;
+		WLog_WARN(TAG, "failed to get handle for channel with id (%"PRIu16")", channelId);
+		return TRUE;
 	}
 	return ogon_processFrontendChannelData(channel, data, size, flags, totalSize);
 }
