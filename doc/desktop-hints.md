@@ -29,5 +29,5 @@ Make sure to set variables XDG_SESSION_TYPE and GDK_BACKEND to "x11":
 ```ini
 environment_add_string=WTSAPI_LIBRARY:/usr/lib/x86_64-linux-gnu/ogon1/libogon-otsapi.so;OGON_X11_DESKTOP:ubuntu;XDG_SESSION_TYPE:x11;GDK_BACKEND:x11
 ```
-Issues:
+Known issues:
 * Some gnome applications may have a double title bar, similar to [this issue](https://github.com/neutrinolabs/xrdp/issues/1642).
