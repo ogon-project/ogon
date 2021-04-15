@@ -529,7 +529,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 	}
 
 	if (getPropertyStringWrapper(module->baseConfigPath, &gConfig,
-	                             module->sessionId, "xauthoritypath", buf, sizeof(buf))) {
+	                             module->sessionId, "tmppath", buf, sizeof(buf))) {
 		WLog_Print(gModuleLog, WLOG_DEBUG, "config: xAuthorityPath = %s", buf);
 		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon.%" PRIu32 "", buf, SessionId);
 	} else {

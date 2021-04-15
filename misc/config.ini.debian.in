@@ -16,7 +16,9 @@ module_xsession_displayOffset_number=100
 module_xsession_uselauncher_bool=true
 module_xsession_startwm_string=@OGON_CFG_PATH@/ogonXsession
 module_xsession_launcherexecutable_string=@OGON_SBIN_PATH@/ogon-backend-launcher
-#module_xsession_xauthoritypath_string=/tmp
+module_xsession_startvc_string=@OGON_BIN_PATH@/ogon-start-vc.sh
+#module_xsession_tmppath_string=/tmp
+#module_xsession_paconfpath_string=/etc/ogon/pulse
 
 # Weston configuration
 module_weston_modulename_string=Weston
