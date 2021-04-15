@@ -323,7 +323,7 @@ int ogon_resize_frontend(ogon_connection *conn, ogon_backend_connection *backend
 		settings->ColorDepth, settings->MultifragMaxRequestSize)))
 	{
 		WLog_DBG(TAG, "failed to recreate bitmap encoder for connection %ld", conn->id);
-		freerdp_set_error_info(conn->context.rdp, PREECONNECTERROR);
+		freerdp_set_error_info(conn->context.rdp, ERRCONNECT_PRE_CONNECT_FAILED);
 		ogon_connection_close(conn);
 		return -1;
 	}
