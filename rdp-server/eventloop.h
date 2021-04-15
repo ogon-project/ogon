@@ -25,6 +25,7 @@
 #define _OGON_RDPSRV_EVENTLOOP_H_
 
 #include <winpr/handle.h>
+#include <winpr/wtypes.h>
 
 struct _ogon_event_loop;
 struct _ogon_event_source;
@@ -41,6 +42,9 @@ enum {
 };
 
 typedef int (*ogon_event_loop_cb)(int mask, int fd, HANDLE handle, void *data);
+
+/** @brief timer callback */
+typedef void (*ogon_event_loop_timer_cb)(void *data);
 
 
 /** @returns a newly created event loop, NULL in case of error */
@@ -59,7 +63,7 @@ void eventloop_destroy(ogon_event_loop **evloop);
  * @param handle the handle that should be monitored
  * @param cb a callback function
  * @param cb_data the data that will be passed to the callback function
- * @return a FreeRdpEventSource suitable to remove the eventSource
+ * @return an ogon_event_source, NULL if it failed
  */
 ogon_event_source *eventloop_add_handle(ogon_event_loop *evloop, int mask, HANDLE handle,
 	ogon_event_loop_cb cb, void *cb_data);
@@ -71,10 +75,21 @@ ogon_event_source *eventloop_add_handle(ogon_event_loop *evloop, int mask, HANDL
  * @param fd a file descriptor to monitor
  * @param cb a callback function
  * @param cb_data the data that will be passed to the callback function
- * @return a FreeRdpEventSource suitable to remove the eventSource
+ * @return an ogon_event_source, NULL if it failed
  */
 ogon_event_source *eventloop_add_fd(ogon_event_loop *evloop, int mask, int fd,
 	ogon_event_loop_cb cb, void *cb_data);
+
+/** registers a timer against the event loop and returns the associated eventSource
+ *
+ * @param evloop the event loop
+ * @param timeout
+ * @param cb callback to call
+ * @param cb_data data to pass to the callback
+ * @return an ogon_event_source, NULL if it failed
+ */
+ogon_event_source *eventloop_add_timer(ogon_event_loop *evloop, UINT32 timeout,
+		ogon_event_loop_timer_cb cb, void *cb_data);
 
 /** @brief contains the informations to save and restore an eventsource */
 struct _ogon_source_state {
@@ -142,6 +157,7 @@ BOOL eventsource_reschedule_for_write(ogon_event_source *source);
  * @return if the operations was successful
  */
 BOOL eventloop_remove_source(ogon_event_source **sourceP);
+
 
 /** do one cycle of epoll()/select(), dispatch events, treat cleanups and return
  * the number of event that have been treated.
