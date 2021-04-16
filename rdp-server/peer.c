@@ -966,7 +966,13 @@ static int pre_connect_handler(int mask, int fd, HANDLE handle, void *data) {
 		}
 
 		/* we have the magic bytes, let's read the RDPEPS blob */
-		read(peer->sockfd, pre_blob, sizeof(pre_blob_magic)); /* skip the pre blob magic */
+		status = read(peer->sockfd, pre_blob,
+				sizeof(pre_blob_magic)); /* skip the pre blob magic */
+		if (status != sizeof(pre_blob_magic)) {
+			WLog_ERR(TAG, "error skipping pre blob magic");
+			context->state = PRECONNECT_ERROR;
+			return 0;
+		}
 
 		context->inStream = Stream_New(NULL, 128);
 		if (!context->inStream) {

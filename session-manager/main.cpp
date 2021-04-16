@@ -31,14 +31,15 @@
 #include <signal.h>
 #include <appcontext/ApplicationContext.h>
 
-#include <fcntl.h>
-#include <winpr/cmdline.h>
-#include <winpr/path.h>
-#include <ogon/version.h>
-#include <ogon/build-config.h>
 #include "../../common/global.h"
 #include "../../common/procutils.h"
 #include "buildflags.h"
+#include <fcntl.h>
+#include <ogon/build-config.h>
+#include <ogon/version.h>
+#include <winpr/cmdline.h>
+#include <winpr/path.h>
+#include <winpr/version.h>
 
 #define PIDFILE "ogon-session-manager.pid"
 
@@ -200,7 +201,8 @@ void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, 
 		CommandLineSwitchStart(arg)
 
 		CommandLineSwitchCase(arg, "version") {
-			printf("ogon-session-manager %s (commit %s)\n", OGON_VERSION_FULL, GIT_REVISION);
+			printf("ogon-session-manager %s (commit %s)\n", OGON_VERSION_FULL,
+					OGON_GIT_REVISION);
 			exit(0);
 		}
 		CommandLineSwitchCase(arg, "buildconfig") {
@@ -266,7 +268,9 @@ void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogLayout *layout;
 	wLogAppender *appender;
 
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Init();
+#endif
 
 	wlog_root = WLog_GetRoot();
 	if (wlog_root) {

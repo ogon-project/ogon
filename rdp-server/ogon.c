@@ -39,14 +39,15 @@
 #include <signal.h>
 #endif
 
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/library.h>
 #include <winpr/path.h>
+#include <winpr/ssl.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/cmdline.h>
-#include <winpr/library.h>
-#include <winpr/file.h>
-#include <winpr/ssl.h>
+#include <winpr/version.h>
 #include <winpr/wlog.h>
 
 #include <ogon/version.h>
@@ -337,7 +338,9 @@ static void initializeWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogAppender *appender;
 	const char *prefixFormat;
 
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Init();
+#endif
 
 	if (!(wlog_root = WLog_GetRoot())) {
 		fprintf(stderr, "Failed to get the logger root\n");
@@ -422,7 +425,8 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 			*no_daemon = 1;
 		}
 		CommandLineSwitchCase(arg, "version") {
-			printf("ogon %s (commit %s)\n", OGON_VERSION_FULL, GIT_REVISION);
+			printf("ogon %s (commit %s)\n", OGON_VERSION_FULL,
+					OGON_GIT_REVISION);
 			exit(0);
 		}
 		CommandLineSwitchCase(arg, "buildconfig") {
@@ -759,7 +763,9 @@ fail_init_ssl:
 	}
 
 	WLog_DBG(TAG, "Terminating..");
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Uninit();
+#endif
 
 	return ret;
 }

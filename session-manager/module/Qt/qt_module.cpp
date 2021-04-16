@@ -32,15 +32,18 @@
 #include <unistd.h>
 #endif
 
+#include <sstream>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/environment.h>
 #include <winpr/pipe.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/environment.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include <ogon/backend.h>
 
@@ -124,7 +127,6 @@ static char* qt_rds_module_start(RDS_MODULE_COMMON* module)
 	char* pipeName;
 	char qPipeName[256];
 	long xres, yres,colordepth;
-	char lpCommandLine[256];
 	const char* endpoint = "Qt";
 	char cmd[256];
 
@@ -151,12 +153,15 @@ static char* qt_rds_module_start(RDS_MODULE_COMMON* module)
 		return NULL;
 	}
 
-	sprintf_s(lpCommandLine, sizeof(lpCommandLine),	"%s -platform ogon", cmd);
+	std::stringstream ss;
+	ss << cmd << " -platform ogon";
 
-	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": Starting process with command line: %s", SessionId, lpCommandLine);
+	WLog_Print(gModuleLog, WLOG_DEBUG,
+			"s %" PRIu32 ": Starting process with command line: %s", SessionId,
+			ss.str().c_str());
 
-	status = CreateProcessAsUserA(module->userToken, NULL, lpCommandLine, NULL,
-			NULL, FALSE, 0, module->envBlock, NULL,	&(qt->si), &(qt->pi));
+	status = CreateProcessAsUserA(module->userToken, NULL, ss.str().data(),
+			NULL, NULL, FALSE, 0, module->envBlock, NULL, &(qt->si), &(qt->pi));
 	if (!status) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not start qt application %s", SessionId, cmd);
 		goto out_create_process_error;
@@ -215,7 +220,9 @@ static char *qt_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int qt_module_init() {
+#if !defined(WINPR_VERSION_MAJOR) || (WINPR_VERSION_MAJOR < 2)
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.qt");
 	return 0;
 }
