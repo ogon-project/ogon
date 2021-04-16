@@ -15,6 +15,7 @@
 /* Cisco OpenH264 */
 #cmakedefine WITH_OPENH264
 #cmakedefine WITH_LIBSYSTEMD
+#cmakedefine USE_FREERDP_H264
 
 /* Encoder stats */
 #cmakedefine WITH_ENCODER_STATS

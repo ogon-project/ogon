@@ -38,7 +38,12 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/region.h>
 
+#if defined(USE_FREERDP_H264)
+#include <freerdp/codec/h264.h>
+#endif
+#if defined(WITH_OPENH264)
 #include "openh264.h"
+#endif
 
 #ifdef WITH_ENCODER_STATS
 #include <freerdp/utils/stopwatch.h>
@@ -92,6 +97,9 @@ typedef struct _ogon_bitmap_encoder {
 
 #ifdef WITH_OPENH264
 	ogon_h264_context *h264_context;
+#endif
+#if defined(USE_FREERDP_H264)
+	H264_CONTEXT *fh264_context;
 #endif
 
 #ifdef WITH_ENCODER_STATS
