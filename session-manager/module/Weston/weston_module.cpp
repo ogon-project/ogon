@@ -34,11 +34,12 @@
 #include <pwd.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/environment.h>
 #include <winpr/pipe.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/environment.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include <ogon/backend.h>
 #include <ogon/module.h>
@@ -214,7 +215,9 @@ static char *weston_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int weston_module_init() {
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.weston");
 	return 0;
 }

@@ -32,13 +32,15 @@
 #include <appcontext/ApplicationContext.h>
 
 #include <fcntl.h>
-#include <winpr/cmdline.h>
-#include <winpr/path.h>
-#include <ogon/version.h>
-#include <ogon/build-config.h>
+
 #include "../../common/global.h"
 #include "../../common/procutils.h"
 #include "buildflags.h"
+#include <ogon/build-config.h>
+#include <ogon/version.h>
+#include <winpr/cmdline.h>
+#include <winpr/path.h>
+#include <winpr/version.h>
 
 #define PIDFILE "ogon-session-manager.pid"
 
@@ -266,7 +268,9 @@ void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogLayout *layout;
 	wLogAppender *appender;
 
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 
 	wlog_root = WLog_GetRoot();
 	if (wlog_root) {
