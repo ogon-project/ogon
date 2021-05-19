@@ -145,10 +145,9 @@ static BOOL backend_write_rds_message(ogon_backend_connection *backend, UINT16 t
 	return backend_drain_output(backend);
 }
 
-
-static BOOL backend_synchronize_keyboard_event(ogon_backend_connection *backend, DWORD flags,
-	UINT32 connectionId)
-{
+static BOOL backend_synchronize_keyboard_event(
+		void *rbackend, DWORD flags, UINT32 connectionId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_synchronize_keyboard_event msg;
 
 	msg.flags = flags;
@@ -156,9 +155,9 @@ static BOOL backend_synchronize_keyboard_event(ogon_backend_connection *backend,
 	return backend_write_rds_message(backend, OGON_CLIENT_SYNCHRONIZE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
-static BOOL backend_scancode_keyboard_event(ogon_backend_connection *backend, DWORD flags,
-	DWORD code, DWORD keyboardType,	UINT32 connectionId)
-{
+static BOOL backend_scancode_keyboard_event(void *rbackend, DWORD flags,
+		DWORD code, DWORD keyboardType, UINT32 connectionId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_scancode_keyboard_event msg;
 	ZeroMemory(&msg, sizeof(msg));
 
@@ -169,9 +168,9 @@ static BOOL backend_scancode_keyboard_event(ogon_backend_connection *backend, DW
 	return backend_write_rds_message(backend, OGON_CLIENT_SCANCODE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
-static BOOL backend_unicode_keyboard_event(ogon_backend_connection *backend, DWORD flags,
-	DWORD code, UINT32 connectionId)
-{
+static BOOL backend_unicode_keyboard_event(
+		void *rbackend, DWORD flags, DWORD code, UINT32 connectionId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_unicode_keyboard_event msg;
 
 	msg.flags = flags;
@@ -180,9 +179,9 @@ static BOOL backend_unicode_keyboard_event(ogon_backend_connection *backend, DWO
 	return backend_write_rds_message(backend, OGON_CLIENT_UNICODE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
-static BOOL backend_mouse_event(ogon_backend_connection *backend, DWORD flags, DWORD x, DWORD y,
-	UINT32 connectionId)
-{
+static BOOL backend_mouse_event(
+		void *rbackend, DWORD flags, DWORD x, DWORD y, UINT32 connectionId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_mouse_event msg;
 
 	msg.flags = flags;
@@ -192,9 +191,9 @@ static BOOL backend_mouse_event(ogon_backend_connection *backend, DWORD flags, D
 	return backend_write_rds_message(backend, OGON_CLIENT_MOUSE_EVENT, (ogon_message *)&msg);
 }
 
-static BOOL backend_extended_mouse_event(ogon_backend_connection *backend, DWORD flags, DWORD x,
-	DWORD y, UINT32 connectionId)
-{
+static BOOL backend_extended_mouse_event(
+		void *rbackend, DWORD flags, DWORD x, DWORD y, UINT32 connectionId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_extended_mouse_event msg;
 
 	msg.flags = flags;
@@ -205,7 +204,8 @@ static BOOL backend_extended_mouse_event(ogon_backend_connection *backend, DWORD
 	return backend_write_rds_message(backend, OGON_CLIENT_EXTENDED_MOUSE_EVENT, (ogon_message *)&msg);
 }
 
-static BOOL backend_framebuffer_sync_request(ogon_backend_connection *backend, INT32 bufferId) {
+static BOOL backend_framebuffer_sync_request(void *rbackend, INT32 bufferId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	if (bufferId < 0) {
 		return FALSE;
 	}
@@ -214,7 +214,8 @@ static BOOL backend_framebuffer_sync_request(ogon_backend_connection *backend, I
 			(ogon_message *)&backend->framebufferSyncRequest);
 }
 
-static BOOL backend_immediate_sync_request(ogon_backend_connection *backend, INT32 bufferId) {
+static BOOL backend_immediate_sync_request(void *rbackend, INT32 bufferId) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	if (bufferId < 0) {
 		return FALSE;
 	}
@@ -223,16 +224,18 @@ static BOOL backend_immediate_sync_request(ogon_backend_connection *backend, INT
 			(ogon_message *)&backend->immediateSyncRequest);
 }
 
-static BOOL backend_sbp_reply(ogon_backend_connection *backend, ogon_msg_sbp_reply *msg) {
+static BOOL backend_sbp_reply(void *rbackend, ogon_msg_sbp_reply *msg) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	return backend_write_rds_message(backend, OGON_CLIENT_SBP_REPLY, (ogon_message *)msg);
 }
 
-static BOOL backend_seat_new(ogon_backend_connection *backend, ogon_msg_seat_new *msg) {
+static BOOL backend_seat_new(void *rbackend, ogon_msg_seat_new *msg) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	return backend_write_rds_message(backend, OGON_CLIENT_SEAT_NEW, (ogon_message *)msg);
 }
 
-static BOOL backend_seat_removed(ogon_backend_connection* backend, UINT32 id)
-{
+static BOOL backend_seat_removed(void *rbackend, UINT32 id) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_seat_removed *msg = &backend->seatRemoved;
 	msg->clientId = id;
 	return backend_write_rds_message(backend, OGON_CLIENT_SEAT_REMOVED, (ogon_message *)msg);
@@ -242,7 +245,8 @@ static void list_dictionary_message_free(void *item) {
 	free(item);
 }
 
-static BOOL backend_message(ogon_backend_connection *backend, ogon_msg_message *msg) {
+static BOOL backend_message(void *rbackend, ogon_msg_message *msg) {
+	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	message_answer *answer_helper;
 
 	answer_helper = calloc(1, sizeof(message_answer));
@@ -1141,17 +1145,17 @@ ogon_backend_connection *backend_new(ogon_connection *conn, ogon_backend_props *
 	}
 
 	client = &ret->client;
-	client->SynchronizeKeyboardEvent = (pfn_ogon_client_synchronize_keyboard_event)backend_synchronize_keyboard_event;
-	client->ScancodeKeyboardEvent = (pfn_ogon_client_scancode_keyboard_event)backend_scancode_keyboard_event;
-	client->UnicodeKeyboardEvent = (pfn_ogon_client_unicode_keyboard_event)backend_unicode_keyboard_event;
-	client->MouseEvent = (pfn_ogon_client_mouse_event)backend_mouse_event;
-	client->ExtendedMouseEvent = (pfn_ogon_client_extended_mouse_event)backend_extended_mouse_event;
-	client->FramebufferSyncRequest = (pfn_ogon_client_framebuffer_sync_request)backend_framebuffer_sync_request;
-	client->Sbp = (pfn_ogon_client_sbp)backend_sbp_reply;
-	client->ImmediateSyncRequest = (pfn_ogon_client_immediate_sync_request)backend_immediate_sync_request;
-	client->SeatNew = (pfn_ogon_client_seat_new)backend_seat_new;
-	client->SeatRemoved = (pfn_ogon_client_seat_removed)backend_seat_removed;
-	client->Message = (pfn_ogon_client_message)backend_message;
+	client->SynchronizeKeyboardEvent = backend_synchronize_keyboard_event;
+	client->ScancodeKeyboardEvent = backend_scancode_keyboard_event;
+	client->UnicodeKeyboardEvent = backend_unicode_keyboard_event;
+	client->MouseEvent = backend_mouse_event;
+	client->ExtendedMouseEvent = backend_extended_mouse_event;
+	client->FramebufferSyncRequest = backend_framebuffer_sync_request;
+	client->Sbp = backend_sbp_reply;
+	client->ImmediateSyncRequest = backend_immediate_sync_request;
+	client->SeatNew = backend_seat_new;
+	client->SeatRemoved = backend_seat_removed;
+	client->Message = backend_message;
 
 	ret->server = &serverCallbacks[0];
 

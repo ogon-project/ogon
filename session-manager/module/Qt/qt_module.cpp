@@ -36,11 +36,12 @@
 #include <sys/wait.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/environment.h>
 #include <winpr/pipe.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/environment.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include <ogon/backend.h>
 
@@ -215,7 +216,9 @@ static char *qt_get_custom_info(RDS_MODULE_COMMON *module)
 }
 
 int qt_module_init() {
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.qt");
 	return 0;
 }

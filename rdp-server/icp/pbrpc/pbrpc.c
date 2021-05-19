@@ -78,6 +78,7 @@ static void list_dictionary_item_free(void* value)
 pbRPCContext* pbrpc_server_new(pbRPCTransportContext* transport, HANDLE shutdown)
 {
 	pbRPCContext* context;
+	wObject *obj;
 
 	if (!(context = calloc(1, sizeof(pbRPCContext)))) {
 		return NULL;
@@ -97,7 +98,8 @@ pbRPCContext* pbrpc_server_new(pbRPCTransportContext* transport, HANDLE shutdown
 		goto out_free_transactions;
 	}
 
-	context->writeQueue->object.fnObjectFree = queue_item_free;
+	obj = Queue_Object(context->writeQueue);
+	obj->fnObjectFree = queue_item_free;
 	context->shutdown = shutdown;
 	return context;
 

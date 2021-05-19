@@ -37,19 +37,20 @@
 #include <errno.h>
 #endif
 
-#include <winpr/pipe.h>
-#include <winpr/path.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/wlog.h>
-#include <winpr/environment.h>
-#include <winpr/sysinfo.h>
-#include <ogon/backend.h>
-#include <list>
 #include <algorithm>
 #include <grp.h>
+#include <list>
+#include <ogon/backend.h>
 #include <pwd.h>
 #include <sys/poll.h>
+#include <winpr/environment.h>
+#include <winpr/path.h>
+#include <winpr/pipe.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include "x11_module.h"
 #include "../common/module_helper.h"
@@ -732,7 +733,9 @@ static char *x11_get_custom_info(RDS_MODULE_COMMON *module) {
 }
 
 int x11_module_init() {
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.x11");
 
 	if (!InitializeCriticalSectionAndSpinCount(&gStartCS, 0x00000400)) {

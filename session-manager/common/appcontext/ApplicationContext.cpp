@@ -26,9 +26,10 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/path.h>
-#include <winpr/library.h>
 #include <winpr/environment.h>
+#include <winpr/library.h>
+#include <winpr/path.h>
+#include <winpr/version.h>
 
 #include <list>
 #include <utils/StringHelpers.h>
@@ -54,7 +55,9 @@ namespace ogon { namespace sessionmanager {
 	}
 
 	ApplicationContext::~ApplicationContext() {
+#if WINPR_VERSION_MAJOR < 3
 		WLog_Uninit();
+#endif
 	}
 
 	void ApplicationContext::init(void) {
