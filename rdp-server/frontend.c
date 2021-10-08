@@ -1498,7 +1498,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	peer->PostConnect = ogon_peer_post_connect;
 	peer->Activate = ogon_peer_activate;
 
-	input = peer->input;
+	input = peer->context->input;
 	input->SynchronizeEvent = ogon_input_synchronize_event;
 	input->KeyboardEvent = ogon_input_keyboard_event;
 	input->UnicodeKeyboardEvent = ogon_input_unicode_keyboard_event;
