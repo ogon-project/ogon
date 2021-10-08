@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/version.h>
 
 #include <ogon/dmgbuf.h>
 
@@ -367,10 +368,11 @@ int ogon_send_gfx_debug_bitmap(ogon_connection *conn) {
 	return 0;
 }
 
-#if defined(WITH_OPENH264) || defined(USE_FREERDP_H264)
+#if defined(WITH_OPENH264)
 
-static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s, RDP_RECT *rects, UINT32 numRects, BYTE *encodedData, UINT32 encodedSize)
-{
+static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s,
+		const RDP_RECT *rects, UINT32 numRects, const BYTE *encodedData,
+		UINT32 encodedSize) {
 	UINT32 i;
 	UINT32 avc420MetablockSize = 4 + numRects * 10;
 
@@ -382,10 +384,13 @@ static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s, RDP_RECT *rects, 
 	Stream_Write_UINT32(s, numRects); /* numRegionRects (4 bytes) */
 
 	for (i = 0; i < numRects; i++) {
-		Stream_Write_UINT16(s, rects[i].x); /* regionRects.left (2 bytes) */
-		Stream_Write_UINT16(s, rects[i].y); /* regionRects.top (2 bytes) */
-		Stream_Write_UINT16(s, rects[i].x + rects[i].width); /* regionRects.right (2 bytes) */
-		Stream_Write_UINT16(s, rects[i].y + rects[i].height); /* regionRects.bottom (2 bytes) */
+		const RDP_RECT *rect = &rects[i];
+		Stream_Write_UINT16(s, rect->x); /* regionRects.left (2 bytes) */
+		Stream_Write_UINT16(s, rect->y); /* regionRects.top (2 bytes) */
+		Stream_Write_UINT16(
+				s, rect->x + rect->width); /* regionRects.right (2 bytes) */
+		Stream_Write_UINT16(
+				s, rect->y + rect->height); /* regionRects.bottom (2 bytes) */
 	}
 
 	for (i = 0; i < numRects; i++) {
@@ -416,14 +421,8 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	BOOL useAVC444v2 = frontend->rdpgfx->avc444v2Supported;
 	BOOL enableFullAVC444 = FALSE;
 	BYTE op = 0; /* Luma & chroma */
-#if defined(WITH_OPENH264)
 	BOOL rv;
 	ogon_openh264_compress_mode openh264CompressMode;
-#endif
-#if defined(USE_FREERDP_H264)
-	INT32 rc;
-	H264_CONTEXT *h264 = encoder->fh264_context;
-#endif
 
 	s = encoder->stream;
 	Stream_SetPosition(s, 0);
@@ -458,43 +457,7 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	}
 
 	STOPWATCH_START(encoder->swH264Compress);
-#if defined(USE_FREERDP_H264)
-	if (maxFrameRate && (maxFrameRate <= 60) &&
-			(h264->FrameRate != maxFrameRate)) {
-		h264->FrameRate = maxFrameRate;
-	}
 
-	if (targetFrameSizeInBits) {
-		UINT32 newBitRate = targetFrameSizeInBits * h264->FrameRate;
-
-		if (newBitRate != h264->BitRate) {
-			h264->BitRate = newBitRate;
-		}
-	}
-
-	if (enableFullAVC444) {
-		rc = avc444_compress(h264, data, encoder->srcFormat, encoder->scanLine,
-				encoder->desktopWidth, encoder->desktopHeight,
-				useAVC444v2 ? 2 : 1, &op, &encodedData, &encodedSize,
-				&chromaData, &chromaSize);
-	} else {
-		rc = avc420_compress(h264, data, encoder->srcFormat, encoder->scanLine,
-				encoder->desktopWidth, encoder->desktopHeight, &encodedData,
-				&encodedSize);
-		op = 1; /* Luma only */
-	}
-	if ((rc < 0) || encodedSize < 1) {
-		STOPWATCH_STOP(encoder->swH264Compress);
-		WLog_ERR(TAG,
-				"h264 compression failed [%d]. AVC444v2=%s, AVC444v1=%s  "
-				"encodedSize=%" PRIu32 " chromaSize=%" PRIu32 "",
-				rc, useAVC444v2 ? "true" : "false",
-				enableFullAVC444 ? "true" : "false", encodedSize, chromaSize);
-		goto out;
-	}
-#endif
-
-#if defined(WITH_OPENH264)
 	if (enableFullAVC444) {
 		if (useAVC444v2) {
 			openh264CompressMode =
@@ -517,7 +480,7 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 				openh264CompressMode, encodedSize, targetFrameSizeInBits);
 		goto out;
 	}
-#endif
+
 	STOPWATCH_STOP(encoder->swH264Compress);
 #if 0
 	WLog_DBG(TAG, "h264 compression ok. mode=%"PRIu32" encodedSize=%"PRIu32" targetFrameSizeInBits=%"PRIu32" optimizable=%"PRIu32"",
@@ -541,7 +504,6 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	}
 
 	if (enableFullAVC444) {
-#if defined(WITH_OPENH264)
 		/* generate avc444 avc420EncodedBitstream2 */
 		openh264CompressMode = COMPRESS_MODE_AVC444VX_B; /* avc444 step 2/2 */
 
@@ -560,7 +522,6 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 #if 0
 		WLog_DBG(TAG, "h264 compression ok. mode=%"PRIu32" encodedSize=%"PRIu32" targetFrameSizeInBits=%"PRIu32" optimizable=%"PRIu32"",
 		         openh264CompressMode, encodedSize, targetFrameSizeInBits, optimizable);
-#endif
 #endif
 		if (op == 0) {
 			if (!ogon_write_avc420_bitmap_stream(
@@ -608,7 +569,412 @@ out:
 
 	return 0;
 }
-#endif /* defined(WITH_OPENH264) || defined(USE_FREERDP_H264) */
+#endif /* defined(WITH_OPENH264) */
+
+#if defined(USE_FREERDP_H264) && (FREERDP_VERSION_MAJOR < 3)
+
+static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s,
+		const RDP_RECT *rects, UINT32 numRects, const BYTE *encodedData,
+		UINT32 encodedSize) {
+	UINT32 i;
+	UINT32 avc420MetablockSize = 4 + numRects * 10;
+
+	if (!Stream_EnsureRemainingCapacity(s, avc420MetablockSize + encodedSize)) {
+		WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
+		return FALSE;
+	}
+
+	Stream_Write_UINT32(s, numRects); /* numRegionRects (4 bytes) */
+
+	for (i = 0; i < numRects; i++) {
+		const RDP_RECT *rect = &rects[i];
+
+		Stream_Write_UINT16(s, rect->x); /* regionRects.left (2 bytes) */
+		Stream_Write_UINT16(s, rect->y); /* regionRects.top (2 bytes) */
+		Stream_Write_UINT16(
+				s, rect->x + rect->width); /* regionRects.right (2 bytes) */
+		Stream_Write_UINT16(
+				s, rect->y + rect->height); /* regionRects.bottom (2 bytes) */
+	}
+
+	for (i = 0; i < numRects; i++) {
+		Stream_Write_UINT8(s, 18);	/* qpVal (1 byte) */
+		Stream_Write_UINT8(s, 100); /* qualityVal (1 byte) */
+	}
+
+	Stream_Write(s, encodedData, encodedSize);
+
+	return TRUE;
+}
+
+int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
+		const RDP_RECT *rects, UINT32 numRects) {
+	ogon_front_connection *frontend = &conn->front;
+	ogon_bitmap_encoder *encoder = frontend->encoder;
+	BYTE *encodedData;
+	UINT32 encodedSize;
+	BYTE *chromaData;
+	UINT32 chromaSize;
+	RDP_RECT desktopRect;
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = {0};
+	wStream *s;
+	BOOL optimizable = FALSE;
+	UINT32 maxFrameRate = (UINT32)conn->fps;
+	UINT32 targetFrameSizeInBits;
+	BOOL useAVC444 = frontend->rdpgfx->avc444Supported;
+	BOOL useAVC444v2 = frontend->rdpgfx->avc444v2Supported;
+	BOOL enableFullAVC444 = FALSE;
+	BYTE op = 0; /* Luma & chroma */
+	INT32 rc;
+	H264_CONTEXT *h264 = encoder->fh264_context;
+
+	s = encoder->stream;
+	Stream_SetPosition(s, 0);
+
+	if (useAVC444 && frontend->rdpgfxH264EnableFullAVC444) {
+		enableFullAVC444 = TRUE;
+	}
+
+#if 0
+    /**
+     * Note: with the current implementation there are currently
+     * only disadvantages involved if the update region is limited
+     */
+
+    if (!rects || !numRects)
+#endif
+	{
+		desktopRect.x = 0;
+		desktopRect.y = 0;
+		desktopRect.width = encoder->desktopWidth;
+		desktopRect.height = encoder->desktopHeight;
+		numRects = 1;
+		rects = &desktopRect;
+	}
+
+	targetFrameSizeInBits = ogon_bwmgtm_calc_max_target_frame_size(conn);
+
+	if (enableFullAVC444) {
+		/* since we'll encoding this frame twice: */
+		maxFrameRate *= 2;
+		targetFrameSizeInBits /= 2;
+	}
+
+	STOPWATCH_START(encoder->swH264Compress);
+	if (maxFrameRate && (maxFrameRate <= 60) &&
+			(h264->FrameRate != maxFrameRate)) {
+		h264->FrameRate = maxFrameRate;
+	}
+
+	if (targetFrameSizeInBits) {
+		UINT32 newBitRate = targetFrameSizeInBits * h264->FrameRate;
+
+		if (newBitRate != h264->BitRate) {
+			h264->BitRate = newBitRate;
+		}
+	}
+
+	if (enableFullAVC444) {
+		rc = avc444_compress(h264, data, encoder->srcFormat, encoder->scanLine,
+				encoder->desktopWidth, encoder->desktopHeight,
+				useAVC444v2 ? 2 : 1, &op, &encodedData, &encodedSize,
+				&chromaData, &chromaSize);
+	} else {
+		rc = avc420_compress(h264, data, encoder->srcFormat, encoder->scanLine,
+				encoder->desktopWidth, encoder->desktopHeight, &encodedData,
+				&encodedSize);
+		op = 1; /* Luma only */
+	}
+	if ((rc < 0) || encodedSize < 1) {
+		STOPWATCH_STOP(encoder->swH264Compress);
+		WLog_ERR(TAG,
+				"h264 compression failed [%d]. AVC444v2=%s, AVC444v1=%s  "
+				"encodedSize=%" PRIu32 " chromaSize=%" PRIu32 "",
+				rc, useAVC444v2 ? "true" : "false",
+				enableFullAVC444 ? "true" : "false", encodedSize, chromaSize);
+		goto out;
+	}
+
+	STOPWATCH_STOP(encoder->swH264Compress);
+#if 0
+    WLog_DBG(TAG, "h264 compression ok. mode=%"PRIu32" encodedSize=%"PRIu32" targetFrameSizeInBits=%"PRIu32" optimizable=%"PRIu32"",
+             openh264CompressMode, encodedSize, targetFrameSizeInBits, optimizable);
+#endif
+	if (useAVC444) {
+		UINT32 avc420EncodedBitstreamInfo = encodedSize + 4 + numRects * 10;
+
+		if (!enableFullAVC444 || (op != 0)) {
+			avc420EncodedBitstreamInfo |=
+					(1 << 30); /* LC = 0x1: YUV420 frame only */
+		}
+		if (!Stream_EnsureRemainingCapacity(
+					s, sizeof(avc420EncodedBitstreamInfo))) {
+			WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
+			goto out;
+		}
+		Stream_Write_UINT32(s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
+															   (4 bytes) */
+	}
+
+	if (!ogon_write_avc420_bitmap_stream(
+				s, rects, numRects, encodedData, encodedSize)) {
+		goto out;
+	}
+
+	if (enableFullAVC444) {
+		if (op == 0) {
+			if (!ogon_write_avc420_bitmap_stream(
+						s, rects, numRects, chromaData, chromaSize)) {
+				goto out;
+			}
+
+			optimizable =
+					FALSE; /* no post rendering possible in full avc444 mode */
+		}
+	}
+
+	pdu.surfaceId = frontend->rdpgfxOutputSurface;
+	pdu.pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
+	if (useAVC444) {
+		pdu.codecId =
+				useAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
+	} else {
+		pdu.codecId = RDPGFX_CODECID_AVC420;
+	}
+	pdu.destRect.left = 0;
+	pdu.destRect.top = 0;
+	pdu.destRect.right = encoder->desktopWidth;
+	pdu.destRect.bottom = encoder->desktopHeight;
+	pdu.bitmapDataLength = Stream_GetPosition(s);
+	pdu.bitmapData = Stream_Buffer(s);
+
+	if (!ogon_bwmgmt_detect_bandwidth_start(conn)) {
+		return -1;
+	}
+
+	frontend->rdpgfx->WireToSurface1(frontend->rdpgfx, &pdu);
+
+	if (!ogon_bwmgmt_detect_bandwidth_stop(conn)) {
+		return -1;
+	}
+
+out:
+	if (optimizable) {
+		if (frontend->rdpgfxProgressiveTicks == 0) {
+			frontend->rdpgfxProgressiveTicks = 1;
+		}
+	} else {
+		frontend->rdpgfxProgressiveTicks = 0;
+	}
+
+	return 0;
+}
+#endif /* defined(USE_FREERDP_H264) && (FREERDP_VERSION_MAJOR < 3) */
+
+#if defined(USE_FREERDP_H264) && (FREERDP_VERSION_MAJOR >= 3)
+
+static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s,
+		const RDPGFX_H264_METABLOCK *meta, const BYTE *encodedData,
+		UINT32 encodedSize) {
+	UINT32 i;
+	UINT32 avc420MetablockSize = 4 + meta->numRegionRects * 10;
+
+	if (!Stream_EnsureRemainingCapacity(s, avc420MetablockSize + encodedSize)) {
+		WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
+		return FALSE;
+	}
+
+	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
+
+	for (i = 0; i < meta->numRegionRects; i++) {
+		const RECTANGLE_16 *rect = &meta->regionRects[i];
+
+		Stream_Write_UINT16(s, rect->left);	  /* regionRects.left (2 bytes) */
+		Stream_Write_UINT16(s, rect->top);	  /* regionRects.top (2 bytes) */
+		Stream_Write_UINT16(s, rect->right);  /* regionRects.right (2 bytes) */
+		Stream_Write_UINT16(s, rect->bottom); /* regionRects.bottom (2 bytes) */
+	}
+
+	for (i = 0; i < meta->numRegionRects; i++) {
+		const RDPGFX_H264_QUANT_QUALITY *qq = &meta->quantQualityVals[i];
+		Stream_Write_UINT8(s, qq->qpVal);	   /* qpVal (1 byte) */
+		Stream_Write_UINT8(s, qq->qualityVal); /* qualityVal (1 byte) */
+	}
+
+	Stream_Write(s, encodedData, encodedSize);
+
+	return TRUE;
+}
+
+int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
+		const RDP_RECT *rects, UINT32 numRects) {
+	ogon_front_connection *frontend = &conn->front;
+	ogon_bitmap_encoder *encoder = frontend->encoder;
+	BYTE *encodedData;
+	UINT32 encodedSize;
+	BYTE *chromaData;
+	UINT32 chromaSize;
+	RDP_RECT desktopRect;
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = {0};
+	wStream *s;
+	BOOL optimizable = FALSE;
+	UINT32 maxFrameRate = (UINT32)conn->fps;
+	UINT32 targetFrameSizeInBits;
+	BOOL useAVC444 = frontend->rdpgfx->avc444Supported;
+	BOOL useAVC444v2 = frontend->rdpgfx->avc444v2Supported;
+	BOOL enableFullAVC444 = FALSE;
+	BYTE op = 0; /* Luma & chroma */
+	INT32 rc;
+	H264_CONTEXT *h264 = encoder->fh264_context;
+	RECTANGLE_16 inputRect = {0};
+	RDPGFX_H264_METABLOCK meta = {0};
+	RDPGFX_H264_METABLOCK auxMeta = {0};
+
+	s = encoder->stream;
+	Stream_SetPosition(s, 0);
+
+	if (useAVC444 && frontend->rdpgfxH264EnableFullAVC444) {
+		enableFullAVC444 = TRUE;
+	}
+
+#if 0
+    /**
+     * Note: with the current implementation there are currently
+     * only disadvantages involved if the update region is limited
+     */
+
+    if (!rects || !numRects)
+#endif
+	{
+		desktopRect.x = 0;
+		desktopRect.y = 0;
+		desktopRect.width = encoder->desktopWidth;
+		desktopRect.height = encoder->desktopHeight;
+		numRects = 1;
+		rects = &desktopRect;
+	}
+
+	targetFrameSizeInBits = ogon_bwmgtm_calc_max_target_frame_size(conn);
+
+	if (enableFullAVC444) {
+		/* since we'll encoding this frame twice: */
+		maxFrameRate *= 2;
+		targetFrameSizeInBits /= 2;
+	}
+
+	STOPWATCH_START(encoder->swH264Compress);
+	if (maxFrameRate && (maxFrameRate <= 60) &&
+			(h264->FrameRate != maxFrameRate)) {
+		h264->FrameRate = maxFrameRate;
+	}
+
+	if (targetFrameSizeInBits) {
+		UINT32 newBitRate = targetFrameSizeInBits * h264->FrameRate;
+
+		if (newBitRate != h264->BitRate) {
+			h264->BitRate = newBitRate;
+		}
+	}
+
+	inputRect.right = encoder->desktopWidth;
+	inputRect.bottom = encoder->desktopHeight;
+	if (enableFullAVC444) {
+		rc = avc444_compress(h264, data, encoder->srcFormat, encoder->scanLine,
+				encoder->desktopWidth, encoder->desktopHeight, &inputRect,
+				useAVC444v2 ? 2 : 1, &op, &encodedData, &encodedSize,
+				&chromaData, &chromaSize, &meta, &auxMeta);
+	} else {
+		rc = avc420_compress(h264, data, encoder->srcFormat, encoder->scanLine,
+				encoder->desktopWidth, encoder->desktopHeight, &inputRect,
+				&encodedData, &encodedSize, &meta);
+		op = 1; /* Luma only */
+	}
+	if ((rc < 0) || encodedSize < 1) {
+		STOPWATCH_STOP(encoder->swH264Compress);
+		WLog_ERR(TAG,
+				"h264 compression failed [%d]. AVC444v2=%s, AVC444v1=%s  "
+				"encodedSize=%" PRIu32 " chromaSize=%" PRIu32 "",
+				rc, useAVC444v2 ? "true" : "false",
+				enableFullAVC444 ? "true" : "false", encodedSize, chromaSize);
+		goto out;
+	}
+
+	STOPWATCH_STOP(encoder->swH264Compress);
+#if 0
+    WLog_DBG(TAG, "h264 compression ok. mode=%"PRIu32" encodedSize=%"PRIu32" targetFrameSizeInBits=%"PRIu32" optimizable=%"PRIu32"",
+             openh264CompressMode, encodedSize, targetFrameSizeInBits, optimizable);
+#endif
+	if (useAVC444) {
+		UINT32 avc420EncodedBitstreamInfo = encodedSize + 4 + numRects * 10;
+
+		if (!enableFullAVC444 || (op != 0)) {
+			avc420EncodedBitstreamInfo |=
+					(1 << 30); /* LC = 0x1: YUV420 frame only */
+		}
+		if (!Stream_EnsureRemainingCapacity(
+					s, sizeof(avc420EncodedBitstreamInfo))) {
+			WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
+			goto out;
+		}
+		Stream_Write_UINT32(s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
+															   (4 bytes) */
+	}
+
+	if (!ogon_write_avc420_bitmap_stream(s, &meta, encodedData, encodedSize)) {
+		goto out;
+	}
+
+	if (enableFullAVC444) {
+		if (op == 0) {
+			if (!ogon_write_avc420_bitmap_stream(
+						s, &auxMeta, chromaData, chromaSize)) {
+				goto out;
+			}
+
+			optimizable =
+					FALSE; /* no post rendering possible in full avc444 mode */
+		}
+	}
+
+	pdu.surfaceId = frontend->rdpgfxOutputSurface;
+	pdu.pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
+	if (useAVC444) {
+		pdu.codecId =
+				useAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
+	} else {
+		pdu.codecId = RDPGFX_CODECID_AVC420;
+	}
+	pdu.destRect.left = 0;
+	pdu.destRect.top = 0;
+	pdu.destRect.right = encoder->desktopWidth;
+	pdu.destRect.bottom = encoder->desktopHeight;
+	pdu.bitmapDataLength = Stream_GetPosition(s);
+	pdu.bitmapData = Stream_Buffer(s);
+
+	if (!ogon_bwmgmt_detect_bandwidth_start(conn)) {
+		return -1;
+	}
+
+	frontend->rdpgfx->WireToSurface1(frontend->rdpgfx, &pdu);
+
+	if (!ogon_bwmgmt_detect_bandwidth_stop(conn)) {
+		return -1;
+	}
+
+out:
+	free_h264_metablock(&meta);
+	free_h264_metablock(&auxMeta);
+	if (optimizable) {
+		if (frontend->rdpgfxProgressiveTicks == 0) {
+			frontend->rdpgfxProgressiveTicks = 1;
+		}
+	} else {
+		frontend->rdpgfxProgressiveTicks = 0;
+	}
+
+	return 0;
+}
+#endif /* defined(USE_FREERDP_H264) && (FREERDP_VERSION_MAJOR >= 3) */
 
 int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
