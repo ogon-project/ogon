@@ -31,6 +31,7 @@
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/version.h>
 
 #include "../common/global.h"
 #include "icp/icp_client_stubs.h"
@@ -309,6 +310,14 @@ static void ogon_channels_drdynvc_state_change(ogon_vcm *vcm) {
 	ogon_channels_drdynvc_failed(vcm);
 }
 
+static BOOL append(wArrayList *list, const void *what) {
+#if defined(WITH_FREERDP_DEPRECATED) || (FREERDP_VERSION_MAJOR < 3)
+	return ArrayList_Add(list, what) >= 0;
+#else
+	return ArrayList_Append(list, what);
+#endif
+}
+
 BOOL ogon_channels_post_connect(ogon_connection *connection) {
 	UINT32 dynvc_caps;
 	wArrayList *registeredChannels;
@@ -345,7 +354,7 @@ BOOL ogon_channels_post_connect(ogon_connection *connection) {
 		goto out;
 	}
 
-	if (ArrayList_Add(registeredChannels, dynChannel) < 0) {
+	if (!append(registeredChannels, dynChannel)) {
 		WLog_ERR(TAG, "unable to add dynamic channel in the list of channels");
 		goto out;
 	}
@@ -1155,7 +1164,7 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 		goto out_error;
 	}
 
-	if (ArrayList_Add(registeredChannels, currentChannel) < 0) {
+	if (!append(registeredChannels, currentChannel)) {
 		WLog_ERR(TAG, "open static channel: unable to add channel in the list");
 		goto out_error;
 	}
@@ -1287,7 +1296,7 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 
 	WLog_DBG(TAG, "Sent dynamic channel creation request for channel id %"PRIu32" (%s)", currentChannel->channel_id, currentChannel->vc_name);
 
-	if (ArrayList_Add(registeredChannels, currentChannel) < 0) {
+	if (!append(registeredChannels, currentChannel)) {
 		WLog_ERR(TAG, "open dynamic channel: unable to add channel in the list");
 		goto StreamFreeError;
 	}
@@ -1571,7 +1580,7 @@ internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
 		}
 	}
 
-	if (ArrayList_Add(vcm->registered_virtual_channels, regVC) < 0) {
+	if (!append(vcm->registered_virtual_channels, regVC)) {
 		WLog_ERR(TAG, "open internal channel: error adding channel in the list");
 		goto err;
 	}
