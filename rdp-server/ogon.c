@@ -393,7 +393,11 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 		unsigned *wlog_appender_type, DWORD *log_level) {
 	DWORD flags;
 	int status = 0;
+#if WINPR_VERSION_MAJOR < 3
 	COMMAND_LINE_ARGUMENT_A *arg;
+#else
+	const COMMAND_LINE_ARGUMENT_A *arg;
+#endif
 
 	*no_daemon = *kill_process = 0;
 
