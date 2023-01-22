@@ -36,21 +36,21 @@
 #include <ogon/dmgbuf.h>
 
 #include "../common/global.h"
-#include "commondefs.h"
-#include "bandwidth_mgmt.h"
-#include "peer.h"
+#include "back_front_internal.h"
 #include "backend.h"
+#include "bandwidth_mgmt.h"
+#include "commondefs.h"
 #include "encoder.h"
 #include "font8x8.h"
+#include "peer.h"
 
 #define TAG OGON_TAG("core.graphics")
 
 typedef int (*pfn_send_graphics_bits)(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects);
 
-BOOL ogon_rfx_write_message_progressive_simple(RFX_CONTEXT *context, wStream *s,
-	RFX_MESSAGE *msg)
-{
+static BOOL ogon_rfx_write_message_progressive_simple(
+		RFX_CONTEXT *context, wStream *s, RFX_MESSAGE *msg) {
 	UINT32 blockLen;
 	UINT32 i;
 	UINT32 *qv;
@@ -192,8 +192,8 @@ BOOL ogon_rfx_write_message_progressive_simple(RFX_CONTEXT *context, wStream *s,
  * to virtual grid with 64x64 grid tile size.
  */
 
-int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn, const BYTE *data,
-		const RDP_RECT *rects, UINT32 numRects) {
+static int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn,
+		const BYTE *data, const RDP_RECT *rects, UINT32 numRects) {
 	wStream *s;
 	UINT32 i;
 	RFX_MESSAGE *message;
@@ -257,7 +257,7 @@ int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn, const BYTE *data,
 	return ret;
 }
 
-int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
+static int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
 	wStream *s;
 	UINT32 i;
@@ -333,7 +333,7 @@ int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 	return 0;
 }
 
-int ogon_send_gfx_debug_bitmap(ogon_connection *conn) {
+static int ogon_send_gfx_debug_bitmap(ogon_connection *conn) {
 	ogon_front_connection *frontend = &conn->front;
 	ogon_bitmap_encoder *encoder = frontend->encoder;
 	BYTE *encodedData = NULL;
@@ -403,7 +403,7 @@ static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s,
 	return TRUE;
 }
 
-int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
+static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
 	ogon_front_connection *frontend = &conn->front;
 	ogon_bitmap_encoder *encoder = frontend->encoder;
@@ -976,7 +976,7 @@ out:
 }
 #endif /* defined(USE_FREERDP_H264) && (FREERDP_VERSION_MAJOR >= 3) */
 
-int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
+static int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
 	/**
 	 * Note: we use rfx_encode_message() instead of rfx_encode_messages().
@@ -1070,7 +1070,7 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 	return 0;
 }
 
-int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
+static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
 	rdpUpdate *update = conn->context.peer->context->update;
 	ogon_bitmap_encoder *encoder = conn->front.encoder;
@@ -1518,7 +1518,8 @@ static void dumpExtents(REGION16 *r) {
 }
 #endif
 
-void ogon_render_string(char *str, UINT32 fg, UINT32 bg, BYTE *buf, UINT32 scanLine, BOOL vFlip) {
+static void ogon_render_string(char *str, UINT32 fg, UINT32 bg, BYTE *buf,
+		UINT32 scanLine, BOOL vFlip) {
 	UINT32 *p;
 	UINT32 x, y, z;
 	size_t i, len;
@@ -1556,7 +1557,7 @@ void ogon_render_string(char *str, UINT32 fg, UINT32 bg, BYTE *buf, UINT32 scanL
 	}
 }
 
-BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
+static BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
 	ogon_front_connection *front = &conn->front;
 	ogon_bitmap_encoder *encoder = front->encoder;
 	rdpSettings *settings = conn->context.settings;

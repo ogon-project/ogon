@@ -74,8 +74,7 @@ out_free:
 	return -1;
 }
 
-int ogon_icp_shutdown()
-{
+int ogon_icp_shutdown() {
 	pbrpc_server_stop(icpContext->pbcontext);
 	pbrpc_server_free(icpContext->pbcontext);
 	tp_npipe_free(icpContext->tpcontext);
@@ -83,10 +82,7 @@ int ogon_icp_shutdown()
 	return 0;
 }
 
-void* ogon_icp_get_context()
-{
-	return icpContext->pbcontext;
-}
+void *ogon_icp_get_context() { return icpContext->pbcontext; }
 
 BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor) {
 	pbRPCContext* pbrpc = (pbRPCContext *)context;

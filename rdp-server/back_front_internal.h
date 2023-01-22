@@ -32,6 +32,7 @@
 
 #include <ogon/backend.h>
 
+#include "commondefs.h"
 #include "eventloop.h"
 
 #ifdef __cplusplus
@@ -44,6 +45,10 @@ void handle_wait_timer_state(ogon_connection *conn);
 BOOL ogon_frontend_install_frame_timer(ogon_connection *conn);
 int ogon_resize_frontend(
 		ogon_connection *conn, ogon_backend_connection *backend);
+void frontend_destroy(ogon_front_connection *front);
+int frontend_handle_sync_reply(ogon_connection *conn);
+
+int ogon_backend_consume_damage(ogon_connection *conn);
 
 #ifdef __cplusplus
 }

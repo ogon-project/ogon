@@ -33,8 +33,7 @@ DWORD pbrpc_getTag(pbRPCContext *context)
 	return InterlockedIncrement(&(context->tag));
 }
 
-Ogon__Pbrpc__RPCBase* pbrpc_message_new()
-{
+Ogon__Pbrpc__RPCBase *pbrpc_message_new() {
 	Ogon__Pbrpc__RPCBase* msg;
 
 	if (!(msg = calloc(1, sizeof(Ogon__Pbrpc__RPCBase)))) {
@@ -82,8 +81,7 @@ void pbrpc_prepare_error(Ogon__Pbrpc__RPCBase* msg, UINT32 tag, char *error)
 	msg->errordescription = error;
 }
 
-pbRPCPayload* pbrpc_payload_new()
-{
+pbRPCPayload *pbrpc_payload_new() {
 	pbRPCPayload* pl = calloc(1, sizeof(pbRPCPayload));
 	return pl;
 }

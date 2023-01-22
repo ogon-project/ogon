@@ -346,8 +346,7 @@ static int pbrpc_process_request(pbRPCContext* context, Ogon__Pbrpc__RPCBase *rp
 }
 
 // errors < 0 transport erros, errors > 0 pb errors
-int pbrpc_process_message_in(pbRPCContext* context)
-{
+static int pbrpc_process_message_in(pbRPCContext *context) {
 	char *msg;
 	int msgLen;
 	int ret = 0;

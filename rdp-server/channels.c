@@ -51,9 +51,8 @@ static void ringbuffer_reset(RingBuffer *rb) {
 
 static BOOL dvc_send_close(registered_virtual_channel *dvc);
 
-registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(ogon_vcm *vcm,
-	const char *name, UINT16 type)
-{
+static registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(
+		ogon_vcm *vcm, const char *name, UINT16 type) {
 	registered_virtual_channel *currentChannel = NULL;
 	wArrayList *registeredChannels;
 	UINT32 index;
@@ -77,9 +76,8 @@ registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(ogon_vc
 	return NULL;
 }
 
-registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(ogon_vcm *vcm,
-	UINT32 id, UINT16 type)
-{
+static registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(
+		ogon_vcm *vcm, UINT32 id, UINT16 type) {
 	registered_virtual_channel *currentChannel = NULL;
 	wArrayList *registeredChannels;
 	UINT32 index;
@@ -171,7 +169,7 @@ out_free:
 	return NULL;
 }
 
-void vc_free(registered_virtual_channel *channel) {
+static void vc_free(registered_virtual_channel *channel) {
 	ringbuffer_destroy(&channel->pipe_xmit_buffer);
 
 	if (channel->receive_data) {
@@ -374,8 +372,7 @@ out:
 	return result;
 }
 
-BOOL vc_disconnect_server_part(registered_virtual_channel *channel)
-{
+static BOOL vc_disconnect_server_part(registered_virtual_channel *channel) {
 	if (channel->event_source_server) {
 		eventloop_remove_source(&channel->event_source_server);
 		if (channel->pipe_server != INVALID_HANDLE_VALUE) {
@@ -1095,8 +1092,8 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 	return TRUE;
 }
 
-BOOL virtual_manager_open_virtual_channel_send_error(struct ogon_notification_vc_connect *notification, wMessage *msg)
-{
+static BOOL virtual_manager_open_virtual_channel_send_error(
+		struct ogon_notification_vc_connect *notification, wMessage *msg) {
 	int error = ogon_icp_sendResponse(notification->tag, msg->id, 0, FALSE, NULL);
 	if (error != 0) {
 		WLog_ERR(TAG, "ogon_icp_sendResponse failed while sending virtual channel open error");

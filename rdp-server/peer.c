@@ -1035,8 +1035,6 @@ static int pre_connect_handler(int mask, int fd, HANDLE handle, void *data) {
 	return 0;
 }
 
-void frontend_destroy(ogon_front_connection *front);
-
 static void ogon_connection_free(freerdp_peer *peer, rdpContext *context) {
 	OGON_UNUSED(peer);
 	ogon_connection *conn;

@@ -120,7 +120,6 @@ static const char *get_event_name(ogon_event event) {
 }
 #endif
 
-
 ogon_state_machine *ogon_state_new() {
 	ogon_state_machine *stateMachine = calloc(1, sizeof(ogon_state_machine));
 	if (!stateMachine) {

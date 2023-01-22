@@ -101,14 +101,12 @@ static int tp_npipe_read(pbRPCTransportContext* context, char* data, unsigned in
 	return bytesRead;
 }
 
-HANDLE tp_npipe_get_fds(pbRPCTransportContext* context)
-{
+static HANDLE tp_npipe_get_fds(pbRPCTransportContext *context) {
 	NpTransportContext *np = (NpTransportContext*)context;
 	return np->handle;
 }
 
-pbRPCTransportContext* tp_npipe_new()
-{
+pbRPCTransportContext *tp_npipe_new() {
 	NpTransportContext* np = calloc(1, sizeof(NpTransportContext));
 	if (!np)
 		return NULL;

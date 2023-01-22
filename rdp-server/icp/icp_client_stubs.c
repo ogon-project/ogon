@@ -73,12 +73,12 @@
 		ret = PBRPC_BAD_REQUEST_DATA; \
 	}
 
-void dummyCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
+static void dummyCallback(
+		UINT32 reason, Ogon__Pbrpc__RPCBase *response, void *args) {
 	OGON_UNUSED(reason);
 	OGON_UNUSED(args);
 	pbrpc_message_free(response, TRUE);
 }
-
 
 #define ICP_CLIENT_STUB_CALL_ASYNC(camel, expanded) \
 	pbrequest.dataLen = ogon__icp__##expanded ##_request__get_packed_size(&request); \

@@ -105,8 +105,7 @@ out:
 	return targetFrameSizeInBits;
 }
 
-
-UINT16 ogon_bwmgmt_calc_using_buckets(ogon_connection *conn) {
+static UINT16 ogon_bwmgmt_calc_using_buckets(ogon_connection *conn) {
 	UINT16 using_buckets = (UINT16)conn->front.frameAcknowledge;
 
 	if (!using_buckets) {
@@ -119,8 +118,8 @@ UINT16 ogon_bwmgmt_calc_using_buckets(ogon_connection *conn) {
 	return using_buckets;
 }
 
-
-UINT32 ogon_bwmgmt_update_bucket_usage_rec(ogon_connection *conn, UINT32 size_used, UINT16 depth, INT32 current_index) {
+static UINT32 ogon_bwmgmt_update_bucket_usage_rec(ogon_connection *conn,
+		UINT32 size_used, UINT16 depth, INT32 current_index) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 	UINT32 currentBucketSize;
 
@@ -150,8 +149,8 @@ UINT32 ogon_bwmgmt_update_bucket_usage_rec(ogon_connection *conn, UINT32 size_us
 	}
 }
 
-
-UINT32 ogon_bwmgmt_update_bucket_usage(ogon_connection *conn, UINT32 size_used) {
+static UINT32 ogon_bwmgmt_update_bucket_usage(
+		ogon_connection *conn, UINT32 size_used) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 	UINT32 currentBucketIndex = bwmgmt->current_bucket;
 	UINT16 usingBuckets = ogon_bwmgmt_calc_using_buckets(conn);
@@ -172,7 +171,6 @@ UINT32 ogon_bwmgmt_update_bucket_usage(ogon_connection *conn, UINT32 size_used) 
 		return 0;
 	}
 }
-
 
 BOOL ogon_bwmgmt_update_data_usage(ogon_connection *conn) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
@@ -285,8 +283,8 @@ BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenc
 	return TRUE;
 }
 
-
-UINT32 ogon_bwmgmt_client_bandwidth_meassure_average(ogon_bandwidth_mgmt *bwmgmt) {
+static UINT32 ogon_bwmgmt_client_bandwidth_meassure_average(
+		ogon_bandwidth_mgmt *bwmgmt) {
 	UINT32 totalBitrates = 0;
 	UINT32 totaltimedelta = 0;
 	UINT32 run;
@@ -298,7 +296,6 @@ UINT32 ogon_bwmgmt_client_bandwidth_meassure_average(ogon_bandwidth_mgmt *bwmgmt
 
 	return totaltimedelta ? totalBitrates / totaltimedelta : 0;
 }
-
 
 BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber) {
 	OGON_UNUSED(sequenceNumber);

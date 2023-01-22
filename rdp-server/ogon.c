@@ -327,7 +327,7 @@ error_eventloop:
 	return context.returnValue;
 }
 
-void session_manager_connection_lost() {
+static void session_manager_connection_lost() {
 	WLog_INFO(TAG, "session manager connection lost, killing all sessions");
 	app_context_stop_all_connections();
 }
@@ -529,8 +529,7 @@ void killProcess(char *pid_file) {
 	exit(0);
 }
 
-void checkPidFile(char *pid_file) {
-
+static void checkPidFile(char *pid_file) {
 	FILE* fp;
 
 	if (!PathFileExistsA(OGON_VAR_PATH)) {
@@ -561,8 +560,7 @@ void checkPidFile(char *pid_file) {
 	DeleteFileA(pid_file);
 }
 
-void daemonizeCode(char *pid_file) {
-
+static void daemonizeCode(char *pid_file) {
 	FILE* fp;
 	pid_t pid;
 	char text[256];

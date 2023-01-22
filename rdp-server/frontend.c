@@ -181,7 +181,6 @@ void handle_wait_timer_state(ogon_connection *conn) {
 	}
 }
 
-
 int frontend_handle_frame_sent(ogon_connection *conn) {
 	ogon_front_connection *front = &conn->front;
 
@@ -203,10 +202,7 @@ int frontend_handle_frame_sent(ogon_connection *conn) {
 	return 0;
 }
 
-int ogon_backend_consume_damage(ogon_connection *conn);
-
 int frontend_handle_sync_reply(ogon_connection *conn) {
-
 	conn->shadowing->backend->waitingSyncReply = FALSE;
 
 	LinkedList_Enumerator_Reset(conn->frontConnections);
@@ -1369,8 +1365,7 @@ static void ogon_rdpgfx_cache_import_offer(rdpgfx_server_context *rdpgfx, RDPGFX
 	}
 }
 
-BOOL ogon_connection_init_front(ogon_connection *conn)
-{
+BOOL ogon_connection_init_front(ogon_connection *conn) {
 	rdpInput *input;
 	rdpUpdate *update;
 	rdpSettings *settings = conn->context.settings;
@@ -1541,8 +1536,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	return LinkedList_AddFirst(conn->frontConnections, conn);
 }
 
-void frontend_destroy(ogon_front_connection *front)
-{
+void frontend_destroy(ogon_front_connection *front) {
 	if (!front) {
 		return;
 	}
