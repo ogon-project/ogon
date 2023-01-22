@@ -27,6 +27,10 @@
 
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef bool (*pgetPropertyBool)(UINT32 sessionID, const char* path, bool* value);
 typedef bool (*pgetPropertyNumber)(UINT32 sessionID, const char* path, long* value);
 typedef bool (*pgetPropertyString)(UINT32 sessionID, const char* path, char* value, unsigned int valueLength);
@@ -106,5 +110,9 @@ struct rds_module_entry_points_v1
 #define RDS_MODULE_ENTRY_POINT_NAME	"RdsModuleEntry"
 
 typedef int (*pRdsModuleEntry)(RDS_MODULE_ENTRY_POINTS* pEntryPoints);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_MODULES_H_ */

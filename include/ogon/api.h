@@ -25,10 +25,18 @@
 #ifndef OGON_API_H_
 #define OGON_API_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #if __GNUC__ >= 4
 	#define OGON_API __attribute__ ((visibility("default")))
 #else
 	#define OGON_API 
 #endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_API_H_ */
