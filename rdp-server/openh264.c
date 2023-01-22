@@ -291,13 +291,13 @@ void ogon_openh264_context_free(ogon_h264_context *h264) {
 		destroy_open_h264_encoder(h264->pEncoder);
 	}
 
-	_aligned_free(h264->pic1.pData[0]);
-	_aligned_free(h264->pic1.pData[1]);
-	_aligned_free(h264->pic1.pData[2]);
+	winpr_aligned_free(h264->pic1.pData[0]);
+	winpr_aligned_free(h264->pic1.pData[1]);
+	winpr_aligned_free(h264->pic1.pData[2]);
 
-	_aligned_free(h264->pic2.pData[0]);
-	_aligned_free(h264->pic2.pData[1]);
-	_aligned_free(h264->pic2.pData[2]);
+	winpr_aligned_free(h264->pic2.pData[0]);
+	winpr_aligned_free(h264->pic2.pData[1]);
+	winpr_aligned_free(h264->pic2.pData[2]);
 
 #ifdef WITH_ENCODER_STATS
         ogon_print_h264_stopwatches(h264);
@@ -370,23 +370,29 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	ysize = h264Width * h264Height;
 	usize = vsize = ysize >> 2;
 
-	if (!(h264->pic1.pData[0] = (unsigned char*) _aligned_malloc(ysize, 256))) {
+	if (!(h264->pic1.pData[0] =
+						(unsigned char *)winpr_aligned_malloc(ysize, 256))) {
 		goto err;
 	}
-	if (!(h264->pic1.pData[1] = (unsigned char*) _aligned_malloc(usize, 256))) {
+	if (!(h264->pic1.pData[1] =
+						(unsigned char *)winpr_aligned_malloc(usize, 256))) {
 		goto err;
 	}
-	if (!(h264->pic1.pData[2] = (unsigned char*) _aligned_malloc(vsize, 256))) {
+	if (!(h264->pic1.pData[2] =
+						(unsigned char *)winpr_aligned_malloc(vsize, 256))) {
 		goto err;
 	}
 
-	if (!(h264->pic2.pData[0] = (unsigned char*) _aligned_malloc(ysize, 256))) {
+	if (!(h264->pic2.pData[0] =
+						(unsigned char *)winpr_aligned_malloc(ysize, 256))) {
 		goto err;
 	}
-	if (!(h264->pic2.pData[1] = (unsigned char*) _aligned_malloc(usize, 256))) {
+	if (!(h264->pic2.pData[1] =
+						(unsigned char *)winpr_aligned_malloc(usize, 256))) {
 		goto err;
 	}
-	if (!(h264->pic2.pData[2] = (unsigned char*) _aligned_malloc(vsize, 256))) {
+	if (!(h264->pic2.pData[2] =
+						(unsigned char *)winpr_aligned_malloc(vsize, 256))) {
 		goto err;
 	}
 
@@ -483,12 +489,12 @@ err:
 		if (h264->pEncoder) {
 			destroy_open_h264_encoder(h264->pEncoder);
 		}
-		_aligned_free(h264->pic1.pData[0]);
-		_aligned_free(h264->pic1.pData[1]);
-		_aligned_free(h264->pic1.pData[2]);
-		_aligned_free(h264->pic2.pData[0]);
-		_aligned_free(h264->pic2.pData[1]);
-		_aligned_free(h264->pic2.pData[2]);
+		winpr_aligned_free(h264->pic1.pData[0]);
+		winpr_aligned_free(h264->pic1.pData[1]);
+		winpr_aligned_free(h264->pic1.pData[2]);
+		winpr_aligned_free(h264->pic2.pData[0]);
+		winpr_aligned_free(h264->pic2.pData[1]);
+		winpr_aligned_free(h264->pic2.pData[2]);
 		free (h264);
 	}
 

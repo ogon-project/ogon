@@ -226,9 +226,8 @@ BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 	UINT32 starttime;
 
-	if (!peer->activated || !peer->settings->NetworkAutoDetect ||
-		!frontend->frameAcknowledge)
-	{
+	if (!peer->activated || !peer->context->settings->NetworkAutoDetect ||
+			!frontend->frameAcknowledge) {
 		return TRUE;
 	}
 
@@ -248,8 +247,8 @@ BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn) {
 	}
 	bwmgmt->autodetect_rtt_starttime = starttime;
 	bwmgmt->autodetect_rtt_sent = TRUE;
-	peer->autodetect->RTTMeasureRequest(peer->autodetect->context,
-										bwmgmt->autodetect_rtt_seq);
+	peer->context->autodetect->RTTMeasureRequest(peer->context->autodetect,
+			RDP_TRANSPORT_TCP, bwmgmt->autodetect_rtt_seq);
 
 	return TRUE;
 }
@@ -264,21 +263,24 @@ BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenc
 
 	if (frontend->frameAcknowledge) {
 		/* Calculate frameack based on RTT*/
-		frameack = MIN(
-			MAX( peer->autodetect->netCharBaseRTT * connection->fps / 1000, 2 ),
-			(unsigned int) connection->fps );
+		frameack = MIN(MAX(peer->context->autodetect->netCharBaseRTT *
+									   connection->fps / 1000,
+							   2),
+				(unsigned int)connection->fps);
 		if (frameack != frontend->frameAcknowledge) {
 			frontend->frameAcknowledge = frameack;
-			WLog_VRB(TAG, "measured delay : %"PRIu32" adjusted frameack to %"PRIu32"",
-				peer->autodetect->netCharBaseRTT, frameack);
+			WLog_VRB(TAG,
+					"measured delay : %" PRIu32 " adjusted frameack to %" PRIu32
+					"",
+					peer->context->autodetect->netCharBaseRTT, frameack);
 		}
 	}
 
 	/* Reset counter for next test batch*/
 	bwmgmt->autodetect_rtt_sent = FALSE;
 	bwmgmt->autodetect_rtt_seq++;
-	peer->autodetect->netCharAverageRTT = 0;
-	peer->autodetect->netCharBaseRTT = 0;
+	peer->context->autodetect->netCharAverageRTT = 0;
+	peer->context->autodetect->netCharBaseRTT = 0;
 
 	return TRUE;
 }
@@ -384,13 +386,13 @@ BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn) {
 	freerdp_peer *peer = conn->context.peer;
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 
-	if (!peer->activated || !peer->settings->NetworkAutoDetect) {
+	if (!peer->activated || !peer->context->settings->NetworkAutoDetect) {
 		return TRUE;
 	}
 
-	if (!peer->autodetect->BandwidthMeasureStart(peer->autodetect->context,
-												 bwmgmt->autodetect_bandwidth_seq))
-	{
+	if (!peer->context->autodetect->BandwidthMeasureStart(
+				peer->context->autodetect, RDP_TRANSPORT_TCP,
+				bwmgmt->autodetect_bandwidth_seq)) {
 		WLog_ERR(TAG, "BandwidthMeasureStart failed");
 		return FALSE;
 	}
@@ -403,13 +405,13 @@ BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn) {
 	freerdp_peer *peer = conn->context.peer;
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 
-	if (!peer->activated || !peer->settings->NetworkAutoDetect) {
+	if (!peer->activated || !peer->context->settings->NetworkAutoDetect) {
 		return TRUE;
 	}
 
-	if (!peer->autodetect->BandwidthMeasureStop(peer->autodetect->context,
-												bwmgmt->autodetect_bandwidth_seq))
-	{
+	if (!peer->context->autodetect->BandwidthMeasureStop(
+				peer->context->autodetect, RDP_TRANSPORT_TCP,
+				bwmgmt->autodetect_bandwidth_seq)) {
 		WLog_ERR(TAG, "BandwidthMeasureStop failed");
 		return FALSE;
 	}

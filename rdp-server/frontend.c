@@ -133,22 +133,13 @@ out:
 static int ogon_generate_certificate(ogon_connection *conn, const char *cert_file, const char *key_file) {
 	rdpSettings *settings = conn->context.settings;
 
-	settings->CertificateFile = strdup(cert_file);
-	settings->PrivateKeyFile = strdup(key_file);
-	settings->RdpKeyFile = strdup(settings->PrivateKeyFile);
-
-	if (!settings->CertificateFile || !settings->PrivateKeyFile || !settings->RdpKeyFile) {
-		goto out_fail;
-	}
-
+	if (!freerdp_settings_set_string(
+				settings, FreeRDP_CertificateFile, cert_file))
+		return -1;
+	if (!freerdp_settings_set_string(
+				settings, FreeRDP_PrivateKeyFile, key_file))
+		return -1;
 	return 0;
-
-out_fail:
-	free(settings->CertificateFile);
-	settings->CertificateFile = NULL;
-	free(settings->PrivateKeyFile);
-	settings->PrivateKeyFile = NULL;
-	return -1;
 }
 
 void handle_wait_timer_state(ogon_connection *conn) {
@@ -369,7 +360,7 @@ static BOOL ogon_peer_capabilities(freerdp_peer *client) {
 
 static BOOL ogon_peer_post_connect(freerdp_peer *client)
 {
-	rdpSettings* settings = client->settings;
+	rdpSettings *settings = client->context->settings;
 	ogon_connection *conn = (ogon_connection *)client->context;
 	ogon_front_connection *front = &conn->front;
 	int error_code;
@@ -386,9 +377,10 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client)
 		return FALSE;
 	}
 
-	if (client->settings->AutoLogonEnabled)	{
+	if (client->context->settings->AutoLogonEnabled) {
 		WLog_DBG(TAG, "autologon enabled, user=[%s] domain=[%s]",
-			client->settings->Username, client->settings->Domain);
+				client->context->settings->Username,
+				client->context->settings->Domain);
 	}
 
 	WLog_DBG(TAG, "requested desktop: %"PRIu32"x%"PRIu32"@%"PRIu32"bpp", settings->DesktopWidth,
@@ -557,7 +549,7 @@ static void ogon_init_output(ogon_connection *conn) {
 }
 
 static BOOL ogon_peer_activate(freerdp_peer *client) {
-	rdpSettings* settings = client->settings;
+	rdpSettings *settings = client->context->settings;
 	ogon_connection *conn = (ogon_connection *)client->context;
 	ogon_front_connection *front = &conn->front;
 	BOOL resizeClient = FALSE;
@@ -601,7 +593,7 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 
 		ogon_bitmap_encoder* encoder = front->encoder;
 		ogon_backend_connection *backend;
-		rdpPointerUpdate *pointer = client->update->pointer;
+		rdpPointerUpdate *pointer = client->context->update->pointer;
 		POINTER_SYSTEM_UPDATE systemPointer = { 0 };
 
 		backend = conn->shadowing->backend;
@@ -633,7 +625,7 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 					settings->DesktopHeight = front->pendingResizeHeight;
 					front->pendingResizeHeight = 0;
 					front->pendingResizeWidth = 0;
-					client->update->DesktopResize(client->context);
+					client->context->update->DesktopResize(client->context);
 					return TRUE;
 				}
 			}
@@ -699,7 +691,8 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 	 */
 	if (resizeClient) {
 		ogon_state_set_event(front->state, OGON_EVENT_FRONTEND_TRIGGER_RESIZE);
-		client->update->DesktopResize(client->update->context);
+		client->context->update->DesktopResize(
+				client->context->update->context);
 		return TRUE;
 	}
 
@@ -1436,18 +1429,21 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	}
 
 	if (reqs[INDEX_FORCE_WEAK].success && reqs[INDEX_FORCE_WEAK].v.boolValue) {
-			free(settings->RdpKeyFile);
-			settings->RdpKeyFile = NULL;
-			settings->RdpServerRsaKey = ogon_generate_weak_rsa_key();
+		rdpRsaKey *key = ogon_generate_weak_rsa_key();
+		if (!key) return FALSE;
+		if (!freerdp_settings_set_pointer_len(
+					settings, FreeRDP_RdpServerRsaKey, key, 1))
+			return FALSE;
 	}
 
 	front->showDebugInfo = reqs[INDEX_SHOW_DEBUG].v.boolValue;
 	front->rdpgfxForbidden = reqs[INDEX_NO_EGFX].v.boolValue;
 
-
-	peer->settings->NetworkAutoDetect = TRUE;
-	peer->autodetect->BandwidthMeasureResults = ogon_bwmgmt_client_bandwidth_measure_results;
-	peer->autodetect->RTTMeasureResponse = ogon_bwmgmt_client_rtt_measure_response;
+	peer->context->settings->NetworkAutoDetect = TRUE;
+	peer->context->autodetect->BandwidthMeasureResults =
+			ogon_bwmgmt_client_bandwidth_measure_results;
+	peer->context->autodetect->RTTMeasureResponse =
+			ogon_bwmgmt_client_rtt_measure_response;
 
 #if defined(WITH_OPENH264) || defined(USE_FREERDP_H264)
 	if (!front->rdpgfxForbidden) {
@@ -1505,7 +1501,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn)
 	input->MouseEvent = ogon_input_mouse_event;
 	input->ExtendedMouseEvent = ogon_input_extended_mouse_event;
 
-	update = peer->update;
+	update = peer->context->update;
 	update->SurfaceFrameAcknowledge = ogon_update_frame_acknowledge;
 	update->SuppressOutput = ogon_suppress_output;
 	update->RefreshRect = ogon_refresh_rect;

@@ -51,7 +51,7 @@ static void ogon_delete_encoder_bmp_context(ogon_bitmap_encoder *e) {
 	freerdp_bitmap_planar_context_free(ctx->planar);
 	Stream_Free(ctx->bs, TRUE);
 	Stream_Free(ctx->bts, TRUE);
-	_aligned_free(ctx->imageCopyBuffer);
+	winpr_aligned_free(ctx->imageCopyBuffer);
 	free(ctx->rects);
 	free(ctx);
 
@@ -81,7 +81,7 @@ static BOOL ogon_create_encoder_bmp_context(ogon_bitmap_encoder *encoder) {
 
 	maxBitmapSize = 64 * 64 * encoder->dstBytesPerPixel + 3; /* 3 == RLE header */
 
-	if (!(ctx->imageCopyBuffer = _aligned_malloc(maxBitmapSize, 16))) {
+	if (!(ctx->imageCopyBuffer = winpr_aligned_malloc(maxBitmapSize, 16))) {
 		goto fail;
 	}
 
@@ -255,7 +255,8 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	encoder->bytesPerPixel = bytesPerPixel;
 	encoder->scanLine = scanLine;
 
-	if (!(encoder->clientView = (BYTE *)_aligned_malloc(desktopHeight * scanLine, 256))) {
+	if (!(encoder->clientView = (BYTE *)winpr_aligned_malloc(
+				  desktopHeight * scanLine, 256))) {
 		goto fail;
 	}
 
@@ -332,7 +333,7 @@ void ogon_bitmap_encoder_free(ogon_bitmap_encoder *encoder) {
 		return;
 	}
 
-	_aligned_free(encoder->clientView);
+	winpr_aligned_free(encoder->clientView);
 	region16_uninit(&encoder->accumulatedDamage);
 	free(encoder->rdpRects);
 

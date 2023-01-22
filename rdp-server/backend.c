@@ -337,7 +337,7 @@ int ogon_resize_frontend(ogon_connection *conn, ogon_backend_connection *backend
 	}
 
 	/* we can safely start the reactivate sequence */
-	client->update->DesktopResize(client->update->context);
+	client->context->update->DesktopResize(client->context->update->context);
 	ogon_state_set_event(front->state, OGON_EVENT_FRONTEND_TRIGGER_RESIZE);
 	return 0;
 }
@@ -599,7 +599,8 @@ void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_point
 	POINTER_COLOR_UPDATE* pointerColor = &(pointerNew.colorPtrAttr);
 	BOOL isRdesktop = FALSE;
 	char *clientProductId = connection->context.settings->ClientProductId;
-	rdpPointerUpdate* pointer = connection->context.peer->update->pointer;
+	rdpPointerUpdate *pointer =
+			connection->context.peer->context->update->pointer;
 
 	/**
 	 * Note: As msg values got already validated in ogon_server_set_pointer()
@@ -771,7 +772,8 @@ static int ogon_server_set_system_pointer(ogon_connection *connection,
 
 		if (!msg->clientId || (frontConnection->id == msg->clientId)) {
 			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
-			rdpPointerUpdate* pointer = frontConnection->context.peer->update->pointer;
+			rdpPointerUpdate *pointer =
+					frontConnection->context.peer->context->update->pointer;
 
 			pointer_system.type = msg->ptrType;
 			IFCALL(pointer->PointerSystem, &frontConnection->context, &pointer_system);
@@ -794,7 +796,8 @@ static int ogon_server_beep(ogon_connection *connection, ogon_msg_beep *msg) {
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
 		PLAY_SOUND_UPDATE playSound = { 0 };
 		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
-		pPlaySound playSoundCall = frontConnection->context.peer->update->PlaySound;
+		pPlaySound playSoundCall =
+				frontConnection->context.peer->context->update->PlaySound;
 
 		playSound.duration = msg->duration;
 		playSound.frequency = msg->frequency;

@@ -87,7 +87,7 @@ static BOOL process_switch_pipe(ogon_connection *conn, wMessage *msg) {
 	ogon_front_connection *front = &conn->front;
 
 	client = conn->context.peer;
-	settings = client->settings;
+	settings = client->context->settings;
 
 	if (conn->backend) {
 		backend_destroy(&conn->backend);
@@ -153,7 +153,8 @@ static BOOL process_switch_pipe(ogon_connection *conn, wMessage *msg) {
 			} else {
 				settings->DesktopWidth = width;
 				settings->DesktopHeight = height;
-				client->update->DesktopResize(client->update->context);
+				client->context->update->DesktopResize(
+						client->context->update->context);
 				ogon_state_set_event(front->state, OGON_EVENT_FRONTEND_TRIGGER_RESIZE);
 			}
 		}
@@ -460,7 +461,7 @@ static BOOL process_new_shadowing_frontend(ogon_connection *conn, wMessage *msg)
 	ogon_backend_connection *backend = conn->backend;
 	rdpSettings *settings = conn->context.settings;
 	rdpSettings *spySettings = srcConn->context.settings;
-	rdpPointerUpdate* pointer = srcConn->context.peer->update->pointer;
+	rdpPointerUpdate *pointer = srcConn->context.peer->context->update->pointer;
 
 	int error;
 	BOOL ret = FALSE;
@@ -597,7 +598,7 @@ static BOOL process_rewire_original_backend(ogon_connection *conn, wMessage *msg
 	ogon_backend_connection *backend = conn->backend;
 	rdpSettings *settings = conn->context.settings;
 	POINTER_SYSTEM_UPDATE pointer_system = { 0 };
-	rdpPointerUpdate* pointer = conn->context.peer->update->pointer;
+	rdpPointerUpdate *pointer = conn->context.peer->context->update->pointer;
 
 	BOOL ret = FALSE;
 

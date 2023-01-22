@@ -34,19 +34,33 @@
 
 namespace ogon { namespace sessionmanager { namespace session {
 
-	class SessionNotifier {
-	public:
-		SessionNotifier();
-		~SessionNotifier();
+enum {
+	WTS_CONSOLE_CONNECT = 0x1,
+	WTS_CONSOLE_DISCONNECT = 0x2,
+	WTS_REMOTE_CONNECT = 0x3,
+	WTS_REMOTE_DISCONNECT = 0x4,
+	WTS_SESSION_LOGON = 0x5,
+	WTS_SESSION_LOGOFF = 0x6,
+	WTS_SESSION_LOCK = 0x7,
+	WTS_SESSION_UNLOCK = 0x8,
+	WTS_SESSION_REMOTE_CONTROL = 0x9,
+	WTS_SESSION_CREATE = 0xA,
+	WTS_SESSION_TERMINATE = 0xB
+} WtsNotificationType;
 
-		bool init();
-		bool notify(DWORD reason, UINT32 sessionId);
-		bool shutdown();
+class SessionNotifier {
+   public:
+	SessionNotifier();
+	~SessionNotifier();
 
-	private:
-		const char *wtsNotificationToString(int signal);
-		DBusConnection *mDBusConn;
-		CRITICAL_SECTION mCSection;
+	bool init();
+	bool notify(DWORD reason, UINT32 sessionId);
+	bool shutdown();
+
+   private:
+	const char *wtsNotificationToString(int signal);
+	DBusConnection *mDBusConn;
+	CRITICAL_SECTION mCSection;
 	};
 
 } /*session*/ } /*sessionmanager*/ } /*ogon*/

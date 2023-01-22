@@ -137,7 +137,7 @@ static registered_virtual_channel *vc_new(const char *vcname, const char *pipeNa
 	ret->channel_id = WTSChannelGetId(vcm->client, vcname);
 	ret->pipe_client = INVALID_HANDLE_VALUE;
 
-	settings = vcm->client->settings;
+	settings = vcm->client->context->settings;
 	ret->pipe_expected_bytes = 4;
 	ret->pipe_waiting_length = TRUE;
 	ret->pipe_target_buffer = ret->header_buffer;
@@ -913,9 +913,12 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 			first = TRUE;
 			while (payloadLen > 0)
 			{
-				s = Stream_New(NULL, regVC->client->settings->VirtualChannelChunkSize);
+				s = Stream_New(NULL, regVC->client->context->settings
+											 ->VirtualChannelChunkSize);
 				if (!s) {
-					WLog_ERR(TAG, "failed to create Stream of size %"PRIu32"", regVC->client->settings->VirtualChannelChunkSize);
+					WLog_ERR(TAG, "failed to create Stream of size %" PRIu32 "",
+							regVC->client->context->settings
+									->VirtualChannelChunkSize);
 					return FALSE;
 				}
 				buffer = Stream_Buffer(s);
@@ -1471,7 +1474,8 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 	if (!data)
 		goto out_error;
 
-	if (!(s = Stream_New(NULL, regVC->client->settings->VirtualChannelChunkSize))) {
+	if (!(s = Stream_New(NULL,
+				  regVC->client->context->settings->VirtualChannelChunkSize))) {
 		WLog_ERR(TAG, "%s: error creating stream", __FUNCTION__);
 		goto out_error;
 	}

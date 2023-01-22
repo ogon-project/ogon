@@ -32,7 +32,7 @@
 
 #include <winpr/handle.h>
 #include <winpr/wtsapi.h>
-#include <winpr/wnd.h>
+
 #include <memory>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <ogon/module.h>

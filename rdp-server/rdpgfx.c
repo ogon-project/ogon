@@ -371,21 +371,12 @@ static BOOL rdpgfx_server_recv_cache_import_offer(rdpgfx_server_context *rdpgfx,
 		return FALSE;
 	}
 
-	cache_import_offer.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)calloc(
-		cache_import_offer.cacheEntriesCount, sizeof(RDPGFX_CACHE_ENTRY_METADATA));
-
-	if (!cache_import_offer.cacheEntries) {
-		return FALSE;
-	}
-
 	for (index = 0; index < cache_import_offer.cacheEntriesCount; index++) {
                 Stream_Read_UINT64(s, cache_import_offer.cacheEntries[index].cacheKey);
                 Stream_Read_UINT32(s, cache_import_offer.cacheEntries[index].bitmapLength);
 	}
 
 	IFCALL(rdpgfx->CacheImportOffer, rdpgfx, &cache_import_offer);
-
-	free(cache_import_offer.cacheEntries);
 
 	return TRUE;
 }

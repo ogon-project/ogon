@@ -995,7 +995,7 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 
 	freerdp_peer *peer = conn->context.peer;
 	rdpSettings *settings = conn->context.settings;
-	rdpUpdate* update = peer->update;
+	rdpUpdate *update = peer->context->update;
 
 	ogon_backend_connection *backend = conn->backend;
 	ogon_front_connection *frontend = &conn->front;
@@ -1072,7 +1072,7 @@ int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 
 int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 		const RDP_RECT *rects, UINT32 numRects) {
-	rdpUpdate *update = conn->context.peer->update;
+	rdpUpdate *update = conn->context.peer->context->update;
 	ogon_bitmap_encoder *encoder = conn->front.encoder;
 	UINT32 bytePerPixel = encoder->dstBytesPerPixel;
 	UINT32 bitsPerPixel = encoder->dstBitsPerPixel;
@@ -1242,7 +1242,6 @@ int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 
 	bitmapUpdate.skipCompression = FALSE;
 	bitmapUpdate.rectangles = bmp->rects;
-	bitmapUpdate.count = 0;
 	bitmapUpdate.number = 0;
 
 	updatePduSize = 0;
@@ -1259,7 +1258,6 @@ int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 		}
 
 		bitmapUpdate.number++;
-		bitmapUpdate.count++;
 
 		if (i + 1 < numBitmaps) {
 			nextSize = bmp->rects[i + 1].bitmapLength + bitmapUpdateDataHeaderSize;
@@ -1276,8 +1274,7 @@ int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 				goto fail;
 			}
 			STOPWATCH_STOP(encoder->swSendBitmapUpdate);
-			bitmapUpdate.rectangles += bitmapUpdate.count;
-			bitmapUpdate.count = 0;
+			bitmapUpdate.rectangles += bitmapUpdate.number;
 			bitmapUpdate.number = 0;
 			updatePduSize = 0;
 		}
@@ -1479,7 +1476,7 @@ int ogon_backend_consume_damage(ogon_connection *conn) {
 
 static inline void ogon_send_frame_marker(ogon_connection *conn, BOOL begin) {
 	rdpSettings *settings = conn->context.settings;
-	rdpUpdate *update = conn->context.peer->update;
+	rdpUpdate *update = conn->context.peer->context->update;
 	ogon_front_connection *front = &conn->front;
 
 	/* WLog_DBG(TAG, "%s: send frame %s frameId=%"PRIu32" lastAckFrame=%"PRIu32"", __FUNCTION__,

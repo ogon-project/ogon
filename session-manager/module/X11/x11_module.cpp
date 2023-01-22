@@ -324,7 +324,7 @@ finish:
 	}
 
 	if (pArgs) {
-		HeapFree(GetProcessHeap(), 0, pArgs);
+		free(pArgs);
 	}
 
 	if (lpszEnvironmentBlock) {
