@@ -31,7 +31,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-pbRPCTransportContext* tp_npipe_new();
+pbRPCTransportContext *tp_npipe_new(void);
 void tp_npipe_free(pbRPCTransportContext *context);
 
 #ifdef __cplusplus

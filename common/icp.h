@@ -31,12 +31,20 @@
 
 #include <winpr/synch.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 int ogon_icp_start(HANDLE shutdown, UINT32 vmajor, UINT32 vminor);
-int ogon_icp_shutdown();
-void *ogon_icp_get_context();
+int ogon_icp_shutdown(void);
+void *ogon_icp_get_context(void);
 BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor);
 
-typedef void (*disconnected_callback)();
+typedef void (*disconnected_callback)(void);
 void ogon_icp_set_disconnect_cb(disconnected_callback cb);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_ICP_H_ */

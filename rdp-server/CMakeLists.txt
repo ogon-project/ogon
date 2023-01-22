@@ -15,7 +15,7 @@ set(${MODULE_PREFIX}_SRCS
 	channels.h
 	encoder.c
 	encoder.h
-	eventloop.c
+	eventloop.cpp
 	eventloop.h
 	ogon.cpp
 	ogon.h
