@@ -27,6 +27,10 @@
 
 #include "pbrpc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 int ping(LONG tag, pbRPCPayload *request, pbRPCPayload **response);
 int switchTo(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
 int logoffUserSession(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
@@ -35,5 +39,9 @@ int otsapiVirtualChannelClose(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** 
 int otsapiStartRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse);
 int otsapiStopRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse);
 int message(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_ICPSERVERSTUBS_H_ */

@@ -30,6 +30,10 @@
 
 #include "channels.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef enum _rdpgfx_server_open_result
 {
 	RDPGFX_SERVER_OPEN_RESULT_OK = 0,
@@ -159,5 +163,9 @@ struct _rdpgfx_server_context
 
 rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);
 void rdpgfx_server_context_free(rdpgfx_server_context* context);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_RDPGFX_CHANNEL_H_ */

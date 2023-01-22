@@ -36,41 +36,36 @@
 
 #define TAG OGON_TAG("icp.client")
 
-#define ICP_CLIENT_STUB_SETUP(camel, expanded) \
-	UINT32 type = OGON__ICP__MSGTYPE__##camel ; \
-	pbRPCPayload pbrequest; \
-	pbRPCPayload *pbresponse = NULL; \
-	size_t ret; \
-	Ogon__Icp__##camel ## Request request; \
-	Ogon__Icp__##camel ## Response *response = NULL; \
-	pbRPCContext* context = (pbRPCContext*) ogon_icp_get_context(); \
-	if (!context) \
-		return PBRPC_FAILED; \
-	ogon__icp__ ##expanded ##_request__init(&request);
+#define ICP_CLIENT_STUB_SETUP(camel, expanded)                      \
+	UINT32 type = OGON__ICP__MSGTYPE__##camel;                      \
+	pbRPCPayload pbrequest;                                         \
+	pbRPCPayload *pbresponse = NULL;                                \
+	size_t ret;                                                     \
+	Ogon__Icp__##camel##Request request;                            \
+	Ogon__Icp__##camel##Response *response = NULL;                  \
+	pbRPCContext *context = (pbRPCContext *)ogon_icp_get_context(); \
+	if (!context) return PBRPC_FAILED;                              \
+	ogon__icp__##expanded##_request__init(&request);
 
-#define ICP_CLIENT_STUB_SETUP_ASYNC(camel, expanded) \
-	UINT32 type = OGON__ICP__MSGTYPE__##camel ; \
-	pbRPCPayload pbrequest; \
-	size_t ret; \
-	Ogon__Icp__##camel ## Request request; \
-	pbRPCContext* context = (pbRPCContext*) ogon_icp_get_context(); \
-	if (!context) \
-		return PBRPC_FAILED; \
-	ogon__icp__ ##expanded ##_request__init(&request);
+#define ICP_CLIENT_STUB_SETUP_ASYNC(camel, expanded)                \
+	UINT32 type = OGON__ICP__MSGTYPE__##camel;                      \
+	pbRPCPayload pbrequest;                                         \
+	size_t ret;                                                     \
+	Ogon__Icp__##camel##Request request;                            \
+	pbRPCContext *context = (pbRPCContext *)ogon_icp_get_context(); \
+	if (!context) return PBRPC_FAILED;                              \
+	ogon__icp__##expanded##_request__init(&request);
 
-
-#define ICP_CLIENT_STUB_CALL(camel, expanded) \
-	pbrequest.dataLen = ogon__icp__##expanded ##_request__get_packed_size(&request); \
-	if (!(pbrequest.data = malloc(pbrequest.dataLen))) \
-		return PBRPC_FAILED; \
-	ret = ogon__icp__##expanded ##_request__pack(&request, (uint8_t*) pbrequest.data); \
-	if (ret == pbrequest.dataLen) \
-	{ \
-		ret = pbrpc_call_method(context, type, &pbrequest, &pbresponse); \
-	} \
-	else \
-	{ \
-		ret = PBRPC_BAD_REQUEST_DATA; \
+#define ICP_CLIENT_STUB_CALL(camel, expanded)                               \
+	pbrequest.dataLen =                                                     \
+			ogon__icp__##expanded##_request__get_packed_size(&request);     \
+	if (!(pbrequest.data = malloc(pbrequest.dataLen))) return PBRPC_FAILED; \
+	ret = ogon__icp__##expanded##_request__pack(                            \
+			&request, (uint8_t *)pbrequest.data);                           \
+	if (ret == pbrequest.dataLen) {                                         \
+		ret = pbrpc_call_method(context, type, &pbrequest, &pbresponse);    \
+	} else {                                                                \
+		ret = PBRPC_BAD_REQUEST_DATA;                                       \
 	}
 
 static void dummyCallback(
@@ -103,18 +98,23 @@ static void dummyCallback(
 			Ogon__Icp__##camel ##Response response; \
 			ogon__icp__##expanded ##_response__init(&response)
 
-#define ICP_CLIENT_SEND_PACK(camel, expanded) \
-			if (status == 0) {\
-				pbresponse->dataLen = ogon__icp__##expanded ##_response__get_packed_size(&response); \
-				if (!(pbresponse->data = malloc(pbresponse->dataLen))) { \
-					return -1; \
-				} \
-				ret = ogon__icp__##expanded ##_response__pack(&response, (uint8_t*) pbresponse->data); \
-			} else { \
-				pbresponse->dataLen = 0; \
-				pbresponse->data = NULL; \
-				ret = 0; \
-			}
+#define ICP_CLIENT_SEND_PACK(camel, expanded)                          \
+	do {                                                               \
+		if (status == 0) {                                             \
+			pbresponse->dataLen =                                      \
+					ogon__icp__##expanded##_response__get_packed_size( \
+							&response);                                \
+			if (!(pbresponse->data = malloc(pbresponse->dataLen))) {   \
+				return -1;                                             \
+			}                                                          \
+			ret = ogon__icp__##expanded##_response__pack(              \
+					&response, (uint8_t *)pbresponse->data);           \
+		} else {                                                       \
+			pbresponse->dataLen = 0;                                   \
+			pbresponse->data = NULL;                                   \
+			ret = 0;                                                   \
+		}                                                              \
+	} while (0)
 
 int ogon_icp_sendResponse(UINT32 tag, UINT32 type, UINT32 status, BOOL success, void *responseparam1)
 {
@@ -492,7 +492,7 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 	Ogon__Icp__PropertyReq *propertyReqPtr[MAX_PROPERTIES_NB];
 	Ogon__Icp__PropertyReq propertyRequests[MAX_PROPERTIES_NB];
 
-	ICP_CLIENT_STUB_SETUP(PropertyBulk, property_bulk);
+	ICP_CLIENT_STUB_SETUP(PropertyBulk, property_bulk)
 
 	request.connectionid = connectionId;
 	request.properties = propertyReqPtr;
@@ -525,11 +525,11 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 		return PBRPC_FAILED;
 	}
 
-	ICP_CLIENT_STUB_CALL(PropertyBulk, property_bulk);
+	ICP_CLIENT_STUB_CALL(PropertyBulk, property_bulk)
 	if (ret != 0)
 		return ret;
 
-	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBulk, property_bulk);
+	ICP_CLIENT_STUB_UNPACK_RESPONSE(PropertyBulk, property_bulk)
 
 	if (!response || response->n_results != nitems) {
 		return PBRPC_BAD_RESPONSE;
@@ -569,7 +569,7 @@ static int real_ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *it
 		}
 	}
 
-	ICP_CLIENT_STUB_CLEANUP(PropertyBulk, property_bulk);
+	ICP_CLIENT_STUB_CLEANUP(PropertyBulk, property_bulk)
 
 	return PBRPC_SUCCESS;
 }

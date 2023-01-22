@@ -28,9 +28,9 @@
 #include <errno.h>
 #endif
 
-#include <winpr/print.h>
 #include <winpr/file.h>
 #include <winpr/pipe.h>
+#include <winpr/print.h>
 
 #include <ogon/backend.h>
 #include <ogon/dmgbuf.h>
@@ -70,18 +70,15 @@ static BOOL drain_ringbuffer_to_pipe(
 	size_t commitBytes;
 	BOOL r;
 
-	while ( (nbChunks = ringbuffer_peek(rb, chunks, 0xffff)) ) {
+	while ((nbChunks = ringbuffer_peek(rb, chunks, 0xffff))) {
 		commitBytes = 0;
 
-		for (i = 0; i < nbChunks; i++)
-		{
+		for (i = 0; i < nbChunks; i++) {
 			toWrite = chunks[i].size;
 			ptr = chunks[i].data;
-			while (toWrite)
-			{
+			while (toWrite) {
 				r = WriteFile(pipe, ptr, toWrite, &written, NULL);
-				if (!r || !written)
-				{
+				if (!r || !written) {
 					/* broken IO: r = False written=undefined
 					 * or EWOULDBLOCK: r = TRUE written=0 */
 					ringbuffer_commit_read_bytes(rb, commitBytes);
@@ -106,9 +103,8 @@ static BOOL drain_ringbuffer_to_pipe(
 	return TRUE;
 }
 
-static BOOL backend_write_rds_message(ogon_backend_connection *backend, UINT16 type,
-	ogon_message *msg)
-{
+static BOOL backend_write_rds_message(
+		ogon_backend_connection *backend, UINT16 type, ogon_message *msg) {
 	wStream *s;
 	BYTE *buf;
 	int len;
@@ -120,7 +116,8 @@ static BOOL backend_write_rds_message(ogon_backend_connection *backend, UINT16 t
 		return FALSE;
 	}
 
-	buf = ringbuffer_ensure_linear_write(&backend->xmitBuffer, len + RDS_ORDER_HEADER_LENGTH);
+	buf = ringbuffer_ensure_linear_write(
+			&backend->xmitBuffer, len + RDS_ORDER_HEADER_LENGTH);
 	if (!buf) {
 		WLog_ERR(TAG, "can't grow xmit ringbuffer");
 		return FALSE;
@@ -138,7 +135,8 @@ static BOOL backend_write_rds_message(ogon_backend_connection *backend, UINT16 t
 
 	ogon_message_unprepare(type, &protobufMessage);
 
-	if (!ringbuffer_commit_written_bytes(&backend->xmitBuffer, RDS_ORDER_HEADER_LENGTH + len)) {
+	if (!ringbuffer_commit_written_bytes(
+				&backend->xmitBuffer, RDS_ORDER_HEADER_LENGTH + len)) {
 		return FALSE;
 	}
 
@@ -152,7 +150,8 @@ static BOOL backend_synchronize_keyboard_event(
 
 	msg.flags = flags;
 	msg.clientId = connectionId;
-	return backend_write_rds_message(backend, OGON_CLIENT_SYNCHRONIZE_KEYBOARD_EVENT, (ogon_message *)&msg);
+	return backend_write_rds_message(backend,
+			OGON_CLIENT_SYNCHRONIZE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
 static BOOL backend_scancode_keyboard_event(void *rbackend, DWORD flags,
@@ -165,7 +164,8 @@ static BOOL backend_scancode_keyboard_event(void *rbackend, DWORD flags,
 	msg.code = code;
 	msg.keyboardType = keyboardType;
 	msg.clientId = connectionId;
-	return backend_write_rds_message(backend, OGON_CLIENT_SCANCODE_KEYBOARD_EVENT, (ogon_message *)&msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_SCANCODE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
 static BOOL backend_unicode_keyboard_event(
@@ -176,7 +176,8 @@ static BOOL backend_unicode_keyboard_event(
 	msg.flags = flags;
 	msg.code = code;
 	msg.clientId = connectionId;
-	return backend_write_rds_message(backend, OGON_CLIENT_UNICODE_KEYBOARD_EVENT, (ogon_message *)&msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_UNICODE_KEYBOARD_EVENT, (ogon_message *)&msg);
 }
 
 static BOOL backend_mouse_event(
@@ -188,7 +189,8 @@ static BOOL backend_mouse_event(
 	msg.x = x;
 	msg.y = y;
 	msg.clientId = connectionId;
-	return backend_write_rds_message(backend, OGON_CLIENT_MOUSE_EVENT, (ogon_message *)&msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_MOUSE_EVENT, (ogon_message *)&msg);
 }
 
 static BOOL backend_extended_mouse_event(
@@ -201,7 +203,8 @@ static BOOL backend_extended_mouse_event(
 	msg.y = y;
 	msg.clientId = connectionId;
 
-	return backend_write_rds_message(backend, OGON_CLIENT_EXTENDED_MOUSE_EVENT, (ogon_message *)&msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_EXTENDED_MOUSE_EVENT, (ogon_message *)&msg);
 }
 
 static BOOL backend_framebuffer_sync_request(void *rbackend, INT32 bufferId) {
@@ -210,7 +213,8 @@ static BOOL backend_framebuffer_sync_request(void *rbackend, INT32 bufferId) {
 		return FALSE;
 	}
 	backend->framebufferSyncRequest.bufferId = bufferId;
-	return backend_write_rds_message(backend, OGON_CLIENT_FRAMEBUFFER_SYNC_REQUEST,
+	return backend_write_rds_message(backend,
+			OGON_CLIENT_FRAMEBUFFER_SYNC_REQUEST,
 			(ogon_message *)&backend->framebufferSyncRequest);
 }
 
@@ -220,36 +224,38 @@ static BOOL backend_immediate_sync_request(void *rbackend, INT32 bufferId) {
 		return FALSE;
 	}
 	backend->immediateSyncRequest.bufferId = bufferId;
-	return backend_write_rds_message(backend, OGON_CLIENT_IMMEDIATE_SYNC_REQUEST,
+	return backend_write_rds_message(backend,
+			OGON_CLIENT_IMMEDIATE_SYNC_REQUEST,
 			(ogon_message *)&backend->immediateSyncRequest);
 }
 
 static BOOL backend_sbp_reply(void *rbackend, ogon_msg_sbp_reply *msg) {
 	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
-	return backend_write_rds_message(backend, OGON_CLIENT_SBP_REPLY, (ogon_message *)msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_SBP_REPLY, (ogon_message *)msg);
 }
 
 static BOOL backend_seat_new(void *rbackend, ogon_msg_seat_new *msg) {
 	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
-	return backend_write_rds_message(backend, OGON_CLIENT_SEAT_NEW, (ogon_message *)msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_SEAT_NEW, (ogon_message *)msg);
 }
 
 static BOOL backend_seat_removed(void *rbackend, UINT32 id) {
 	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
 	ogon_msg_seat_removed *msg = &backend->seatRemoved;
 	msg->clientId = id;
-	return backend_write_rds_message(backend, OGON_CLIENT_SEAT_REMOVED, (ogon_message *)msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_SEAT_REMOVED, (ogon_message *)msg);
 }
 
-static void list_dictionary_message_free(void *item) {
-	free(item);
-}
+static void list_dictionary_message_free(void *item) { free(item); }
 
 static BOOL backend_message(void *rbackend, ogon_msg_message *msg) {
 	ogon_backend_connection *backend = (ogon_backend_connection *)rbackend;
-	message_answer *answer_helper;
 
-	answer_helper = calloc(1, sizeof(message_answer));
+	auto answer_helper =
+			static_cast<message_answer *>(calloc(1, sizeof(message_answer)));
 	if (!answer_helper) {
 		WLog_ERR(TAG, "failed to allocate message answer");
 		return FALSE;
@@ -258,18 +264,20 @@ static BOOL backend_message(void *rbackend, ogon_msg_message *msg) {
 	answer_helper->message_id = msg->message_id;
 	answer_helper->icp_tag = msg->icp_tag;
 	answer_helper->icp_type = msg->icp_type;
-	if (!ListDictionary_Add(backend->message_answer_list, (void *)(intptr_t)msg->message_id, answer_helper)) {
+	if (!ListDictionary_Add(backend->message_answer_list,
+				(void *)(intptr_t)msg->message_id, answer_helper)) {
 		free(answer_helper);
 		WLog_ERR(TAG, "failed to add answer to message answers list");
 		return FALSE;
 	}
 
-	return backend_write_rds_message(backend, OGON_CLIENT_MESSAGE, (ogon_message *)msg);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_MESSAGE, (ogon_message *)msg);
 }
 
-static BOOL backend_send_capabilities(ogon_connection *conn, ogon_backend_connection *backend,
-	rdpSettings *settings, UINT32 width, UINT32 height)
-{
+static BOOL backend_send_capabilities(ogon_connection *conn,
+		ogon_backend_connection *backend, rdpSettings *settings, UINT32 width,
+		UINT32 height) {
 	ogon_msg_capabilities *capa = &backend->capabilities;
 
 	capa->desktopWidth = width;
@@ -279,14 +287,16 @@ static BOOL backend_send_capabilities(ogon_connection *conn, ogon_backend_connec
 	capa->keyboardSubType = settings->KeyboardSubType;
 	capa->clientId = conn->id;
 
-	return backend_write_rds_message(conn->backend, OGON_CLIENT_CAPABILITIES, (ogon_message *)capa);
+	return backend_write_rds_message(
+			conn->backend, OGON_CLIENT_CAPABILITIES, (ogon_message *)capa);
 }
 
-BOOL ogon_backend_initialize(ogon_connection *conn, ogon_backend_connection *backend,
-	rdpSettings *settings, UINT32 width, UINT32 height)
-{
+BOOL ogon_backend_initialize(ogon_connection *conn,
+		ogon_backend_connection *backend, rdpSettings *settings, UINT32 width,
+		UINT32 height) {
 	return backend_send_capabilities(conn, backend, settings, width, height) &&
-		backend_synchronize_keyboard_event(backend, conn->front.indicators, conn->id);
+		   backend_synchronize_keyboard_event(
+				   backend, conn->front.indicators, conn->id);
 }
 
 static BOOL ogon_backend_send_version(ogon_backend_connection *backend) {
@@ -295,7 +305,8 @@ static BOOL ogon_backend_send_version(ogon_backend_connection *backend) {
 	version.versionMinor = OGON_PROTOCOL_VERSION_MINOR;
 	version.cookie = backend->properties.ogonCookie;
 
-	return backend_write_rds_message(backend, OGON_CLIENT_VERSION, (ogon_message *)&version);
+	return backend_write_rds_message(
+			backend, OGON_CLIENT_VERSION, (ogon_message *)&version);
 }
 
 int ogon_resize_frontend(
@@ -305,7 +316,6 @@ int ogon_resize_frontend(
 	ogon_screen_infos *screenInfos = &backend->screenInfos;
 	ogon_front_connection *front = &conn->front;
 	BOOL doResize = FALSE;
-
 
 	if (ogon_state_get(front->state) == OGON_STATE_WAITING_RESIZE) {
 		/* peer is already re-sizing save the size
@@ -323,12 +333,14 @@ int ogon_resize_frontend(
 		front->encoder = NULL;
 	}
 
-	if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width, screenInfos->height,
-		screenInfos->bpp, screenInfos->bytesPerPixel, screenInfos->scanline,
-		settings->ColorDepth, settings->MultifragMaxRequestSize)))
-	{
-		WLog_DBG(TAG, "failed to recreate bitmap encoder for connection %ld", conn->id);
-		freerdp_set_error_info(conn->context.rdp, ERRCONNECT_PRE_CONNECT_FAILED);
+	if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width,
+				  screenInfos->height, screenInfos->bpp,
+				  screenInfos->bytesPerPixel, screenInfos->scanline,
+				  settings->ColorDepth, settings->MultifragMaxRequestSize))) {
+		WLog_DBG(TAG, "failed to recreate bitmap encoder for connection %ld",
+				conn->id);
+		freerdp_set_error_info(
+				conn->context.rdp, ERRCONNECT_PRE_CONNECT_FAILED);
 		ogon_connection_close(conn);
 		return -1;
 	}
@@ -356,16 +368,19 @@ static int ogon_server_framebuffer_info(
 	backend->backendVersion = msg->version;
 	backend->multiseatCapable = msg->multiseatCapable;
 
-	WLog_DBG(TAG, "framebuffer info: message: %"PRIu32"x%"PRIu32"@%"PRIu32"/%"PRIu32" scanline=%"PRIu32" userid=%"PRIu32"",
-			msg->width, msg->height, msg->bitsPerPixel,
-			msg->bytesPerPixel, msg->scanline, msg->userId);
+	WLog_DBG(TAG,
+			"framebuffer info: message: %" PRIu32 "x%" PRIu32 "@%" PRIu32
+			"/%" PRIu32 " scanline=%" PRIu32 " userid=%" PRIu32 "",
+			msg->width, msg->height, msg->bitsPerPixel, msg->bytesPerPixel,
+			msg->scanline, msg->userId);
 
 	if (!backend->active) {
 		WLog_DBG(TAG, "backend is not active: ignoring framebuffer info");
 		return 0;
 	}
 
-	newSize = (msg->width != screenInfos->width) || (msg->height != screenInfos->height);
+	newSize = (msg->width != screenInfos->width) ||
+			  (msg->height != screenInfos->height);
 
 	/**
 	 * Note: if newSize is true we will call ogon_resize_frontend() for
@@ -375,10 +390,10 @@ static int ogon_server_framebuffer_info(
 	newEncoders = !newSize && (msg->scanline != screenInfos->scanline);
 
 	if (newSize || newEncoders) {
-		if (backend->damage)
-			ogon_dmgbuf_free(backend->damage);
+		if (backend->damage) ogon_dmgbuf_free(backend->damage);
 
-		backend->damage = ogon_dmgbuf_new(msg->width, msg->height, msg->scanline);
+		backend->damage =
+				ogon_dmgbuf_new(msg->width, msg->height, msg->scanline);
 		if (!backend->damage) {
 			WLog_ERR(TAG, "Problem creating dmgbuf");
 			return -1;
@@ -386,21 +401,22 @@ static int ogon_server_framebuffer_info(
 	}
 
 	if (ogon_dmgbuf_set_user(backend->damage, msg->userId) != 0) {
-			WLog_ERR(TAG, "Failed to set the userId to the dmgbuf");
-			return -1;
+		WLog_ERR(TAG, "Failed to set the userId to the dmgbuf");
+		return -1;
 	}
 	screenInfos->width = msg->width;
 	screenInfos->height = msg->height;
 	screenInfos->scanline = msg->scanline;
 
 	/* /!\ /!\ /!\ /!\
-	 * here we assume that bytesPerPixel and bitsPerPixel are 4 and 32, and we don't handle
-	 * changes of these numbers. Any sane backend shouldn't change the depth in the middle
-	 * of a session ;)
-	 * however, we could pass the current encoder to ogon_bitmap_encoder_new() and do the
-	 * required checks there so it could simply return or update the current encoder or
-	 * create a new one. this would be the right thing to do because actually only the
-	 * bitmap encoder really knows how to handle the framebuffer properties/parameters
+	 * here we assume that bytesPerPixel and bitsPerPixel are 4 and 32, and we
+	 * don't handle changes of these numbers. Any sane backend shouldn't change
+	 * the depth in the middle of a session ;) however, we could pass the
+	 * current encoder to ogon_bitmap_encoder_new() and do the required checks
+	 * there so it could simply return or update the current encoder or create a
+	 * new one. this would be the right thing to do because actually only the
+	 * bitmap encoder really knows how to handle the framebuffer
+	 * properties/parameters
 	 */
 
 	screenInfos->bytesPerPixel = msg->bytesPerPixel;
@@ -408,12 +424,14 @@ static int ogon_server_framebuffer_info(
 
 	LinkedList_Enumerator_Reset(connection->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
-		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
+		auto frontConnection = static_cast<ogon_connection *>(
+				LinkedList_Enumerator_Current(connection->frontConnections));
 		ogon_front_connection *front = &frontConnection->front;
 		rdpSettings *settings = frontConnection->context.settings;
 
-		WLog_DBG(TAG, "framebuffer info: processing frontConnection %ld newSize=%s",
-				 frontConnection->id, newSize ? "yes" : "no");
+		WLog_DBG(TAG,
+				"framebuffer info: processing frontConnection %ld newSize=%s",
+				frontConnection->id, newSize ? "yes" : "no");
 
 		if (!newSize && (!front->encoder || newEncoders)) {
 			if (front->encoder) {
@@ -421,12 +439,15 @@ static int ogon_server_framebuffer_info(
 				front->encoder = NULL;
 			}
 
-			if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width, screenInfos->height,
-				screenInfos->bpp, screenInfos->bytesPerPixel, screenInfos->scanline,
-				settings->ColorDepth, settings->MultifragMaxRequestSize)))
-			{
-				WLog_ERR(TAG, "failed to (re-)create bitmap encoder for frontConnection %ld",
-						 frontConnection->id);
+			if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width,
+						  screenInfos->height, screenInfos->bpp,
+						  screenInfos->bytesPerPixel, screenInfos->scanline,
+						  settings->ColorDepth,
+						  settings->MultifragMaxRequestSize))) {
+				WLog_ERR(TAG,
+						"failed to (re-)create bitmap encoder for "
+						"frontConnection %ld",
+						frontConnection->id);
 				ogon_connection_close(frontConnection);
 				continue;
 			}
@@ -435,16 +456,19 @@ static int ogon_server_framebuffer_info(
 		ogon_state_set_event(front->state, OGON_EVENT_BACKEND_ATTACHED);
 		if (newSize) {
 			if (ogon_resize_frontend(frontConnection, backend) < 0) {
-				WLog_DBG(TAG, "error resizing connection %ld", frontConnection->id);
+				WLog_DBG(TAG, "error resizing connection %ld",
+						frontConnection->id);
 				ogon_connection_close(frontConnection);
 				continue;
 			}
 		} else {
-				handle_wait_timer_state(frontConnection);
+			handle_wait_timer_state(frontConnection);
 		}
 	}
 
-	WLog_DBG(TAG, "framebuffer info: screen infos: %"PRIu32"x%"PRIu32"@%"PRIu32"/%"PRIu32" scanline=%"PRIu32"",
+	WLog_DBG(TAG,
+			"framebuffer info: screen infos: %" PRIu32 "x%" PRIu32 "@%" PRIu32
+			"/%" PRIu32 " scanline=%" PRIu32 "",
 			screenInfos->width, screenInfos->height, screenInfos->bpp,
 			screenInfos->bytesPerPixel, screenInfos->scanline);
 
@@ -462,9 +486,8 @@ void ogon_connection_clear_pointer_cache(ogon_connection *connection) {
 	}
 }
 
-static BOOL ogon_server_set_pointer_cache_index(ogon_connection *connection,
-	POINTER_COLOR_UPDATE *p)
-{
+static BOOL ogon_server_set_pointer_cache_index(
+		ogon_connection *connection, POINTER_COLOR_UPDATE *p) {
 	UINT32 hash = 0;
 	UINT32 seed = 0;
 	UINT32 carry = 0;
@@ -490,13 +513,15 @@ static BOOL ogon_server_set_pointer_cache_index(ogon_connection *connection,
 	if (p->lengthXorMask) {
 		PMurHash32_Process(&seed, &carry, p->xorMaskData, p->lengthXorMask);
 	}
-	hash = PMurHash32_Result(seed, carry, 24 + p->lengthAndMask + p->lengthXorMask);
+	hash = PMurHash32_Result(
+			seed, carry, 24 + p->lengthAndMask + p->lengthXorMask);
 
 	for (i = 0; i < settings->PointerCacheSize; i++) {
 		if (cache[i].hash == hash) {
 			cache[i].hits++;
 			p->cacheIndex = i;
-			/* WLog_DBG(TAG, "found hash %"PRIu32" at index %"PRIu32"", hash, p->cacheIndex); */
+			/* WLog_DBG(TAG, "found hash %"PRIu32" at index %"PRIu32"", hash,
+			 * p->cacheIndex); */
 			return TRUE;
 		}
 	}
@@ -514,7 +539,8 @@ static BOOL ogon_server_set_pointer_cache_index(ogon_connection *connection,
 	cache[p->cacheIndex].hits = 1;
 	cache[p->cacheIndex].hash = hash;
 
-	/* WLog_DBG(TAG, "conn %ld adding hash %"PRIu32" at index %"PRIu32"", connection->id, hash, p->cacheIndex); */
+	/* WLog_DBG(TAG, "conn %ld adding hash %"PRIu32" at index %"PRIu32"",
+	 * connection->id, hash, p->cacheIndex); */
 	return FALSE;
 }
 
@@ -545,7 +571,8 @@ static BOOL ogon_new_pointer_to_mono_color_pointer(
 	}
 
 	pointerNew->xorBpp = 24;
-	pointerColor->lengthXorMask = pointerColor->width * pointerColor->height * 3;
+	pointerColor->lengthXorMask =
+			pointerColor->width * pointerColor->height * 3;
 	pointerColor->lengthAndMask = pointerColor->height * andMskStride;
 
 	memset(andMsk, 0, pointerColor->lengthAndMask);
@@ -563,19 +590,22 @@ static BOOL ogon_new_pointer_to_mono_color_pointer(
 				 * - calculate the the greyscale value (Y)
 				 * - if Y is below 128 the pixel is black otherwise it is white
 				 * In order to calculate Y we use the the ITU-R BT.601 factors
-				 * See http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
-				 * Y = 0.299*R + 0.587*G + 0.114*B
-				 * For better performance we prevent floating point multiplication
-				 * and use integer factors with the maximum possible shift so that
-				 * the higest possible result will still fit into 32 bits:
-				 * 0.299*(1<<24) = 5016388
+				 * See
+				 * http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion Y
+				 * = 0.299*R + 0.587*G + 0.114*B For better performance we
+				 * prevent floating point multiplication and use integer factors
+				 * with the maximum possible shift so that the higest possible
+				 * result will still fit into 32 bits: 0.299*(1<<24) = 5016388
 				 * 0.587*(1<<24) = 9848226
 				 * 0.114*(1<<24) = 1912603
 				 */
 				UINT32 b = xorSrc[0];
 				UINT32 g = xorSrc[1];
 				UINT32 r = xorSrc[2];
-				colorValue = ((5016388*r + 9848226*g + 1912603*b) >> 24) >> 7 ? 0xFF : 0x00;
+				colorValue =
+						((5016388 * r + 9848226 * g + 1912603 * b) >> 24) >> 7
+								? 0xFF
+								: 0x00;
 				setAndMaskBit = FALSE;
 			}
 
@@ -596,9 +626,9 @@ static BOOL ogon_new_pointer_to_mono_color_pointer(
 
 void ogon_connection_set_pointer(
 		ogon_connection *connection, const ogon_msg_set_pointer *msg) {
-	POINTER_CACHED_UPDATE pointerCached = { 0 };
-	POINTER_NEW_UPDATE pointerNew = { 0 };
-	POINTER_COLOR_UPDATE* pointerColor = &(pointerNew.colorPtrAttr);
+	POINTER_CACHED_UPDATE pointerCached = {0};
+	POINTER_NEW_UPDATE pointerNew = {0};
+	POINTER_COLOR_UPDATE *pointerColor = &(pointerNew.colorPtrAttr);
 	BOOL isRdesktop = FALSE;
 	char *clientProductId = connection->context.settings->ClientProductId;
 	rdpPointerUpdate *pointer =
@@ -668,11 +698,11 @@ static int ogon_server_set_pointer(
 	const ogon_msg_set_pointer *msg = (const ogon_msg_set_pointer *)rawmsg;
 	ogon_backend_connection *backend = connection->backend;
 	ogon_msg_set_pointer *last = &backend->lastSetPointer;
-	BYTE *newAlloc;
 
 	/* basic verification of message values */
 	if (!msg->width || msg->width > 96 || !msg->height || msg->height > 96) {
-		WLog_ERR(TAG, "invalid pointer size: %"PRIu32"x%"PRIu32"", msg->width, msg->height);
+		WLog_ERR(TAG, "invalid pointer size: %" PRIu32 "x%" PRIu32 "",
+				msg->width, msg->height);
 		return -1;
 	}
 	/**
@@ -682,19 +712,25 @@ static int ogon_server_set_pointer(
 	 * to the cursor's width/height
 	 */
 	if (msg->xPos > msg->width || msg->yPos > msg->height) {
-		WLog_ERR(TAG, "invalid pointer hotspot: %"PRIu32"x%"PRIu32" (%"PRIu32" x %"PRIu32")", msg->xPos, msg->yPos, msg->width, msg->height);
+		WLog_ERR(TAG,
+				"invalid pointer hotspot: %" PRIu32 "x%" PRIu32 " (%" PRIu32
+				" x %" PRIu32 ")",
+				msg->xPos, msg->yPos, msg->width, msg->height);
 		return -1;
 	}
 	if (msg->xorBpp != 24 && msg->xorBpp != 32) {
-		WLog_ERR(TAG, "unsupported pointer color depth: %"PRIu32"", msg->xorBpp);
+		WLog_ERR(TAG, "unsupported pointer color depth: %" PRIu32 "",
+				msg->xorBpp);
 		return -1;
 	}
 	if (!msg->lengthXorMask || msg->lengthXorMask > (96 * 96 * 4)) {
-		WLog_ERR(TAG, "pointer with invalid XOR mask length: %"PRIu32"", msg->lengthXorMask);
+		WLog_ERR(TAG, "pointer with invalid XOR mask length: %" PRIu32 "",
+				msg->lengthXorMask);
 		return -1;
 	}
 	if (!msg->lengthAndMask || msg->lengthAndMask > (96 * 96 / 8)) {
-		WLog_ERR(TAG, "pointer with invalid AND mask length: %"PRIu32"", msg->lengthAndMask);
+		WLog_ERR(TAG, "pointer with invalid AND mask length: %" PRIu32 "",
+				msg->lengthAndMask);
 		return -1;
 	}
 	if (!msg->andMaskData || !msg->xorMaskData) {
@@ -711,7 +747,8 @@ static int ogon_server_set_pointer(
 	last->yPos = msg->yPos;
 	last->xorBpp = msg->xorBpp;
 
-	newAlloc = realloc(last->xorMaskData, msg->lengthXorMask);
+	auto newAlloc =
+			static_cast<BYTE *>(realloc(last->xorMaskData, msg->lengthXorMask));
 	if (!newAlloc) {
 		WLog_ERR(TAG, "failed to realloc xorMask");
 		return -1;
@@ -720,7 +757,8 @@ static int ogon_server_set_pointer(
 	last->xorMaskData = newAlloc;
 	memcpy(newAlloc, msg->xorMaskData, msg->lengthXorMask);
 
-	newAlloc = realloc(last->andMaskData, msg->lengthAndMask);
+	newAlloc =
+			static_cast<BYTE *>(realloc(last->andMaskData, msg->lengthAndMask));
 	if (!newAlloc) {
 		WLog_ERR(TAG, "failed to realloc andMask");
 		return -1;
@@ -734,13 +772,14 @@ static int ogon_server_set_pointer(
 		return 0;
 	}
 
-
-	WLog_DBG(TAG, "(%ld) set_pointer_shape message for %"PRIu32"", connection->id, msg->clientId);
+	WLog_DBG(TAG, "(%ld) set_pointer_shape message for %" PRIu32 "",
+			connection->id, msg->clientId);
 
 	/* then broadcast the new pointer to all target front connections */
 	LinkedList_Enumerator_Reset(connection->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
-		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
+		auto frontConnection = static_cast<ogon_connection *>(
+				LinkedList_Enumerator_Current(connection->frontConnections));
 
 		if (!msg->clientId || (frontConnection->id == msg->clientId)) {
 			ogon_connection_set_pointer(frontConnection, msg);
@@ -757,28 +796,31 @@ static int ogon_server_set_system_pointer(
 	ogon_backend_connection *backend = connection->backend;
 
 	backend->lastSetSystemPointer = msg->ptrType;
-	if (msg->ptrType == SYSPTR_NULL)
-		backend->haveBackendPointer = FALSE;
+	if (msg->ptrType == SYSPTR_NULL) backend->haveBackendPointer = FALSE;
 
 	if (!backend->active) {
-		WLog_ERR(TAG, "not treating set system pointer as backend is not active");
+		WLog_ERR(TAG,
+				"not treating set system pointer as backend is not active");
 		return 0;
 	}
 
-	WLog_DBG(TAG, "(%ld) set_system_pointer message type %"PRIu32" to %"PRIu32"", connection->id,
-			msg->ptrType, msg->clientId);
+	WLog_DBG(TAG,
+			"(%ld) set_system_pointer message type %" PRIu32 " to %" PRIu32 "",
+			connection->id, msg->ptrType, msg->clientId);
 
 	LinkedList_Enumerator_Reset(connection->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
-		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
+		auto frontConnection = static_cast<ogon_connection *>(
+				LinkedList_Enumerator_Current(connection->frontConnections));
 
 		if (!msg->clientId || (frontConnection->id == msg->clientId)) {
-			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
+			POINTER_SYSTEM_UPDATE pointer_system = {0};
 			rdpPointerUpdate *pointer =
 					frontConnection->context.peer->context->update->pointer;
 
 			pointer_system.type = msg->ptrType;
-			IFCALL(pointer->PointerSystem, &frontConnection->context, &pointer_system);
+			IFCALL(pointer->PointerSystem, &frontConnection->context,
+					&pointer_system);
 		}
 	}
 
@@ -797,8 +839,9 @@ static int ogon_server_beep(
 
 	LinkedList_Enumerator_Reset(connection->frontConnections);
 	while (LinkedList_Enumerator_MoveNext(connection->frontConnections)) {
-		PLAY_SOUND_UPDATE playSound = { 0 };
-		ogon_connection *frontConnection = LinkedList_Enumerator_Current(connection->frontConnections);
+		PLAY_SOUND_UPDATE playSound = {0};
+		auto frontConnection = static_cast<ogon_connection *>(
+				LinkedList_Enumerator_Current(connection->frontConnections));
 		pPlaySound playSoundCall =
 				frontConnection->context.peer->context->update->PlaySound;
 
@@ -812,13 +855,13 @@ static int ogon_server_beep(
 
 /* @brief contextual data for an SBP request */
 typedef struct _sbp_context {
-	LONG		connectionId;
-	UINT32		originalTag;
-	UINT32		originalType;
+	LONG connectionId;
+	UINT32 originalTag;
+	UINT32 originalType;
 } sbp_context;
 
-
-static sbp_context *SbpContext_new(ogon_connection *connection, UINT32 tag, UINT32 type) {
+static sbp_context *SbpContext_new(
+		ogon_connection *connection, UINT32 tag, UINT32 type) {
 	sbp_context *ret = (sbp_context *)malloc(sizeof(sbp_context));
 	if (!ret) {
 		return NULL;
@@ -831,49 +874,49 @@ static sbp_context *SbpContext_new(ogon_connection *connection, UINT32 tag, UINT
 
 static void sbpCallback(
 		UINT32 reason, Ogon__Pbrpc__RPCBase *response, void *args) {
-	rds_notification_sbp *event;
-
 	sbp_context *context = (sbp_context *)args;
 
-	event = calloc(1, sizeof(*event));
-	if (!event)
-	{
+	auto event = static_cast<rds_notification_sbp *>(
+			calloc(1, sizeof(rds_notification_sbp)));
+	if (!event) {
 		WLog_ERR(TAG, "sbp callback: unable to allocate message");
 		goto cleanup_exit;
 	}
 
 	event->reply.tag = context->originalTag;
-	event->reply.sbpType = context->originalType; // TODO: check if it's really sbpType
+	event->reply.sbpType =
+			context->originalType;	// TODO: check if it's really sbpType
 
-	switch(reason) {
-	case PBRPC_SUCCESS:
-		if (!response)
-		{
-			WLog_ERR(TAG, "No response data");
-			free(event);
-			goto cleanup_exit;
-		}
+	switch (reason) {
+		case PBRPC_SUCCESS:
+			if (!response) {
+				WLog_ERR(TAG, "No response data");
+				free(event);
+				goto cleanup_exit;
+			}
 
-		event->reply.status = SBP_REPLY_SUCCESS;
-		event->reply.sbpType = response->msgtype;
-		event->reply.dataLen = response->payload.len;
-		event->reply.data = (char *)response->payload.data;
-		break;
-
-	case PBRCP_TRANSPORT_ERROR:
-	default:
-		if (response) {
+			event->reply.status = SBP_REPLY_SUCCESS;
 			event->reply.sbpType = response->msgtype;
-		} else {
-			event->reply.sbpType = context->originalType;
-		}
+			event->reply.dataLen = response->payload.len;
+			event->reply.data = (char *)response->payload.data;
+			break;
 
-		event->reply.status = SBP_REPLY_TRANSPORT_ERROR;
-		break;
+		case PBRCP_TRANSPORT_ERROR:
+		default:
+			if (response) {
+				event->reply.sbpType = response->msgtype;
+			} else {
+				event->reply.sbpType = context->originalType;
+			}
+
+			event->reply.status = SBP_REPLY_TRANSPORT_ERROR;
+			break;
 	}
 
-	if (!app_context_post_message_connection(context->connectionId, NOTIFY_SBP_REPLY, event, NULL)) {
-		WLog_ERR(TAG, "sbp callback: error posting to connection %"PRId32"", context->connectionId);
+	if (!app_context_post_message_connection(
+				context->connectionId, NOTIFY_SBP_REPLY, event, NULL)) {
+		WLog_ERR(TAG, "sbp callback: error posting to connection %" PRId32 "",
+				context->connectionId);
 		pbrpc_message_free_response(response);
 		free(event);
 		goto cleanup_exit;
@@ -905,7 +948,8 @@ static int ogon_server_sbp_request(
 	payload.dataLen = msg->dataLen;
 	payload.errorDescription = 0;
 
-	pbrcp_call_method_async(pbContext, msg->sbpType, &payload, sbpCallback, (void *)sbpContext);
+	pbrcp_call_method_async(
+			pbContext, msg->sbpType, &payload, sbpCallback, (void *)sbpContext);
 	return 0;
 }
 
@@ -921,7 +965,10 @@ static int ogon_server_framebuffer_sync_reply(
 	}
 
 	if (msg->bufferId != ogon_dmgbuf_get_id(backend->damage)) {
-		WLog_ERR(TAG, "sync reply for connection %ld: unknown(old) bufferId %"PRId32"", connection->id, msg->bufferId);
+		WLog_ERR(TAG,
+				"sync reply for connection %ld: unknown(old) bufferId %" PRId32
+				"",
+				connection->id, msg->bufferId);
 		return 0;
 	}
 
@@ -934,11 +981,14 @@ static int ogon_server_message_reply(
 	int error = 0;
 	message_answer *answer_helper;
 	ogon_backend_connection *backend = connection->backend;
-	if (ListDictionary_Contains(backend->message_answer_list,(void *)(intptr_t)msg->message_id)) {
-		answer_helper = (message_answer *)ListDictionary_GetItemValue(backend->message_answer_list,
-			(void *)(intptr_t)msg->message_id);
-		error = ogon_icp_sendResponse(answer_helper->icp_tag, answer_helper->icp_type, 0, TRUE,
-			(void *)(intptr_t)msg->result);
+	if (ListDictionary_Contains(backend->message_answer_list,
+				(void *)(intptr_t)msg->message_id)) {
+		answer_helper = (message_answer *)ListDictionary_GetItemValue(
+				backend->message_answer_list,
+				(void *)(intptr_t)msg->message_id);
+		error = ogon_icp_sendResponse(answer_helper->icp_tag,
+				answer_helper->icp_type, 0, TRUE,
+				(void *)(intptr_t)msg->result);
 		if (error != 0) {
 			WLog_ERR(TAG, "error sending icp response");
 			return 1;
@@ -962,37 +1012,48 @@ static const backend_server_protocol_cb serverCallbacks[] = {
 		NULL,								/*  7 - OGON_SERVER_VERSION_REPLY */
 };
 
-#define SERVER_CALLBACKS_NB (sizeof(serverCallbacks) / sizeof(backend_server_protocol_cb))
+#define SERVER_CALLBACKS_NB \
+	(sizeof(serverCallbacks) / sizeof(backend_server_protocol_cb))
 
-static BOOL backend_treat_message(ogon_connection *connection, wStream *s, UINT16 type) {
+static BOOL backend_treat_message(
+		ogon_connection *connection, wStream *s, UINT16 type) {
 	ogon_msg_version *version = NULL;
 	backend_server_protocol_cb cb;
 	ogon_backend_connection *backend = connection->backend;
 	BOOL ret = FALSE;
 
 	if (!ogon_message_read(s, type, &backend->currentInMessage)) {
-		WLog_ERR(TAG, "error treating message: failed to read server message type %"PRIu16"", type);
+		WLog_ERR(TAG,
+				"error treating message: failed to read server message type "
+				"%" PRIu16 "",
+				type);
 		Stream_SetPosition(s, 0);
 		winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(s), Stream_Length(s));
 		return FALSE;
 	}
 
 	if (type >= SERVER_CALLBACKS_NB) {
-		WLog_ERR(TAG, "error treating message: invalid message type %"PRIu16"", type);
+		WLog_ERR(TAG,
+				"error treating message: invalid message type %" PRIu16 "",
+				type);
 		goto out;
 	}
 
 	if (type == OGON_SERVER_VERSION_REPLY) {
 		version = &backend->currentInMessage.version;
 		if (version->versionMajor != OGON_PROTOCOL_VERSION_MAJOR) {
-			WLog_ERR(TAG, "error treating message: received protocol version info with %"PRIu32".%"PRIu32" but own protocol version is %"PRIu32".%"PRIu32"",
-				version->versionMajor, version->versionMinor,
-				OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR);
+			WLog_ERR(TAG,
+					"error treating message: received protocol version info "
+					"with %" PRIu32 ".%" PRIu32
+					" but own protocol version is %" PRIu32 ".%" PRIu32 "",
+					version->versionMajor, version->versionMinor,
+					OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR);
 			goto out;
 		}
 
 		if (!version->cookie) {
-			WLog_ERR(TAG, "no cookie to match %s", backend->properties.backendCookie);
+			WLog_ERR(TAG, "no cookie to match %s",
+					backend->properties.backendCookie);
 			goto out;
 		}
 
@@ -1007,21 +1068,24 @@ static BOOL backend_treat_message(ogon_connection *connection, wStream *s, UINT1
 	}
 
 	if (!backend->version_exchanged) {
-		WLog_ERR(TAG, "error treating message: no version exchanged, disconnecting backend");
+		WLog_ERR(TAG,
+				"error treating message: no version exchanged, disconnecting "
+				"backend");
 		goto out;
 	}
 
 	cb = backend->server[type];
 	if (!cb) {
-		WLog_ERR(TAG, "error treating message: message %"PRIu16" (%s) not implemented yet",
-			type, ogon_message_name(type));
+		WLog_ERR(TAG,
+				"error treating message: message %" PRIu16
+				" (%s) not implemented yet",
+				type, ogon_message_name(type));
 		goto out;
 	}
 
 	if (cb(connection, &backend->currentInMessage) < 0) {
-		WLog_ERR(TAG, "error treating message %"PRIu16" (%s)",
-			type, ogon_message_name(type)
-		);
+		WLog_ERR(TAG, "error treating message %" PRIu16 " (%s)", type,
+				ogon_message_name(type));
 	} else {
 		ret = TRUE;
 	}
@@ -1035,7 +1099,8 @@ static BOOL backend_drain_output(ogon_backend_connection *backend) {
 	int mask = OGON_EVENTLOOP_READ;
 
 	if (backend->writeReady && ringbuffer_used(&backend->xmitBuffer)) {
-		if (!drain_ringbuffer_to_pipe(&backend->xmitBuffer, backend->pipe, &backend->writeReady)) {
+		if (!drain_ringbuffer_to_pipe(&backend->xmitBuffer, backend->pipe,
+					&backend->writeReady)) {
 			return FALSE;
 		}
 	}
@@ -1045,8 +1110,7 @@ static BOOL backend_drain_output(ogon_backend_connection *backend) {
 	}
 
 	if ((eventsource_mask(backend->pipeEventSource) != mask) &&
-		!eventsource_change_source(backend->pipeEventSource, mask))
-	{
+			!eventsource_change_source(backend->pipeEventSource, mask)) {
 		WLog_ERR(TAG, "drain output: unable to change eventSource mask");
 		return FALSE;
 	}
@@ -1060,14 +1124,13 @@ static BOOL backend_drain_input(ogon_connection *connection) {
 	ogon_backend_connection *backend = connection->backend;
 
 	while (TRUE) {
-		if (!ReadFile(backend->pipe, Stream_Pointer(backend->recvBuffer), backend->expectedReadBytes,
-			&readBytes, NULL) || !readBytes)
-		{
-			if (GetLastError() == ERROR_NO_DATA)
-				break;
+		if (!ReadFile(backend->pipe, Stream_Pointer(backend->recvBuffer),
+					backend->expectedReadBytes, &readBytes, NULL) ||
+				!readBytes) {
+			if (GetLastError() == ERROR_NO_DATA) break;
 
-			WLog_DBG(TAG, "error during ReadFile(handle=%p toRead=%"PRIu32")", backend->pipe,
-				backend->expectedReadBytes);
+			WLog_DBG(TAG, "error during ReadFile(handle=%p toRead=%" PRIu32 ")",
+					backend->pipe, backend->expectedReadBytes);
 			return FALSE;
 		}
 
@@ -1085,14 +1148,16 @@ static BOOL backend_drain_input(ogon_connection *connection) {
 
 		if (backend->stateWaitingHeader) {
 			Stream_SetPosition(backend->recvBuffer, 0);
-			ogon_read_message_header(backend->recvBuffer, &backend->currentInMessageType, &packetLen);
+			ogon_read_message_header(backend->recvBuffer,
+					&backend->currentInMessageType, &packetLen);
 			backend->stateWaitingHeader = FALSE;
 			backend->expectedReadBytes = packetLen;
 
 			Stream_SetPosition(backend->recvBuffer, 0);
 
 			if (backend->expectedReadBytes) {
-				if (!Stream_EnsureRemainingCapacity(backend->recvBuffer, packetLen)) {
+				if (!Stream_EnsureRemainingCapacity(
+							backend->recvBuffer, packetLen)) {
 					WLog_ERR(TAG, "unable to grow incoming buffer");
 					return FALSE;
 				}
@@ -1103,9 +1168,12 @@ static BOOL backend_drain_input(ogon_connection *connection) {
 		Stream_SealLength(backend->recvBuffer);
 		Stream_SetPosition(backend->recvBuffer, 0);
 
-		/* WLog_DBG(TAG, "drain input: treating message type %"PRIu16" ...", backend->currentInMessageType); */
-		if (!backend_treat_message(connection, backend->recvBuffer, backend->currentInMessageType)) {
-			WLog_ERR(TAG, "error treating message type %"PRIu16"", backend->currentInMessageType);
+		/* WLog_DBG(TAG, "drain input: treating message type %"PRIu16" ...",
+		 * backend->currentInMessageType); */
+		if (!backend_treat_message(connection, backend->recvBuffer,
+					backend->currentInMessageType)) {
+			WLog_ERR(TAG, "error treating message type %" PRIu16 "",
+					backend->currentInMessageType);
 			return FALSE;
 		}
 
@@ -1118,8 +1186,7 @@ static BOOL backend_drain_input(ogon_connection *connection) {
 }
 
 /* event loop callback for the content provider pipe */
-static int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(fd);
 	OGON_UNUSED(handle);
 	ogon_connection *connection = (ogon_connection *)data;
@@ -1141,16 +1208,15 @@ static int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data)
 	return 0;
 }
 
-ogon_backend_connection *backend_new(ogon_connection *conn, ogon_backend_props *props)
-{
-	ogon_backend_connection *ret;
+ogon_backend_connection *backend_new(
+		ogon_connection *conn, ogon_backend_props *props) {
 	rdpSettings *settings = conn->context.settings;
 	ogon_client_interface *client;
 	DWORD pipeMode;
 
-	ret = calloc(1, sizeof(ogon_backend_connection));
+	auto ret = new (ogon_backend_connection);
 	if (!ret) {
-		goto out_error;
+		goto fail;
 	}
 
 	client = &ret->client;
@@ -1178,40 +1244,43 @@ ogon_backend_connection *backend_new(ogon_connection *conn, ogon_backend_props *
 	ret->haveBackendPointer = FALSE;
 
 	if (!ringbuffer_init(&ret->xmitBuffer, 0x10000)) {
-		goto out_free;
+		goto fail;
 	}
 
 	ret->recvBuffer = Stream_New(NULL, 0x10000);
 	if (!ret->recvBuffer) {
-		goto out_ringbuffer;
+		goto fail;
 	}
 
 	ret->pipe = ogon_named_pipe_connect(props->serviceEndpoint, 20);
 	if (ret->pipe == INVALID_HANDLE_VALUE) {
-		WLog_ERR(TAG, "failed to connect to named pipe [%s]", props->serviceEndpoint);
-		goto out_stream;
+		WLog_ERR(TAG, "failed to connect to named pipe [%s]",
+				props->serviceEndpoint);
+		goto fail;
 	}
 
 	WLog_DBG(TAG, "connected to endpoint [%s]", props->serviceEndpoint);
 
 	pipeMode = PIPE_NOWAIT;
-	if (!SetNamedPipeHandleState(ret->pipe, &pipeMode, NULL, NULL))	{
-		WLog_ERR(TAG, "unable to set [%s] pipe non-blocking", props->serviceEndpoint);
-		goto out_close;
+	if (!SetNamedPipeHandleState(ret->pipe, &pipeMode, NULL, NULL)) {
+		WLog_ERR(TAG, "unable to set [%s] pipe non-blocking",
+				props->serviceEndpoint);
+		goto fail;
 	}
 
-	ret->pipeEventSource = eventloop_add_handle(conn->runloop->evloop, OGON_EVENTLOOP_READ,
-			ret->pipe, handle_pipe_bytes, conn);
+	ret->pipeEventSource = eventloop_add_handle(conn->runloop->evloop,
+			OGON_EVENTLOOP_READ, ret->pipe, handle_pipe_bytes, conn);
 	if (!ret->pipeEventSource) {
 		WLog_ERR(TAG, "error adding endpoint pipe handle to event loop");
-		goto out_close;
+		goto fail;
 	}
 
 	if (!(ret->message_answer_list = ListDictionary_New(FALSE))) {
 		WLog_ERR(TAG, "error creating message_answer_list");
-		goto out_close;
+		goto fail;
 	}
-	ret->message_answer_list->objectValue.fnObjectFree = list_dictionary_message_free;
+	ret->message_answer_list->objectValue.fnObjectFree =
+			list_dictionary_message_free;
 
 	ret->next_message_id = 1;
 
@@ -1221,31 +1290,24 @@ ogon_backend_connection *backend_new(ogon_connection *conn, ogon_backend_props *
 	props->backendCookie = NULL;
 	props->ogonCookie = NULL;
 
-	if (!ogon_backend_send_version(ret))	{
-		WLog_ERR(TAG, "error sending version packet over [%s]", props->serviceEndpoint);
-		goto out_send_version;
+	if (!ogon_backend_send_version(ret)) {
+		WLog_ERR(TAG, "error sending version packet over [%s]",
+				props->serviceEndpoint);
+		goto fail;
 	}
 	ret->version_exchanged = FALSE;
 
 	return ret;
 
-out_send_version:
-	ogon_backend_props_free(&ret->properties);
-	ListDictionary_Free(ret->message_answer_list);
-out_close:
-	CloseHandle(ret->pipe);
-out_stream:
-	Stream_Free(ret->recvBuffer, TRUE);
-out_ringbuffer:
-	ringbuffer_destroy(&ret->xmitBuffer);
-out_free:
-	free(ret);
-out_error:
-	return NULL;
+fail:
+
+	backend_destroy(&ret);
+	return nullptr;
 }
 
 void backend_destroy(ogon_backend_connection **backendP) {
 	ogon_backend_connection *backend = *backendP;
+	if (!backend) return;
 
 	ogon_backend_props_free(&backend->properties);
 	if (backend->pipeEventSource)
@@ -1264,4 +1326,3 @@ void backend_destroy(ogon_backend_connection **backendP) {
 
 	*backendP = NULL;
 }
-

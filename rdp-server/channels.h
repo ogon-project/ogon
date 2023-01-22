@@ -32,6 +32,9 @@
 #include "ogon.h"
 #include "eventloop.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 enum {
 	CREATE_REQUEST_PDU = 0x01,
@@ -140,5 +143,9 @@ void virtual_manager_close_all_channels(ogon_vcm *vcm);
 BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *intVC);
 internal_virtual_channel *virtual_manager_open_internal_virtual_channel(ogon_vcm *vcm, const char *name, BOOL isDynamic);
 BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *intVC, BYTE *data, UINT32 length, UINT32 *pWritten);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_CHANNELS_H_ */

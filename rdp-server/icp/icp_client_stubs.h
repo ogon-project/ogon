@@ -29,6 +29,10 @@
 
 #include "../commondefs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 int ogon_icp_Ping(BOOL* pong);
 int ogon_icp_DisconnectUserSession(UINT32 connectionId, BOOL* disconnected);
 int ogon_icp_DisconnectUserSession_async(UINT32 connectionId);
@@ -76,5 +80,9 @@ typedef struct {
 void ogon_PropertyItem_free(PropertyItem *items);
 
 int ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_ICPCLIENTSTUBS_H_ */

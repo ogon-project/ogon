@@ -32,6 +32,10 @@
 
 #include <freerdp/freerdp.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct _ogon_h264_context ogon_h264_context;
 
 typedef enum _ogon_openh264_compress_mode {
@@ -51,6 +55,9 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 void ogon_openh264_context_free(ogon_h264_context *h264);
 ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight, UINT32 scrStride);
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* WITH_OPENH264 defined   */
 #endif /* OGON_RDPSRV_OPENH264_H_ */

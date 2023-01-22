@@ -27,6 +27,9 @@
 #include <freerdp/freerdp.h>
 #include "commondefs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 void ogon_bwmgmt_init_buckets(ogon_connection *conn, UINT32 bitrate);
 UINT32 ogon_bwmgmt_update_bucket(ogon_connection *conn);
@@ -39,5 +42,9 @@ BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenc
 BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn);
 BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn);
 BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_BANDWIDTH_MGMT_H_ */

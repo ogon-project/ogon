@@ -26,6 +26,10 @@
 
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct pbrpc_transport_context pbRPCTransportContext;
 
 typedef int (*pTransport_open)(pbRPCTransportContext* context, int timeout);
@@ -42,5 +46,9 @@ struct pbrpc_transport_context
 	pTransport_write write;
 	pTransport_get_fds get_fds;
 };
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_ */

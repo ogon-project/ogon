@@ -33,6 +33,10 @@
 
 #define PBRPC_TIMEOUT 10000
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct pbrpc_method pbRPCMethod;
 
 struct  pbrpc_context
@@ -101,5 +105,9 @@ void pbrcp_call_method_async(pbRPCContext* context, UINT32 type, pbRPCPayload* r
 		pbRpcResponseCallback callback, void *callback_args);
 
 int pbrpc_respond_method(pbRPCContext* context, pbRPCPayload *response, UINT32 status, UINT32 type, UINT32 tag);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_ICP_PBRPC_H_ */

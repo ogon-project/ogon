@@ -27,6 +27,10 @@
 #include <winpr/handle.h>
 #include <winpr/wtypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct _ogon_event_loop;
 struct _ogon_event_source;
 
@@ -167,5 +171,9 @@ BOOL eventloop_remove_source(ogon_event_source **sourceP);
  * @return the number of treated events
  */
 int eventloop_dispatch_loop(ogon_event_loop *evloop, long timeout);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_EVENTLOOP_H_ */

@@ -51,6 +51,9 @@
 
 #define OGON_MAX_BUCKET 15
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /** @brief holds data related to a new pointer cache entry */
 typedef struct _ogon_pointer_cache_entry {
@@ -198,5 +201,9 @@ BOOL ogon_post_exit_shadow_notification(ogon_connection *conn, wMessage *msg, BO
 BOOL initiate_immediate_request(ogon_connection *conn, ogon_front_connection *front, BOOL setDamage);
 ogon_connection_runloop *ogon_runloop_new(freerdp_peer *peer);
 ogon_connection *ogon_connection_create(ogon_connection_runloop *runloop);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_PEER_H_ */

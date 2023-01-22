@@ -54,6 +54,10 @@
 #define STOPWATCH_STOP(sw)	do { } while (0)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct _ogon_bmp_context {
 	BITMAP_PLANAR_CONTEXT *planar;
 	wStream *bs;
@@ -127,5 +131,9 @@ BOOL ogon_bitmap_encoder_update_maxrequest_size(ogon_bitmap_encoder *encoder,
 );
 
 void ogon_encoder_blank_client_view_area(ogon_bitmap_encoder *encoder, RECTANGLE_16 *r);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_ENCODER_H_ */

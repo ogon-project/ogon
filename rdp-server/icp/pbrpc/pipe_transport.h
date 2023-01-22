@@ -27,6 +27,15 @@
 #include "pbrpc.h"
 #include "pbrpc_transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 pbRPCTransportContext* tp_npipe_new();
 void tp_npipe_free(pbRPCTransportContext *context);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 #endif /* OGON_RDPSRV_ICP_PIPETRANSPORT_H_ */

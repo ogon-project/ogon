@@ -38,6 +38,9 @@
 #include "commondefs.h"
 #include <ogon/backend.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 int ogon_send_surface_bits(ogon_connection *conn);
 
@@ -125,5 +128,9 @@ enum {
 	NOTIFY_STOP_SHADOWING,
 	NOTIFY_USER_MESSAGE,
 };
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_OGON_H_ */
