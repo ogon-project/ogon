@@ -25,7 +25,7 @@ set(${MODULE_PREFIX}_SRCS
 	peer.h
 	PMurHash.c
 	PMurHash.h
-	state.c
+	state.cpp
 	state.h
 	rdpgfx.c
 	rdpgfx.h
