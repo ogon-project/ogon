@@ -95,7 +95,8 @@ struct rds_module_x11 {
 typedef struct rds_module_x11 rdsModuleX11;
 
 /* user, groups, environment, cwd, pipe , sessionId*/
-BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd, char *lpCurrentDirectory, char *xauthorityfile) {
+static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
+		char *lpCurrentDirectory, char *xauthorityfile) {
 	BOOL ret = FALSE;
 	char buf[BUF_SIZE];
 	pid_t pid = 0;
@@ -732,7 +733,7 @@ static char *x11_get_custom_info(RDS_MODULE_COMMON *module) {
 	return customInfo;
 }
 
-int x11_module_init() {
+static int x11_module_init() {
 #if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
 #endif
@@ -746,7 +747,7 @@ int x11_module_init() {
 	return 0;
 }
 
-int x11_module_destroy() {
+static int x11_module_destroy() {
 	DeleteCriticalSection(&gStartCS);
 	return 0;
 }

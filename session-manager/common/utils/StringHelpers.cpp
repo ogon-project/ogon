@@ -21,6 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
+#include <codecvt>
+
 #include "StringHelpers.h"
 
 namespace std{
@@ -53,4 +55,14 @@ namespace boost {
 		ss << std::boolalpha << b;
 		return ss.str();
 	}
+}
+
+std::string wchar_to_utf8(const std::u16string &wstr) {
+	return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}
+			.to_bytes(wstr);
+}
+
+std::u16string utf8_to_wchar(const std::string &str) {
+	return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}
+			.from_bytes(str);
 }

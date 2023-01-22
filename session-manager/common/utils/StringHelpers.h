@@ -62,4 +62,7 @@ namespace boost {
 	template<> std::string lexical_cast<std::string, bool>(const bool &b);
 }
 
+std::string wchar_to_utf8(const std::u16string &wstr);
+std::u16string utf8_to_wchar(const std::string &str);
+
 #endif /* _OGON_SMGR_STRINGHELPERS_H_ */

@@ -150,7 +150,7 @@ static bool remove_monitoring_process(DWORD process_id) {
 	return removed;
 }
 
-BOOL handle_signal(int signum) {
+static BOOL handle_signal(int signum) {
 	/* SIGCHLD: parent dead or control pipe closed */
 	if (signum == SIGPIPE) {
 		gModule.stopModule();
@@ -219,8 +219,8 @@ static void signal_stop() {
 	SetEvent(gSignalStop);
 }
 
-void SplitFilename (std::string filename, std::string& folder, std::string& file)
-{
+static void SplitFilename(
+		std::string filename, std::string &folder, std::string &file) {
 	size_t found;
 
 	filename.erase(
@@ -239,7 +239,6 @@ void SplitFilename (std::string filename, std::string& folder, std::string& file
 		file = filename.substr(found+1);
 	}
 }
-
 
 int main(int argc, char *argv[]) {
 	int read_fd;

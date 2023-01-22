@@ -39,7 +39,7 @@
 #define WTS_SESSION_CREATE 			0xA
 #define WTS_SESSION_TERMINATE 		0xB
 
-const char *wtsNotificationToString(int signal) {
+static const char *wtsNotificationToString(int signal) {
 	switch (signal) {
 		case 0x1:
 			return "WTS_CONSOLE_CONNECT";

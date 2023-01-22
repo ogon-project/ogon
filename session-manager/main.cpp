@@ -146,7 +146,8 @@ static COMMAND_LINE_ARGUMENT_A ogon_session_manager_args[] = {
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-void printhelprow(const char *kshort, const char *klong, const char *helptext) {
+static void printhelprow(
+		const char *kshort, const char *klong, const char *helptext) {
 	if (kshort) {
 		printf("    %s, %-25s %s\n", kshort,klong, helptext);
 	} else {
@@ -154,7 +155,7 @@ void printhelprow(const char *kshort, const char *klong, const char *helptext) {
 	}
 }
 
-void printhelp(const char *bin) {
+static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
 	printhelprow("-h", "--help", "prints this help screen");
@@ -167,9 +168,9 @@ void printhelp(const char *bin) {
 	printhelprow(NULL, "--buildconfig", "Print build configuration");
 }
 
-void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, std::string &checkConfigFileName,
+static void parseCommandLine(int argc, char **argv, int &no_daemon,
+		int &kill_process, std::string &checkConfigFileName,
 		unsigned &wlog_appender_type, DWORD &log_level) {
-
 	DWORD flags;
 	int status = 0;
 #if WINPR_VERSION_MAJOR < 3
@@ -267,7 +268,7 @@ void parseCommandLine(int argc, char **argv, int &no_daemon, int &kill_process, 
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
-void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
+static void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLog *wlog_root;
 	wLogLayout *layout;
 	wLogAppender *appender;
@@ -377,8 +378,7 @@ int checkConfigFile(std::string checkConfigFileName) {
 	return 1;
 }
 
-void checkPidFile(char *pid_file) {
-
+static void checkPidFile(char *pid_file) {
 	FILE* fp;
 
 	if (!PathFileExistsA(OGON_VAR_PATH)) {
@@ -408,8 +408,7 @@ void checkPidFile(char *pid_file) {
 	DeleteFileA(pid_file);
 }
 
-void daemonizeCode(char *pid_file) {
-
+static void daemonizeCode(char *pid_file) {
 	int fd;
 	FILE* fp;
 	pid_t pid;
@@ -474,8 +473,7 @@ void daemonizeCode(char *pid_file) {
 	/* end of daemonizing code */
 }
 
-void setupSignalHandler() {
-
+static void setupSignalHandler() {
 #ifndef WIN32
 	sigset_t set;
 	struct sigaction act;
@@ -502,8 +500,7 @@ void setupSignalHandler() {
 #endif
 }
 
-void handleSignal() {
-
+static void handleSignal() {
 #ifndef WIN32
 	int signum;
 

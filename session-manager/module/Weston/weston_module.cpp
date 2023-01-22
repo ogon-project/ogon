@@ -214,7 +214,7 @@ static char *weston_get_custom_info(RDS_MODULE_COMMON *module)
 	return customInfo;
 }
 
-int weston_module_init() {
+static int weston_module_init() {
 #if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
 #endif
@@ -222,9 +222,7 @@ int weston_module_init() {
 	return 0;
 }
 
-int weston_module_destroy() {
-	return 0;
-}
+static int weston_module_destroy() { return 0; }
 static int weston_rds_module_connect(RDS_MODULE_COMMON *module) {
 	OGON_UNUSED(module);
 	return 0;

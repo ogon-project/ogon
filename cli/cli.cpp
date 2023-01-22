@@ -63,7 +63,7 @@ static struct option long_options[] = {
 
 #define TICKS_PER_SECOND 10000000
 #define EPOCH_DIFFERENCE 11644473600LL
-time_t convertWindowsTimeToUnixTime(long long int input){
+static time_t convertWindowsTimeToUnixTime(long long int input) {
 	long long int temp;
 	temp = input / TICKS_PER_SECOND; //convert from 100ns intervals to seconds;
 	temp = temp - EPOCH_DIFFERENCE;  //subtract number of seconds between epochs
@@ -72,7 +72,7 @@ time_t convertWindowsTimeToUnixTime(long long int input){
 
 #define MESSAGE_TITLE "ogon message"
 
-const char * stateToString(WTS_CONNECTSTATE_CLASS connectState) {
+static const char *stateToString(WTS_CONNECTSTATE_CLASS connectState) {
 	switch (connectState) {
 		case WTSActive:
 			return "Active";
@@ -99,7 +99,7 @@ const char * stateToString(WTS_CONNECTSTATE_CLASS connectState) {
 	}
 }
 
-const char * protoTypeToString(USHORT type) {
+static const char *protoTypeToString(USHORT type) {
 	switch (type) {
 		case 0:
 			return "console session";
@@ -112,7 +112,7 @@ const char * protoTypeToString(USHORT type) {
 	}
 }
 
-const char * addrFamToString(DWORD type) {
+static const char *addrFamToString(DWORD type) {
 	switch (type) {
 		case 2:
 			return "IPv4";
@@ -123,8 +123,8 @@ const char * addrFamToString(DWORD type) {
 	}
 }
 
-BOOL printSessionDetailed(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer) {
-
+static BOOL printSessionDetailed(
+		UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer) {
 	LPSTR pBuffer = NULL;
 	BOOL bSuccess;
 	DWORD bytesReturned = 0;
@@ -265,8 +265,8 @@ BOOL printSessionDetailed(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState,
 	return TRUE;
 }
 
-BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer, BOOL printHeader) {
-
+static BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState,
+		HANDLE hServer, BOOL printHeader) {
 	LPSTR pUsername = NULL;
 	LPSTR pDomain = NULL;
 	BOOL bSuccess;
@@ -303,9 +303,7 @@ BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE 
 	return TRUE;
 }
 
-
-
-bool listSessions(HANDLE hServer, bool detailed) {
+static bool listSessions(HANDLE hServer, bool detailed) {
 	DWORD index;
 	DWORD count;
 	BOOL bSuccess;
@@ -339,8 +337,8 @@ bool listSessions(HANDLE hServer, bool detailed) {
 	return true;
 }
 
-
-bool terminateUserSessions(HANDLE hServer, const char* user, bool onlyDisconnect) {
+static bool terminateUserSessions(
+		HANDLE hServer, const char *user, bool onlyDisconnect) {
 	DWORD index;
 	DWORD count;
 	BOOL bSuccess;
@@ -411,11 +409,12 @@ bool terminateUserSessions(HANDLE hServer, const char* user, bool onlyDisconnect
 	return bReturnValue;
 }
 
-void printhelprow(const char *kshort, const char *klong,const char *helptext) {
+static void printhelprow(
+		const char *kshort, const char *klong, const char *helptext) {
 	printf("    %s, %-20s %s\n", kshort,klong,helptext);
 }
 
-void printhelp(const char *bin) {
+static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
 	printhelprow("-h", "--help", "prints this help screen");
@@ -441,7 +440,6 @@ void printhelp(const char *bin) {
 	printf("  list sessions detailed: ogon-cli -x -u <username> -p <password>\n\n");
 	printf("  shadow a session: ogon-cli -s <sessionId> -m\n\n");
 	printf("    Note: To abort shadowing press CTRL + F10.\n");
-
 }
 
 int main(int argc,char * const argv[]) {

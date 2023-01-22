@@ -215,7 +215,7 @@ static char *qt_get_custom_info(RDS_MODULE_COMMON *module)
 	return customInfo;
 }
 
-int qt_module_init() {
+static int qt_module_init() {
 #if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
 #endif
@@ -223,9 +223,7 @@ int qt_module_init() {
 	return 0;
 }
 
-int qt_module_destroy() {
-	return 0;
-}
+static int qt_module_destroy() { return 0; }
 static int qt_rds_module_connect(RDS_MODULE_COMMON *module) {
 	OGON_UNUSED(module);
 	return 0;

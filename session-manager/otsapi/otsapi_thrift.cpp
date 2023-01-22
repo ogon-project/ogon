@@ -40,10 +40,14 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
+#include <codecvt>
+#include <locale>
+#include <string>
+
+#include <fstream>
+#include <malloc.h>
 #include <map>
 #include <sstream>
-#include <fstream>
-
 
 #include <winpr/crt.h>
 #include <winpr/pipe.h>
@@ -92,13 +96,23 @@ typedef struct {
 
 typedef std::map<HANDLE, TSessionInfo *> TSessionMap;
 
-TSessionInfo gCurrentServer;
-CRITICAL_SECTION gCSection;
-TSessionMap gSessionMap;
+static TSessionInfo gCurrentServer;
+static CRITICAL_SECTION gCSection;
+static TSessionMap gSessionMap;
 
 #define TOKEN_DIR_PREFIX "/tmp/ogon.session."
 #define CHECK_AUTH_TOKEN(con) if(!con->authTokenScanned){ getAuthToken(con->authToken, con->sessionId); con->authTokenScanned=true;}
 #define CHECK_CLIENT_CONNECTION(con) if(!con->transport || !con->transport->isOpen()) { connectClient(con, con->host.c_str(), con->port);}
+
+static std::string wchar_to_utf8(const std::u16string &wstr) {
+	return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}
+			.to_bytes(wstr);
+}
+
+static std::u16string utf8_to_wchar(const std::string &str) {
+	return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}
+			.from_bytes(str);
+}
 
 void lib_load(void );
 void lib_unload(void );
@@ -277,7 +291,7 @@ void lib_load(void) {
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 }
 
-HANDLE connect2Pipe(const std::string &pipeName) {
+static HANDLE connect2Pipe(const std::string &pipeName) {
 	HANDLE hNamedPipe;
 
 	if (!WaitNamedPipeA(pipeName.c_str(), 5000)) {
@@ -295,15 +309,13 @@ HANDLE connect2Pipe(const std::string &pipeName) {
 	return hNamedPipe;
 }
 
-
 /**
  * WTSAPI Stubs
  */
 
-
-BOOL WINAPI ogon_WTSStartRemoteControlSessionExA(LPSTR pTargetServerName,
-		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags) {
-
+static BOOL WINAPI ogon_WTSStartRemoteControlSessionExA(LPSTR pTargetServerName,
+		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers,
+		DWORD flags) {
 	OGON_UNUSED(pTargetServerName);
 	TSessionInfo *currentCon;
 	BOOL bSuccess;
@@ -343,32 +355,27 @@ BOOL WINAPI ogon_WTSStartRemoteControlSessionExA(LPSTR pTargetServerName,
 	return bSuccess;
 }
 
+static BOOL WINAPI ogon_WTSStartRemoteControlSessionExW(
+		LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk,
+		USHORT HotkeyModifiers, DWORD flags) {
+	auto converted = wchar_to_utf8(
+			reinterpret_cast<const char16_t *>(pTargetServerName));
 
-BOOL WINAPI ogon_WTSStartRemoteControlSessionExW(LPWSTR pTargetServerName,
-	ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags) {
-	char converted[256];
-
-	int result = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) pTargetServerName,
-			wcslen((const wchar_t *)pTargetServerName) + 1, converted, sizeof(converted), NULL, NULL);
-	if (result == sizeof(converted)) {
-		converted[result-1] = 0;
-	} else {
-		converted[result] = 0;
-	}
-	return ogon_WTSStartRemoteControlSessionExA(converted, TargetLogonId, HotkeyVk, HotkeyModifiers, flags);
+	return ogon_WTSStartRemoteControlSessionExA(
+			converted.data(), TargetLogonId, HotkeyVk, HotkeyModifiers, flags);
 }
 
-BOOL WINAPI ogon_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName,
-	ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers) {
+static BOOL WINAPI ogon_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName,
+		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers) {
 	return ogon_WTSStartRemoteControlSessionExW(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers, 0);
 }
 
-BOOL WINAPI ogon_WTSStartRemoteControlSessionA(LPSTR pTargetServerName,
-	ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers) {
+static BOOL WINAPI ogon_WTSStartRemoteControlSessionA(LPSTR pTargetServerName,
+		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers) {
 	return ogon_WTSStartRemoteControlSessionExA(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers, 0);
 }
 
-BOOL WINAPI ogon_WTSStopRemoteControlSession(ULONG LogonId) {
+static BOOL WINAPI ogon_WTSStopRemoteControlSession(ULONG LogonId) {
 	TSessionInfo *currentCon;
 	BOOL bSuccess;
 
@@ -401,9 +408,8 @@ BOOL WINAPI ogon_WTSStopRemoteControlSession(ULONG LogonId) {
 	return bSuccess;
 }
 
-BOOL WINAPI ogon_WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId,
-	PWSTR pPassword, BOOL bWait) {
-
+static BOOL WINAPI ogon_WTSConnectSessionW(
+		ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait) {
 	OGON_UNUSED(LogonId);
 	OGON_UNUSED(TargetLogonId);
 	OGON_UNUSED(pPassword);
@@ -411,9 +417,8 @@ BOOL WINAPI ogon_WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId,
-	PSTR pPassword, BOOL bWait) {
-
+static BOOL WINAPI ogon_WTSConnectSessionA(
+		ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait) {
 	OGON_UNUSED(LogonId);
 	OGON_UNUSED(TargetLogonId);
 	OGON_UNUSED(pPassword);
@@ -421,9 +426,8 @@ BOOL WINAPI ogon_WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved,
-	DWORD Version, PWTS_SERVER_INFOW *ppServerInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved,
+		DWORD Version, PWTS_SERVER_INFOW *ppServerInfo, DWORD *pCount) {
 	OGON_UNUSED(pDomainName);
 	OGON_UNUSED(Reserved);
 	OGON_UNUSED(Version);
@@ -432,9 +436,8 @@ BOOL WINAPI ogon_WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved,
-	DWORD Version, PWTS_SERVER_INFOA *ppServerInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved,
+		DWORD Version, PWTS_SERVER_INFOA *ppServerInfo, DWORD *pCount) {
 	OGON_UNUSED(pDomainName);
 	OGON_UNUSED(Reserved);
 	OGON_UNUSED(Version);
@@ -443,7 +446,7 @@ BOOL WINAPI ogon_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved,
 	return FALSE;
 }
 
-HANDLE WINAPI ogon_WTSOpenServerA(LPSTR pServerName) {
+static HANDLE WINAPI ogon_WTSOpenServerA(LPSTR pServerName) {
 	TSessionInfo *sessionInfo = newSessionInfo();
 	if (sessionInfo == NULL) {
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -465,30 +468,21 @@ HANDLE WINAPI ogon_WTSOpenServerA(LPSTR pServerName) {
 	return INVALID_HANDLE_VALUE;
 }
 
-HANDLE WINAPI ogon_WTSOpenServerW(LPWSTR pServerName) {
-	char converted[256];
-
-	int result = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) pServerName,
-			wcslen((const wchar_t *)pServerName) + 1, converted, sizeof(converted), NULL, NULL);
-	if (result == sizeof(converted)) {
-		converted[result-1] = 0;
-	} else {
-		converted[result] = 0;
-	}
-
-	return ogon_WTSOpenServerA(converted);
+static HANDLE WINAPI ogon_WTSOpenServerW(LPWSTR pServerName) {
+	auto converted =
+			wchar_to_utf8(reinterpret_cast<const char16_t *>(pServerName));
+	return ogon_WTSOpenServerA(converted.data());
 }
 
-
-HANDLE WINAPI ogon_WTSOpenServerExW(LPWSTR pServerName) {
+static HANDLE WINAPI ogon_WTSOpenServerExW(LPWSTR pServerName) {
 	return ogon_WTSOpenServerW(pServerName);
 }
 
-HANDLE WINAPI ogon_WTSOpenServerExA(LPSTR pServerName) {
+static HANDLE WINAPI ogon_WTSOpenServerExA(LPSTR pServerName) {
 	return ogon_WTSOpenServerA(pServerName);
 }
 
-void WINAPI ogon_WTSCloseServer(HANDLE hServer) {
+static void WINAPI ogon_WTSCloseServer(HANDLE hServer) {
 	if (hServer == WTS_CURRENT_SERVER_HANDLE) {
 		return;
 	}
@@ -507,9 +501,8 @@ void WINAPI ogon_WTSCloseServer(HANDLE hServer) {
 	}
 }
 
-BOOL WINAPI ogon_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
-	DWORD Version, PWTS_SESSION_INFOA *ppSessionInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
+		DWORD Version, PWTS_SESSION_INFOA *ppSessionInfo, DWORD *pCount) {
 	OGON_UNUSED(Reserved);
 
 	ogon::TReturnEnumerateSession result;
@@ -587,9 +580,8 @@ BOOL WINAPI ogon_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
 	return TRUE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
-	DWORD Version, PWTS_SESSION_INFOW *ppSessionInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
+		DWORD Version, PWTS_SESSION_INFOW *ppSessionInfo, DWORD *pCount) {
 	PWTS_SESSION_INFOA pSessionInfoA;
 	PWTS_SESSION_INFOW pSessionInfoW;
 	DWORD count;
@@ -605,12 +597,16 @@ BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
 	}
 
 	/* Allocate memory (including space for strings). */
-	int cbExtra = 0;
+	std::vector<std::u16string> list;
+	size_t cbExtra = 0;
 	for (DWORD index = 0; index < count; index++) {
-		cbExtra += MultiByteToWideChar(CP_ACP, 0, pSessionInfoA[index].pWinStationName, -1, NULL, 0);
+		auto str = utf8_to_wchar(pSessionInfoA[index].pWinStationName);
+		list.push_back(str);
+		cbExtra += (str.size() + 1) * sizeof(char16_t);
 	}
 
-	pSessionInfoW = (PWTS_SESSION_INFOW)calloc(1, sizeof(WTS_SESSION_INFOW) * count + cbExtra);
+	pSessionInfoW =
+			(PWTS_SESSION_INFOW)calloc(1, sizeof(WTS_SESSION_INFOW) * cbExtra);
 	if (!pSessionInfoW) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		WTSFreeMemory(pSessionInfoA);
@@ -627,8 +623,9 @@ BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
 		if (pSessionInfoA[index].pWinStationName) {
 			pSessionInfoW[index].pWinStationName = (LPWSTR)pExtra;
 
-			int size = MultiByteToWideChar(CP_ACP, 0, pSessionInfoA[index].pWinStationName,
-				-1, pSessionInfoW[index].pWinStationName, cbExtra);
+			auto str = list[index];
+			auto size = (str.size() + 1) * sizeof(char16_t);
+			memcpy(pExtra, str.c_str(), size);
 			pExtra += size;
 			cbExtra -= size;
 		}
@@ -639,9 +636,8 @@ BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
 	return TRUE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateSessionsExW(HANDLE hServer, DWORD *pLevel,
-	DWORD Filter, PWTS_SESSION_INFO_1W *ppSessionInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateSessionsExW(HANDLE hServer, DWORD *pLevel,
+		DWORD Filter, PWTS_SESSION_INFO_1W *ppSessionInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pLevel);
 	OGON_UNUSED(Filter);
@@ -651,9 +647,8 @@ BOOL WINAPI ogon_WTSEnumerateSessionsExW(HANDLE hServer, DWORD *pLevel,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateSessionsExA(HANDLE hServer, DWORD *pLevel,
-	DWORD Filter, PWTS_SESSION_INFO_1A *ppSessionInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateSessionsExA(HANDLE hServer, DWORD *pLevel,
+		DWORD Filter, PWTS_SESSION_INFO_1A *ppSessionInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pLevel);
 	OGON_UNUSED(Filter);
@@ -663,9 +658,8 @@ BOOL WINAPI ogon_WTSEnumerateSessionsExA(HANDLE hServer, DWORD *pLevel,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved,
-	DWORD Version, PWTS_PROCESS_INFOW *ppProcessInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved,
+		DWORD Version, PWTS_PROCESS_INFOW *ppProcessInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(Reserved);
 	OGON_UNUSED(Version);
@@ -675,9 +669,8 @@ BOOL WINAPI ogon_WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved,
-	DWORD Version, PWTS_PROCESS_INFOA *ppProcessInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved,
+		DWORD Version, PWTS_PROCESS_INFOA *ppProcessInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(Reserved);
 	OGON_UNUSED(Version);
@@ -687,9 +680,8 @@ BOOL WINAPI ogon_WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSTerminateProcess(HANDLE hServer, DWORD ProcessId,
-	DWORD ExitCode) {
-
+static BOOL WINAPI ogon_WTSTerminateProcess(
+		HANDLE hServer, DWORD ProcessId, DWORD ExitCode) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(ProcessId);
 	OGON_UNUSED(ExitCode);
@@ -697,9 +689,9 @@ BOOL WINAPI ogon_WTSTerminateProcess(HANDLE hServer, DWORD ProcessId,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
-	WTS_INFO_CLASS wtsInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned) {
-
+static BOOL WINAPI ogon_WTSQuerySessionInformationA(HANDLE hServer,
+		DWORD SessionId, WTS_INFO_CLASS wtsInfoClass, LPSTR *ppBuffer,
+		DWORD *pBytesReturned) {
 	ogon::TReturnQuerySessionInformation result;
 	TSessionInfo *currentCon;
 
@@ -882,9 +874,9 @@ BOOL WINAPI ogon_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
 	}
 }
 
-BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId,
-	WTS_INFO_CLASS WTSInfoClass, LPWSTR *ppBuffer, DWORD *pBytesReturned) {
-
+static BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer,
+		DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR *ppBuffer,
+		DWORD *pBytesReturned) {
 	LPSTR pBuffer;
 	DWORD cbBuffer;
 	BOOL bSuccess;
@@ -902,12 +894,15 @@ BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId,
 		case WTSWinStationName:
 		case WTSDomainName:
 		case WTSClientName: {
-			int status = ConvertToUnicode(CP_UTF8, 0, pBuffer, -1, ppBuffer, 0);
-			if (status > 0) {
-				*pBytesReturned = status;
-			} else {
+			auto str = utf8_to_wchar(pBuffer);
+			auto size = (str.size() + 1) * sizeof(char16_t);
+			*ppBuffer = static_cast<WCHAR *>(malloc(size));
+			if (!*ppBuffer) {
 				SetLastError(ERROR_INTERNAL_ERROR);
 				bSuccess = FALSE;
+			} else {
+				memcpy(*ppBuffer, str.c_str(), size);
+				*pBytesReturned = size;
 			}
 			WTSFreeMemory(pBuffer);
 			break;
@@ -927,9 +922,20 @@ BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId,
 			pWTSINFOW->DisconnectTime = pWTSINFOA->DisconnectTime;
 			pWTSINFOW->LastInputTime = pWTSINFOA->LastInputTime;
 			pWTSINFOW->LogonTime = pWTSINFOA->LogonTime;
-			MultiByteToWideChar(CP_UTF8, 0, pWTSINFOA->WinStationName, -1, pWTSINFOW->WinStationName, WINSTATIONNAME_LENGTH);
-			MultiByteToWideChar(CP_UTF8, 0, pWTSINFOA->Domain, -1, pWTSINFOW->Domain, DOMAIN_LENGTH);
-			MultiByteToWideChar(CP_UTF8, 0, pWTSINFOA->UserName, -1, pWTSINFOW->UserName, USERNAME_LENGTH + 1);
+
+			auto WinStationName =
+					utf8_to_wchar(std::string(pWTSINFOA->WinStationName,
+							ARRAYSIZE(pWTSINFOA->WinStationName)));
+			auto Domain = utf8_to_wchar(std::string(
+					pWTSINFOA->Domain, ARRAYSIZE(pWTSINFOA->Domain)));
+			auto UserName = utf8_to_wchar(std::string(
+					pWTSINFOA->UserName, ARRAYSIZE(pWTSINFOA->UserName)));
+			memcpy(pWTSINFOW->WinStationName, WinStationName.c_str(),
+					WinStationName.size() * sizeof(char16_t));
+			memcpy(pWTSINFOW->Domain, Domain.c_str(),
+					Domain.size() * sizeof(char16_t));
+			memcpy(pWTSINFOW->UserName, UserName.c_str(),
+					UserName.size() * sizeof(char16_t));
 
 			*ppBuffer = (LPWSTR)pWTSINFOW;
 			*pBytesReturned = size;
@@ -946,9 +952,9 @@ BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId,
 	return bSuccess;
 }
 
-BOOL WINAPI ogon_WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
-	WTS_CONFIG_CLASS WTSConfigClass, LPWSTR *ppBuffer, DWORD *pBytesReturned) {
-
+static BOOL WINAPI ogon_WTSQueryUserConfigW(LPWSTR pServerName,
+		LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR *ppBuffer,
+		DWORD *pBytesReturned) {
 	OGON_UNUSED(pServerName);
 	OGON_UNUSED(pUserName);
 	OGON_UNUSED(WTSConfigClass);
@@ -958,9 +964,9 @@ BOOL WINAPI ogon_WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName,
-	WTS_CONFIG_CLASS WTSConfigClass, LPSTR *ppBuffer, DWORD *pBytesReturned) {
-
+static BOOL WINAPI ogon_WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName,
+		WTS_CONFIG_CLASS WTSConfigClass, LPSTR *ppBuffer,
+		DWORD *pBytesReturned) {
 	OGON_UNUSED(pServerName);
 	OGON_UNUSED(pUserName);
 	OGON_UNUSED(WTSConfigClass);
@@ -970,9 +976,8 @@ BOOL WINAPI ogon_WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
-	WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength) {
-
+static BOOL WINAPI ogon_WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
+		WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength) {
 	OGON_UNUSED(pServerName);
 	OGON_UNUSED(pUserName);
 	OGON_UNUSED(WTSConfigClass);
@@ -982,9 +987,8 @@ BOOL WINAPI ogon_WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName,
-	WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength) {
-
+static BOOL WINAPI ogon_WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName,
+		WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength) {
 	OGON_UNUSED(pServerName);
 	OGON_UNUSED(pUserName);
 	OGON_UNUSED(WTSConfigClass);
@@ -994,10 +998,9 @@ BOOL WINAPI ogon_WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSendMessageW(HANDLE hServer, DWORD SessionId,
-	LPWSTR pTitle, DWORD TitleLength, LPWSTR pMessage, DWORD MessageLength,
-	DWORD Style, DWORD Timeout, DWORD *pResponse, BOOL bWait) {
-
+static BOOL WINAPI ogon_WTSSendMessageW(HANDLE hServer, DWORD SessionId,
+		LPWSTR pTitle, DWORD TitleLength, LPWSTR pMessage, DWORD MessageLength,
+		DWORD Style, DWORD Timeout, DWORD *pResponse, BOOL bWait) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(SessionId);
 	OGON_UNUSED(pTitle);
@@ -1012,10 +1015,9 @@ BOOL WINAPI ogon_WTSSendMessageW(HANDLE hServer, DWORD SessionId,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle,
-	DWORD TitleLength, LPSTR pMessage, DWORD MessageLength, DWORD Style,
-	DWORD Timeout, DWORD *pResponse, BOOL bWait) {
-
+static BOOL WINAPI ogon_WTSSendMessageA(HANDLE hServer, DWORD SessionId,
+		LPSTR pTitle, DWORD TitleLength, LPSTR pMessage, DWORD MessageLength,
+		DWORD Style, DWORD Timeout, DWORD *pResponse, BOOL bWait) {
 	OGON_UNUSED(TitleLength);
 	DWORD result = 0;
 	TSessionInfo *currentCon;
@@ -1049,7 +1051,8 @@ BOOL WINAPI ogon_WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle,
 	return TRUE;
 }
 
-BOOL WINAPI ogon_WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait) {
+static BOOL WINAPI ogon_WTSDisconnectSession(
+		HANDLE hServer, DWORD SessionId, BOOL bWait) {
 	TSessionInfo *currentCon;
 
 	currentCon = getSessionInfo(hServer);
@@ -1079,7 +1082,8 @@ BOOL WINAPI ogon_WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWai
 	}
 }
 
-BOOL WINAPI ogon_WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait) {
+static BOOL WINAPI ogon_WTSLogoffSession(
+		HANDLE hServer, DWORD SessionId, BOOL bWait) {
 	TSessionInfo *currentCon;
 
 	currentCon = getSessionInfo(hServer);
@@ -1109,17 +1113,15 @@ BOOL WINAPI ogon_WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait) {
 	}
 }
 
-BOOL WINAPI ogon_WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag) {
-
+static BOOL WINAPI ogon_WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(ShutdownFlag);
 
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask,
-	DWORD *pEventFlags) {
-
+static BOOL WINAPI ogon_WTSWaitSystemEvent(
+		HANDLE hServer, DWORD EventMask, DWORD *pEventFlags) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(EventMask);
 	OGON_UNUSED(pEventFlags);
@@ -1127,8 +1129,8 @@ BOOL WINAPI ogon_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask,
 	return FALSE;
 }
 
-HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags) {
-
+static HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(
+		DWORD SessionId, LPSTR pVirtualName, DWORD flags) {
 	std::string virtualName(pVirtualName);
 	if (!(flags & WTS_CHANNEL_OPTION_DYNAMIC) && virtualName.length() > 8) {
 		/* static channels are limited to 8 char */
@@ -1187,9 +1189,8 @@ HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, 
 	return hNamedPipe;
 }
 
-HANDLE WINAPI ogon_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
-	LPSTR pVirtualName) {
-
+static HANDLE WINAPI ogon_WTSVirtualChannelOpen(
+		HANDLE hServer, DWORD SessionId, LPSTR pVirtualName) {
 	if (hServer != WTS_CURRENT_SERVER_HANDLE) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return NULL;
@@ -1197,8 +1198,7 @@ HANDLE WINAPI ogon_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
 	return ogon_WTSVirtualChannelOpenEx(SessionId, pVirtualName, 0);
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelClose(HANDLE hChannelHandle) {
-
+static BOOL WINAPI ogon_WTSVirtualChannelClose(HANDLE hChannelHandle) {
 	THandleInfo info;
 	BOOL result = FALSE;
 
@@ -1238,9 +1238,8 @@ out:
 	return result;
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut,
-		PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead) {
-
+static BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle,
+		ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead) {
 	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL)) {
 		return TRUE;
 	}
@@ -1272,9 +1271,8 @@ BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer,
-	ULONG Length, PULONG pBytesWritten) {
-
+static BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle,
+		PCHAR Buffer, ULONG Length, PULONG pBytesWritten) {
 	ULONG written;
 	ULONG writtenTotal = 0;
 	BOOL success = TRUE;
@@ -1321,22 +1319,21 @@ BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer,
 	return success;
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle) {
-
+static BOOL WINAPI ogon_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle) {
 	OGON_UNUSED(hChannelHandle);
 
 	return TRUE;
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle) {
-
+static BOOL WINAPI ogon_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle) {
 	OGON_UNUSED(hChannelHandle);
 
 	return TRUE;
 }
 
-BOOL WINAPI ogon_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass,
-											PVOID *ppBuffer, DWORD *pBytesReturned) {
+static BOOL WINAPI ogon_WTSVirtualChannelQuery(HANDLE hChannelHandle,
+		WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID *ppBuffer,
+		DWORD *pBytesReturned) {
 	if (hChannelHandle == INVALID_HANDLE_VALUE) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -1367,16 +1364,14 @@ BOOL WINAPI ogon_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS
 	return TRUE;
 }
 
-VOID WINAPI ogon_WTSFreeMemory(PVOID pMemory) {
-
+static VOID WINAPI ogon_WTSFreeMemory(PVOID pMemory) {
 	if (pMemory) {
 		free(pMemory);
 	}
 }
 
-BOOL WINAPI ogon_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-	ULONG NumberOfEntries) {
-
+static BOOL WINAPI ogon_WTSFreeMemoryExW(
+		WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries) {
 	OGON_UNUSED(WTSTypeClass);
 	OGON_UNUSED(pMemory);
 	OGON_UNUSED(NumberOfEntries);
@@ -1384,9 +1379,8 @@ BOOL WINAPI ogon_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
-	ULONG NumberOfEntries) {
-
+static BOOL WINAPI ogon_WTSFreeMemoryExA(
+		WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries) {
 	OGON_UNUSED(WTSTypeClass);
 	OGON_UNUSED(pMemory);
 	OGON_UNUSED(NumberOfEntries);
@@ -1394,24 +1388,22 @@ BOOL WINAPI ogon_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags) {
-
+static BOOL WINAPI ogon_WTSRegisterSessionNotification(
+		HWND hWnd, DWORD dwFlags) {
 	OGON_UNUSED(hWnd);
 	OGON_UNUSED(dwFlags);
 
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSUnRegisterSessionNotification(HWND hWnd) {
-
+static BOOL WINAPI ogon_WTSUnRegisterSessionNotification(HWND hWnd) {
 	OGON_UNUSED(hWnd);
 
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd,
-	DWORD dwFlags) {
-
+static BOOL WINAPI ogon_WTSRegisterSessionNotificationEx(
+		HANDLE hServer, HWND hWnd, DWORD dwFlags) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(hWnd);
 	OGON_UNUSED(dwFlags);
@@ -1419,25 +1411,23 @@ BOOL WINAPI ogon_WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd) {
-
+static BOOL WINAPI ogon_WTSUnRegisterSessionNotificationEx(
+		HANDLE hServer, HWND hWnd) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(hWnd);
 
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSQueryUserToken(ULONG SessionId, PHANDLE phToken) {
-
+static BOOL WINAPI ogon_WTSQueryUserToken(ULONG SessionId, PHANDLE phToken) {
 	OGON_UNUSED(SessionId);
 	OGON_UNUSED(phToken);
 
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateProcessesExW(HANDLE hServer, DWORD *pLevel,
-	DWORD SessionId, LPWSTR *ppProcessInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateProcessesExW(HANDLE hServer, DWORD *pLevel,
+		DWORD SessionId, LPWSTR *ppProcessInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pLevel);
 	OGON_UNUSED(SessionId);
@@ -1447,9 +1437,8 @@ BOOL WINAPI ogon_WTSEnumerateProcessesExW(HANDLE hServer, DWORD *pLevel,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel,
-	DWORD SessionId, LPSTR *ppProcessInfo, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateProcessesExA(HANDLE hServer, DWORD *pLevel,
+		DWORD SessionId, LPSTR *ppProcessInfo, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pLevel);
 	OGON_UNUSED(SessionId);
@@ -1459,9 +1448,8 @@ BOOL WINAPI ogon_WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1471,9 +1459,8 @@ BOOL WINAPI ogon_WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD *pCount) {
-
+static BOOL WINAPI ogon_WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD *pCount) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1483,9 +1470,8 @@ BOOL WINAPI ogon_WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer) {
-
+static BOOL WINAPI ogon_WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1495,9 +1481,8 @@ BOOL WINAPI ogon_WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer) {
-
+static BOOL WINAPI ogon_WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1507,9 +1492,9 @@ BOOL WINAPI ogon_WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSCreateListenerW(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag) {
-
+static BOOL WINAPI ogon_WTSCreateListenerW(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer,
+		DWORD flag) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1520,9 +1505,9 @@ BOOL WINAPI ogon_WTSCreateListenerW(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSCreateListenerA(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag) {
-
+static BOOL WINAPI ogon_WTSCreateListenerA(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer,
+		DWORD flag) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1533,10 +1518,10 @@ BOOL WINAPI ogon_WTSCreateListenerA(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-	PSECURITY_DESCRIPTOR pSecurityDescriptor) {
-
+static BOOL WINAPI ogon_WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPWSTR pListenerName,
+		SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1547,10 +1532,10 @@ BOOL WINAPI ogon_WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-	PSECURITY_DESCRIPTOR pSecurityDescriptor) {
-
+static BOOL WINAPI ogon_WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPSTR pListenerName,
+		SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1561,10 +1546,11 @@ BOOL WINAPI ogon_WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved,
-		DWORD Reserved, LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded) {
-
+static BOOL WINAPI ogon_WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPWSTR pListenerName,
+		SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+		LPDWORD lpnLengthNeeded) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1577,10 +1563,11 @@ BOOL WINAPI ogon_WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL WINAPI ogon_WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved,
-	DWORD Reserved, LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-	PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded) {
-
+static BOOL WINAPI ogon_WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved,
+		DWORD Reserved, LPSTR pListenerName,
+		SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+		LPDWORD lpnLengthNeeded) {
 	OGON_UNUSED(hServer);
 	OGON_UNUSED(pReserved);
 	OGON_UNUSED(Reserved);
@@ -1593,32 +1580,29 @@ BOOL WINAPI ogon_WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved,
 	return FALSE;
 }
 
-BOOL CDECL ogon_WTSEnableChildSessions(BOOL bEnable) {
-
+static BOOL CDECL ogon_WTSEnableChildSessions(BOOL bEnable) {
 	OGON_UNUSED(bEnable);
 
 	return FALSE;
 }
 
-BOOL CDECL ogon_WTSIsChildSessionsEnabled(PBOOL pbEnabled) {
-
+static BOOL CDECL ogon_WTSIsChildSessionsEnabled(PBOOL pbEnabled) {
 	OGON_UNUSED(pbEnabled);
 
 	return FALSE;
 }
 
-BOOL CDECL ogon_WTSGetChildSessionId(PULONG pSessionId) {
-
+static BOOL CDECL ogon_WTSGetChildSessionId(PULONG pSessionId) {
 	OGON_UNUSED(pSessionId);
 
 	return FALSE;
 }
 
-DWORD WINAPI ogon_WTSGetActiveConsoleSessionId(void) {
+static DWORD WINAPI ogon_WTSGetActiveConsoleSessionId(void) {
 	return 0xFFFFFFFF;
 }
 
-BOOL CDECL ogon_WTSLogoffUser(HANDLE hServer) {
+static BOOL CDECL ogon_WTSLogoffUser(HANDLE hServer) {
 	BOOL retVal = FALSE;
 	TSessionInfo *currentCon = getSessionInfo(hServer);
 	if (currentCon == NULL) {
@@ -1655,8 +1639,8 @@ BOOL CDECL ogon_WTSLogoffUser(HANDLE hServer) {
 	return retVal;
 }
 
-BOOL CDECL ogon_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain) {
-
+static BOOL CDECL ogon_WTSLogonUser(
+		HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain) {
 	if ((username == NULL) || ( password== NULL)) {
 		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
