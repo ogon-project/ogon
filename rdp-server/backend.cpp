@@ -77,7 +77,7 @@ static BOOL drain_ringbuffer_to_pipe(
 			toWrite = chunks[i].size;
 			ptr = chunks[i].data;
 			while (toWrite) {
-				r = WriteFile(pipe, ptr, toWrite, &written, NULL);
+				r = WriteFile(pipe, ptr, toWrite, &written, nullptr);
 				if (!r || !written) {
 					/* broken IO: r = False written=undefined
 					 * or EWOULDBLOCK: r = TRUE written=0 */
@@ -330,7 +330,7 @@ int ogon_resize_frontend(
 
 	if (front->encoder) {
 		ogon_bitmap_encoder_free(front->encoder);
-		front->encoder = NULL;
+		front->encoder = nullptr;
 	}
 
 	if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width,
@@ -436,7 +436,7 @@ static int ogon_server_framebuffer_info(
 		if (!newSize && (!front->encoder || newEncoders)) {
 			if (front->encoder) {
 				ogon_bitmap_encoder_free(front->encoder);
-				front->encoder = NULL;
+				front->encoder = nullptr;
 			}
 
 			if (!(front->encoder = ogon_bitmap_encoder_new(screenInfos->width,
@@ -864,7 +864,7 @@ static sbp_context *SbpContext_new(
 		ogon_connection *connection, UINT32 tag, UINT32 type) {
 	sbp_context *ret = (sbp_context *)malloc(sizeof(sbp_context));
 	if (!ret) {
-		return NULL;
+		return nullptr;
 	}
 	ret->connectionId = connection->id;
 	ret->originalTag = tag;
@@ -914,7 +914,7 @@ static void sbpCallback(
 	}
 
 	if (!app_context_post_message_connection(
-				context->connectionId, NOTIFY_SBP_REPLY, event, NULL)) {
+				context->connectionId, NOTIFY_SBP_REPLY, event, nullptr)) {
 		WLog_ERR(TAG, "sbp callback: error posting to connection %" PRId32 "",
 				context->connectionId);
 		pbrpc_message_free_response(response);
@@ -1009,7 +1009,7 @@ static const backend_server_protocol_cb serverCallbacks[] = {
 											   OGON_SERVER_FRAMEBUFFER_SYNC_REPLY
 											 */
 		ogon_server_message_reply,			/*  6 - OGON_SERVER_MESSAGE_REPLY */
-		NULL,								/*  7 - OGON_SERVER_VERSION_REPLY */
+		nullptr,							/*  7 - OGON_SERVER_VERSION_REPLY */
 };
 
 #define SERVER_CALLBACKS_NB \
@@ -1017,7 +1017,7 @@ static const backend_server_protocol_cb serverCallbacks[] = {
 
 static BOOL backend_treat_message(
 		ogon_connection *connection, wStream *s, UINT16 type) {
-	ogon_msg_version *version = NULL;
+	ogon_msg_version *version = nullptr;
 	backend_server_protocol_cb cb;
 	ogon_backend_connection *backend = connection->backend;
 	BOOL ret = FALSE;
@@ -1125,7 +1125,7 @@ static BOOL backend_drain_input(ogon_connection *connection) {
 
 	while (TRUE) {
 		if (!ReadFile(backend->pipe, Stream_Pointer(backend->recvBuffer),
-					backend->expectedReadBytes, &readBytes, NULL) ||
+					backend->expectedReadBytes, &readBytes, nullptr) ||
 				!readBytes) {
 			if (GetLastError() == ERROR_NO_DATA) break;
 
@@ -1247,7 +1247,7 @@ ogon_backend_connection *backend_new(
 		goto fail;
 	}
 
-	ret->recvBuffer = Stream_New(NULL, 0x10000);
+	ret->recvBuffer = Stream_New(nullptr, 0x10000);
 	if (!ret->recvBuffer) {
 		goto fail;
 	}
@@ -1262,7 +1262,7 @@ ogon_backend_connection *backend_new(
 	WLog_DBG(TAG, "connected to endpoint [%s]", props->serviceEndpoint);
 
 	pipeMode = PIPE_NOWAIT;
-	if (!SetNamedPipeHandleState(ret->pipe, &pipeMode, NULL, NULL)) {
+	if (!SetNamedPipeHandleState(ret->pipe, &pipeMode, nullptr, nullptr)) {
 		WLog_ERR(TAG, "unable to set [%s] pipe non-blocking",
 				props->serviceEndpoint);
 		goto fail;
@@ -1286,9 +1286,9 @@ ogon_backend_connection *backend_new(
 
 	ret->properties = *props;
 	/* the backend now owns the strings in properties */
-	props->serviceEndpoint = NULL;
-	props->backendCookie = NULL;
-	props->ogonCookie = NULL;
+	props->serviceEndpoint = nullptr;
+	props->backendCookie = nullptr;
+	props->ogonCookie = nullptr;
 
 	if (!ogon_backend_send_version(ret)) {
 		WLog_ERR(TAG, "error sending version packet over [%s]",
@@ -1313,7 +1313,7 @@ void backend_destroy(ogon_backend_connection **backendP) {
 	if (backend->pipeEventSource)
 		eventloop_remove_source(&backend->pipeEventSource);
 	CloseHandle(backend->pipe);
-	backend->pipe = NULL;
+	backend->pipe = nullptr;
 
 	Stream_Free(backend->recvBuffer, TRUE);
 	ringbuffer_destroy(&backend->xmitBuffer);
@@ -1324,5 +1324,5 @@ void backend_destroy(ogon_backend_connection **backendP) {
 	free(backend->lastSetPointer.xorMaskData);
 	free(backend);
 
-	*backendP = NULL;
+	*backendP = nullptr;
 }

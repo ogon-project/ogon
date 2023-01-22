@@ -114,7 +114,7 @@ BOOL app_context_stop_all_connections(void) {
 
 	for (;;) {
 		HANDLE hThread;
-		ogon_connection *conn = NULL;
+		ogon_connection *conn = nullptr;
 		int nkeys = 0;
 
 		std::lock_guard lock(g_app_context->mux);
@@ -127,7 +127,7 @@ BOOL app_context_stop_all_connections(void) {
 			}
 		}
 
-		while ((hThread = Queue_Dequeue(threads)) != NULL) {
+		while ((hThread = Queue_Dequeue(threads)) != nullptr) {
 			WaitForSingleObject(hThread, INFINITE);
 			CloseHandle(hThread);
 		}

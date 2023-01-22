@@ -59,20 +59,20 @@
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 void RSA_get0_key(
 		const RSA *r, const BIGNUM **n, const BIGNUM **e, const BIGNUM **d) {
-	if (n != NULL) *n = r->n;
-	if (e != NULL) *e = r->e;
-	if (d != NULL) *d = r->d;
+	if (n != nullptr) *n = r->n;
+	if (e != nullptr) *e = r->e;
+	if (d != nullptr) *d = r->d;
 }
 #endif
 
 static rdpRsaKey *ogon_generate_weak_rsa_key() {
 	BOOL success = FALSE;
-	rdpRsaKey *key = NULL;
-	RSA *rsa = NULL;
-	BIGNUM *e = NULL;
-	const BIGNUM *rsa_e = NULL;
-	const BIGNUM *rsa_n = NULL;
-	const BIGNUM *rsa_d = NULL;
+	rdpRsaKey *key = nullptr;
+	RSA *rsa = nullptr;
+	BIGNUM *e = nullptr;
+	const BIGNUM *rsa_e = nullptr;
+	const BIGNUM *rsa_n = nullptr;
+	const BIGNUM *rsa_d = nullptr;
 
 	if (!(key = (rdpRsaKey *)calloc(1, sizeof(rdpRsaKey)))) {
 		goto out;
@@ -83,10 +83,11 @@ static rdpRsaKey *ogon_generate_weak_rsa_key() {
 	if (!(rsa = RSA_new())) {
 		goto out;
 	}
-	if (!BN_set_word(e, 0x10001) || !RSA_generate_key_ex(rsa, 512, e, NULL)) {
+	if (!BN_set_word(e, 0x10001) ||
+			!RSA_generate_key_ex(rsa, 512, e, nullptr)) {
 		goto out;
 	}
-	RSA_get0_key(rsa, &rsa_n, NULL, NULL);
+	RSA_get0_key(rsa, &rsa_n, nullptr, nullptr);
 	key->ModulusLength = BN_num_bytes(rsa_n);
 	if (!(key->Modulus = (BYTE *)malloc(key->ModulusLength))) {
 		goto out;
@@ -94,7 +95,7 @@ static rdpRsaKey *ogon_generate_weak_rsa_key() {
 	BN_bn2bin(rsa_n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
 
-	RSA_get0_key(rsa, NULL, NULL, &rsa_d);
+	RSA_get0_key(rsa, nullptr, nullptr, &rsa_d);
 	key->PrivateExponentLength = BN_num_bytes(rsa_d);
 	if (!(key->PrivateExponent = (BYTE *)malloc(key->PrivateExponentLength))) {
 		goto out;
@@ -102,7 +103,7 @@ static rdpRsaKey *ogon_generate_weak_rsa_key() {
 	BN_bn2bin(rsa_d, key->PrivateExponent);
 	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
 
-	RSA_get0_key(rsa, NULL, &rsa_e, NULL);
+	RSA_get0_key(rsa, nullptr, &rsa_e, nullptr);
 	memset(key->exponent, 0, sizeof(key->exponent));
 	BN_bn2bin(
 			rsa_e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa_e));
@@ -123,7 +124,7 @@ out:
 			free(key->PrivateExponent);
 			free(key);
 		}
-		return NULL;
+		return nullptr;
 	}
 	return key;
 }
@@ -380,7 +381,8 @@ static BOOL ogon_peer_post_connect(freerdp_peer *client) {
 			client->hostname);
 
 	if (front->backendProps.serviceEndpoint) {
-		WLog_ERR(TAG, "error, service endpoint MUST be NULL in post connect");
+		WLog_ERR(
+				TAG, "error, service endpoint MUST be nullptr in post connect");
 		return FALSE;
 	}
 
@@ -781,7 +783,7 @@ static BOOL ogon_peer_activate(freerdp_peer *client) {
 
 out_fail:
 	backend_destroy(&conn->backend);
-	conn->backend = NULL;
+	conn->backend = nullptr;
 	return FALSE;
 }
 
@@ -925,8 +927,8 @@ static BOOL ogon_input_keyboard_event(
 		if ((vkcode == conn->shadowingEscapeKey) &&
 				((conn->front.modifiers & conn->shadowingEscapeModifiers) ==
 						conn->shadowingEscapeModifiers)) {
-			if (!app_context_post_message_connection(
-						conn->shadowing->id, NOTIFY_UNWIRE_SPY, conn, NULL)) {
+			if (!app_context_post_message_connection(conn->shadowing->id,
+						NOTIFY_UNWIRE_SPY, conn, nullptr)) {
 				WLog_ERR(TAG,
 						"error posting a NOTIFY_UNWIRE_SPY to self(%ld), "
 						"frontend is %ld",
@@ -1178,14 +1180,14 @@ static BOOL ogon_suppress_output(
 
 	/* WLog_DBG(TAG, "conn=%ld allow=%"PRIu8"", connection->id, allow); */
 	if (allow) {
-		if (area == NULL) {
+		if (area == nullptr) {
 			WLog_ERR(TAG, "protocol error, area must _not_ be null");
 			return TRUE;
 		}
 		ogon_state_set_event(front->state, OGON_EVENT_FRONTEND_ENABLE_OUTPUT);
 		handle_wait_timer_state(connection);
 	} else {
-		if (area != NULL) {
+		if (area != nullptr) {
 			WLog_ERR(TAG, "protocol error. area _must_ be null.");
 			return TRUE;
 		}
@@ -1493,7 +1495,7 @@ BOOL ogon_connection_init_front(ogon_connection *conn) {
 			PROPERTY_ITEM_INIT_BOOL("ogon.disableGraphicsPipelineH264", FALSE),
 			/*7*/ PROPERTY_ITEM_INIT_BOOL("ogon.enableFullAVC444", FALSE),
 			/*8*/ PROPERTY_ITEM_INIT_BOOL("ogon.restrictAVC444", FALSE),
-			PROPERTY_ITEM_INIT_INT(NULL, 0), /* last one */
+			PROPERTY_ITEM_INIT_INT(nullptr, 0), /* last one */
 	};
 
 	enum {
@@ -1662,7 +1664,7 @@ void frontend_destroy(ogon_front_connection *front) {
 
 	if (front->vcm) {
 		closeVirtualChannelManager(front->vcm);
-		front->vcm = NULL;
+		front->vcm = nullptr;
 	}
 
 	if (front->frameEventSource)
@@ -1670,7 +1672,7 @@ void frontend_destroy(ogon_front_connection *front) {
 
 	if (front->encoder) {
 		ogon_bitmap_encoder_free(front->encoder);
-		front->encoder = NULL;
+		front->encoder = nullptr;
 	}
 
 	ogon_state_free(front->state);
@@ -1678,15 +1680,15 @@ void frontend_destroy(ogon_front_connection *front) {
 	if (front->pointerCache) {
 		WLog_DBG(TAG, "freeing pointer cache");
 		free(front->pointerCache);
-		front->pointerCache = NULL;
+		front->pointerCache = nullptr;
 	}
 
 	ogon_backend_props_free(&front->backendProps);
 
 	if (front->rdpgfx) {
-		front->rdpgfx->OpenResult = NULL;
-		front->rdpgfx->FrameAcknowledge = NULL;
+		front->rdpgfx->OpenResult = nullptr;
+		front->rdpgfx->FrameAcknowledge = nullptr;
 		rdpgfx_server_context_free(front->rdpgfx);
-		front->rdpgfx = NULL;
+		front->rdpgfx = nullptr;
 	}
 }

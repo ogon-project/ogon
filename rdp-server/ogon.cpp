@@ -70,28 +70,28 @@
 #define TAG OGON_TAG("core.main")
 #define PIDFILE "ogon-rdp-server.pid"
 
-static HANDLE g_term_event = NULL;
-static HANDLE g_signal_event = NULL;
+static HANDLE g_term_event = nullptr;
+static HANDLE g_signal_event = nullptr;
 static UINT16 g_listen_port = 3389;
 
 COMMAND_LINE_ARGUMENT_A ogon_args[] = {
-		{"help", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
+		{"help", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
 				"show help screen"},
-		{"kill", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
+		{"kill", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
 				"kill a running daemon"},
-		{"nodaemon", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
+		{"nodaemon", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
 				"run in foreground"},
-		{"version", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
+		{"version", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
 				"print the version"},
-		{"port", COMMAND_LINE_VALUE_REQUIRED, "<number>", "3389", NULL, -1,
-				NULL, "listening port"},
-		{"log", COMMAND_LINE_VALUE_REQUIRED, "<backend>", "", NULL, -1, NULL,
-				"logging backend (syslog or journald)"},
-		{"loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", NULL, -1, NULL,
-				"logging level"},
-		{"buildconfig", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
-				"print build configuration"},
-		{NULL, 0, NULL, NULL, NULL, -1, NULL, NULL}};
+		{"port", COMMAND_LINE_VALUE_REQUIRED, "<number>", "3389", nullptr, -1,
+				nullptr, "listening port"},
+		{"log", COMMAND_LINE_VALUE_REQUIRED, "<backend>", "", nullptr, -1,
+				nullptr, "logging backend (syslog or journald)"},
+		{"loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", nullptr, -1,
+				nullptr, "logging level"},
+		{"buildconfig", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1,
+				nullptr, "print build configuration"},
+		{nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr}};
 
 static void printhelprow(
 		const char *kshort, const char *klong, const char *helptext) {
@@ -105,15 +105,15 @@ static void printhelprow(
 static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
-	printhelprow(NULL, "--help", "print this help screen");
-	printhelprow(NULL, "--kill", "kill a running daemon");
-	printhelprow(NULL, "--version", "print the version");
-	printhelprow(NULL, "--nodaemon", "run in foreground");
-	printhelprow(NULL, "--port=<number>", "listening port (default: 3389)");
+	printhelprow(nullptr, "--help", "print this help screen");
+	printhelprow(nullptr, "--kill", "kill a running daemon");
+	printhelprow(nullptr, "--version", "print the version");
+	printhelprow(nullptr, "--nodaemon", "run in foreground");
+	printhelprow(nullptr, "--port=<number>", "listening port (default: 3389)");
 	printhelprow(
-			NULL, "--log=<backend>", "logging backend (syslog or journald)");
-	printhelprow(NULL, "--loglevel=<level>", "level for logging");
-	printhelprow(NULL, "--buildconfig", "Print build configuration");
+			nullptr, "--log=<backend>", "logging backend (syslog or journald)");
+	printhelprow(nullptr, "--loglevel=<level>", "level for logging");
+	printhelprow(nullptr, "--buildconfig", "Print build configuration");
 }
 
 #ifndef WIN32
@@ -190,7 +190,7 @@ static BOOL ogon_peer_accepted(freerdp_listener *instance, freerdp_peer *peer) {
 	OGON_UNUSED(instance);
 
 	runloop = ogon_runloop_new(peer);
-	return runloop != NULL;
+	return runloop != nullptr;
 }
 
 typedef struct {
@@ -422,7 +422,7 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon,
 	flags |= COMMAND_LINE_SIGIL_DOUBLE_DASH;
 
 	status = CommandLineParseArgumentsA(
-			argc, argv, ogon_args, flags, NULL, NULL, NULL);
+			argc, argv, ogon_args, flags, nullptr, nullptr, nullptr);
 
 	if (status != COMMAND_LINE_STATUS_PRINT_HELP && status != 0) {
 		fprintf(stderr, "Failed to parse command line: %d\n", status);
@@ -500,7 +500,7 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon,
 			}
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 }
 
 void killProcess(char *pid_file) __attribute__((noreturn));
@@ -512,7 +512,7 @@ void killProcess(char *pid_file) {
 
 	fprintf(stderr, "stopping ogon-rdp-server\n");
 
-	fp = NULL;
+	fp = nullptr;
 
 	if (PathFileExistsA(pid_file)) {
 		fp = fopen(pid_file, "r");
@@ -680,7 +680,7 @@ int main(int argc, char **argv) {
 #ifndef WIN32
 	/* block all signals per default */
 	sigfillset(&set);
-	if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
+	if (pthread_sigmask(SIG_BLOCK, &set, nullptr)) {
 		fprintf(stderr, "error blocking all signals\n");
 		return 1;
 	}
@@ -707,14 +707,14 @@ int main(int argc, char **argv) {
 		goto fail_init_ssl;
 	}
 
-	if (!(g_term_event = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(g_term_event = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_ERR(TAG, "error creating termination event");
 		ret = 1;
 		goto fail_term_event;
 	}
 
 #ifndef WIN32
-	if (!(g_signal_event = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(g_signal_event = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_ERR(TAG, "error creating signal event");
 		ret = 1;
 		goto fail_signal_event;
@@ -750,13 +750,13 @@ int main(int argc, char **argv) {
 	/* our signal handler uses the sa_sigaction prototype */
 	act.sa_flags = SA_SIGINFO;
 	/* handle the following signals */
-	sigaction(SIGINT, &act, NULL);
-	sigaction(SIGTERM, &act, NULL);
+	sigaction(SIGINT, &act, nullptr);
+	sigaction(SIGTERM, &act, nullptr);
 	/* and unblock them as well */
 	sigemptyset(&set);
 	sigaddset(&set, SIGINT);
 	sigaddset(&set, SIGTERM);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+	pthread_sigmask(SIG_UNBLOCK, &set, nullptr);
 #endif
 
 	WLog_DBG(TAG, "entering main loop");
