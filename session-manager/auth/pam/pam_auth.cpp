@@ -36,6 +36,8 @@
 #include "pam_auth.h"
 #include <ogon/api.h>
 
+#include <malloc.h>
+
 struct t_user_pass
 {
 	char user[256];
@@ -53,8 +55,7 @@ struct t_auth_info
 
 static void get_service_name(char* service_name)
 {
-	service_name[0] = 0;
-
+	service_name[0] = '\0';
 	if (PathFileExistsA("/etc/pam.d/ogon"))
 	{
 		strncpy(service_name, "ogon", 255);
@@ -68,10 +69,11 @@ static void get_service_name(char* service_name)
 static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr)
 {
 	int i;
-	struct pam_response* reply;
-	struct t_user_pass* user_pass;
+	auto user_pass = static_cast<struct t_user_pass *>(appdata_ptr);
 
-	if (!(reply = calloc(1, sizeof(struct pam_response) * num_msg))) {
+	auto reply = static_cast<struct pam_response *>(
+			calloc(sizeof(struct pam_response), num_msg));
+	if (!reply) {
 		return (PAM_BUF_ERR);
 	}
 
@@ -83,7 +85,6 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 		switch (msg[i]->msg_style)
 		{
 			case PAM_PROMPT_ECHO_ON: /* username */
-				user_pass = appdata_ptr;
 				reply[i].resp = _strdup(user_pass->user);
 				if (!reply[i].resp) {
 					goto out_fail;
@@ -91,7 +92,6 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 				break;
 
 			case PAM_PROMPT_ECHO_OFF: /* password */
-				user_pass = appdata_ptr;
 				reply[i].resp = _strdup(user_pass->pass);
 				if (!reply[i].resp) {
 					goto out_fail;
@@ -124,10 +124,11 @@ long ogon_authenticate_pam(const char* username, const char* password, int* erro
 {
 	int error;
 	char service_name[256];
-	struct t_auth_info* auth_info;
 
 	get_service_name(service_name);
-	auth_info = calloc(1, sizeof(struct t_auth_info));
+
+	auto auth_info = static_cast<struct t_auth_info *>(
+			calloc(1, sizeof(struct t_auth_info)));
 	if (!auth_info) {
 		return 0;
 	}
@@ -213,7 +214,7 @@ int rds_auth_logon_user(rdsAuthModulePam* pam, const char* username, char** doma
 	if (!auth_status)
 		return -1;
 
-	domainName = malloc(strlen(PAM_AUTH_DOMAIN) + 1);
+	domainName = static_cast<char *>(malloc(strlen(PAM_AUTH_DOMAIN) + 1));
 	if (!domainName)
 		return -1;
 	strncpy(domainName, PAM_AUTH_DOMAIN, strlen(PAM_AUTH_DOMAIN) + 1);
