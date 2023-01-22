@@ -22,7 +22,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/backend)
 
 set(${MODULE_PREFIX}_SRCS
-	icp.c
+	icp.cpp
 	icp_client_stubs.c
 	icp_client_stubs.h
 	icp_server_stubs.c
