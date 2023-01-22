@@ -111,8 +111,8 @@ set(${MODULE_PREFIX}_SRCS
 	common/permission/LogonPermission.cpp
 	common/session/SessionNotifier.cpp
 	common/process/ProcessMonitor.cpp
-	../common/security.c
-	../common/procutils.c
+	../common/security.cpp
+	../common/procutils.cpp
 	${ICP_SOURCES}
 	${OTSAPI_SRC}
 	${PBRPC_PROTOBUF_SRC}

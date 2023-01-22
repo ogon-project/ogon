@@ -12,7 +12,7 @@ set(${MODULE_PREFIX}_SRCS
 	keycodes.cpp
 	${MODULE_PROTOC_SRC}
 	${MODULE_PROTOC_HDRS}
-	../common/security.c
+	../common/security.cpp
 	)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

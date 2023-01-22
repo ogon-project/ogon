@@ -23,8 +23,8 @@
 
 #include "procutils.h"
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 BOOL get_parent_pid(const pid_t pid, pid_t *ppid) {
 	char buffer[2048];
@@ -32,7 +32,7 @@ BOOL get_parent_pid(const pid_t pid, pid_t *ppid) {
 	FILE *fp;
 
 	*ppid = 0;
-	snprintf(buffer, sizeof(buffer), "/proc/%lu/stat", (unsigned long) pid);
+	snprintf(buffer, sizeof(buffer), "/proc/%lu/stat", (unsigned long)pid);
 	fp = fopen(buffer, "r");
 	if (!fp) {
 		return FALSE;
@@ -53,13 +53,13 @@ BOOL get_parent_pid(const pid_t pid, pid_t *ppid) {
 	return TRUE;
 }
 
-char* get_process_name(const pid_t pid) {
+char *get_process_name(const pid_t pid) {
 	FILE *fp;
 	size_t size;
 	char buffer[4096];
 	char path[32];
 
-	snprintf(path, sizeof(path), "/proc/%lu/cmdline", (unsigned long) pid);
+	snprintf(path, sizeof(path), "/proc/%lu/cmdline", (unsigned long)pid);
 
 	if (!(fp = fopen(path, "r"))) {
 		return NULL;

@@ -34,7 +34,7 @@ set(${MODULE_PREFIX}_SRCS
 	openh264.h
 	bandwidth_mgmt.c
 	bandwidth_mgmt.h
-	../common/procutils.c
+	../common/procutils.cpp
 	../common/procutils.h
 	)
 
