@@ -29,18 +29,20 @@
 
 #include "commondefs.h"
 
-/** @brief the global ogon context */
-typedef struct _ogon_app_context {
-	wListDictionary *connections;
-	volatile LONG connectionId;
-} ogon_app_context;
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-BOOL app_context_init();
-void app_context_uninit();
-long app_context_get_connectionid();
+BOOL app_context_init(void);
+void app_context_uninit(void);
+long app_context_get_connectionid(void);
 BOOL app_context_add_connection(ogon_connection *connection);
 void app_context_remove_connection(long id);
 BOOL app_context_post_message_connection(long id, UINT32 type,void *wParam, void *lParam);
-BOOL app_context_stop_all_connections();
+BOOL app_context_stop_all_connections(void);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OGON_RDPSRV_APPCONTEXT_H_ */

@@ -8,7 +8,7 @@ include_directories(".")
 include_directories("${CMAKE_BINARY_DIR}/backend")
 
 set(${MODULE_PREFIX}_SRCS
-	app_context.c
+	app_context.cpp
 	app_context.h
 	backend.c
 	channels.c
