@@ -74,7 +74,7 @@ static HANDLE g_term_event = nullptr;
 static HANDLE g_signal_event = nullptr;
 static UINT16 g_listen_port = 3389;
 
-COMMAND_LINE_ARGUMENT_A ogon_args[] = {
+static COMMAND_LINE_ARGUMENT_A ogon_args[] = {
 		{"help", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
 				"show help screen"},
 		{"kill", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
@@ -730,7 +730,6 @@ int main(int argc, char **argv) {
 	if (ogon_icp_start(g_term_event, OGON_PROTOCOL_VERSION_MAJOR,
 				OGON_PROTOCOL_VERSION_MINOR) < 0) {
 		WLog_ERR(TAG, "error creating ICP server");
-		;
 		ret = 1;
 		goto fail_icp_start;
 	}

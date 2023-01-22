@@ -21,7 +21,7 @@ set(${MODULE_PREFIX}_SRCS
 	ogon.h
 	frontend.cpp
 	graphics.c
-	peer.c
+	peer.cpp
 	peer.h
 	PMurHash.c
 	PMurHash.h
