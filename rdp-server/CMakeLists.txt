@@ -30,7 +30,7 @@ set(${MODULE_PREFIX}_SRCS
 	rdpgfx.cpp
 	rdpgfx.h
 	font8x8.h
-	openh264.c
+	openh264.cpp
 	openh264.h
 	bandwidth_mgmt.cpp
 	bandwidth_mgmt.h

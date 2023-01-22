@@ -29,9 +29,9 @@
 
 #include <dlfcn.h>
 
+#include <freerdp/primitives.h>
 #include <winpr/environment.h>
 #include <winpr/sysinfo.h>
-#include <freerdp/primitives.h>
 
 #include "../3rdparty/openh264/codec_api.h"
 #include "../3rdparty/openh264/codec_ver.h"
@@ -43,24 +43,27 @@
 
 #ifdef WITH_ENCODER_STATS
 #include <freerdp/utils/stopwatch.h>
-#define STOPWATCH_START(sw)     stopwatch_start(sw)
-#define STOPWATCH_STOP(sw)      stopwatch_stop(sw)
+#define STOPWATCH_START(sw) stopwatch_start(sw)
+#define STOPWATCH_STOP(sw) stopwatch_stop(sw)
 #else
-#define STOPWATCH_START(sw)     do { } while (0)
-#define STOPWATCH_STOP(sw)      do { } while (0)
+#define STOPWATCH_START(sw) \
+	do {                    \
+	} while (0)
+#define STOPWATCH_STOP(sw) \
+	do {                   \
+	} while (0)
 #endif
-
 
 typedef int (*pfn_create_openh264_encoder)(ISVCEncoder **ppEncoder);
 typedef void (*pfn_destroy_openh264_encoder)(ISVCEncoder *pEncoder);
 typedef void (*pfn_get_openh264_version)(OpenH264Version *pVersion);
 
-pfn_create_openh264_encoder create_openh264_encoder = NULL;
-pfn_destroy_openh264_encoder destroy_open_h264_encoder = NULL;
-pfn_get_openh264_version get_openh264_version = NULL;
-primitives_t *freerdp_primitives = NULL;
+pfn_create_openh264_encoder create_openh264_encoder = nullptr;
+pfn_destroy_openh264_encoder destroy_open_h264_encoder = nullptr;
+pfn_get_openh264_version get_openh264_version = nullptr;
+primitives_t *freerdp_primitives = nullptr;
 
-static void *openh264lib = NULL;
+static void *openh264lib = nullptr;
 static BOOL h264_init_success = FALSE;
 
 struct _ogon_h264_context {
@@ -87,20 +90,28 @@ struct _ogon_h264_context {
 #ifdef WITH_ENCODER_STATS
 static void ogon_print_h264_stopwatchxx(STOPWATCH *sw, const char *title) {
 	double s = stopwatch_get_elapsed_time_in_seconds(sw);
-	double avg = sw->count == 0 ? 0 : s/sw->count;
-	WLog_DBG(TAG, "%-20s | %10u | %10.4fs | %8.6fs | %6.0f",
-	         title, sw->count, s, avg, sw->count/s);
+	double avg = sw->count == 0 ? 0 : s / sw->count;
+	WLog_DBG(TAG, "%-20s | %10u | %10.4fs | %8.6fs | %6.0f", title, sw->count,
+			s, avg, sw->count / s);
 }
 
 static void ogon_print_h264_stopwatches(ogon_h264_context *h264) {
-	WLog_DBG(TAG, "------------------------------------------------------------+-------");
-	WLog_DBG(TAG, "STOPWATCH            |      COUNT |       TOTAL |       AVG |    IPS");
-	WLog_DBG(TAG, "---------------------+------------+-------------+-----------+-------");
+	WLog_DBG(TAG,
+			"------------------------------------------------------------+-----"
+			"--");
+	WLog_DBG(TAG,
+			"STOPWATCH            |      COUNT |       TOTAL |       AVG |    "
+			"IPS");
+	WLog_DBG(TAG,
+			"---------------------+------------+-------------+-----------+-----"
+			"--");
 	ogon_print_h264_stopwatchxx(h264->swRGB2YUV420, "yuv420");
 	ogon_print_h264_stopwatchxx(h264->swRGB2YUV444V1, "yuv444v1");
 	ogon_print_h264_stopwatchxx(h264->swRGB2YUV444V2, "yuv444v2");
 	ogon_print_h264_stopwatchxx(h264->swAVCEncode, "avcencode");
-	WLog_DBG(TAG, "------------------------------------------------------------+-------");
+	WLog_DBG(TAG,
+			"------------------------------------------------------------+-----"
+			"--");
 }
 
 static void ogon_delete_h264_stopwatches(ogon_h264_context *h264) {
@@ -150,7 +161,7 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 		UINT32 *pDstSize, ogon_openh264_compress_mode avcMode,
 		BOOL *pOptimizable) {
 	SFrameBSInfo info;
-	SSourcePicture *sourcePicture = NULL;
+	SSourcePicture *sourcePicture = nullptr;
 	prim_size_t screenSize;
 	pstatus_t pstatus = PRIMITIVES_SUCCESS;
 	int i, j, status;
@@ -162,36 +173,33 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	screenSize.width = (INT32)h264->scrWidth;
 	screenSize.height = (INT32)h264->scrHeight;
 
-	switch(avcMode) {
-	case COMPRESS_MODE_AVC420:
-		STOPWATCH_START(h264->swRGB2YUV420);
-		pstatus = freerdp_primitives->RGBToYUV420_8u_P3AC4R(
-				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
-				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
-				&screenSize);
-		STOPWATCH_STOP(h264->swRGB2YUV420);
-		break;
-	case COMPRESS_MODE_AVC444V1_A:
-		STOPWATCH_START(h264->swRGB2YUV444V1);
-		pstatus = freerdp_primitives->RGBToAVC444YUV(
-				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
-				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
-				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
-				&screenSize);
-		STOPWATCH_STOP(h264->swRGB2YUV444V1);
-		break;
-	case COMPRESS_MODE_AVC444V2_A:
-		STOPWATCH_START(h264->swRGB2YUV444V2);
-		pstatus = freerdp_primitives->RGBToAVC444YUVv2(
-				data, PIXEL_FORMAT_BGRA32, h264->scrStride,
-				h264->pic1.pData, (UINT32 *) h264->pic1.iStride,
-				h264->pic2.pData, (UINT32 *) h264->pic2.iStride,
-				&screenSize);
-		STOPWATCH_STOP(h264->swRGB2YUV444V2);
-		break;
-	case COMPRESS_MODE_AVC444VX_B:
-		/* YUV conversion already completed in previous call */
-		break;
+	switch (avcMode) {
+		case COMPRESS_MODE_AVC420:
+			STOPWATCH_START(h264->swRGB2YUV420);
+			pstatus = freerdp_primitives->RGBToYUV420_8u_P3AC4R(data,
+					PIXEL_FORMAT_BGRA32, h264->scrStride, h264->pic1.pData,
+					(UINT32 *)h264->pic1.iStride, &screenSize);
+			STOPWATCH_STOP(h264->swRGB2YUV420);
+			break;
+		case COMPRESS_MODE_AVC444V1_A:
+			STOPWATCH_START(h264->swRGB2YUV444V1);
+			pstatus = freerdp_primitives->RGBToAVC444YUV(data,
+					PIXEL_FORMAT_BGRA32, h264->scrStride, h264->pic1.pData,
+					(UINT32 *)h264->pic1.iStride, h264->pic2.pData,
+					(UINT32 *)h264->pic2.iStride, &screenSize);
+			STOPWATCH_STOP(h264->swRGB2YUV444V1);
+			break;
+		case COMPRESS_MODE_AVC444V2_A:
+			STOPWATCH_START(h264->swRGB2YUV444V2);
+			pstatus = freerdp_primitives->RGBToAVC444YUVv2(data,
+					PIXEL_FORMAT_BGRA32, h264->scrStride, h264->pic1.pData,
+					(UINT32 *)h264->pic1.iStride, h264->pic2.pData,
+					(UINT32 *)h264->pic2.iStride, &screenSize);
+			STOPWATCH_STOP(h264->swRGB2YUV444V2);
+			break;
+		case COMPRESS_MODE_AVC444VX_B:
+			/* YUV conversion already completed in previous call */
+			break;
 	}
 
 	if (pstatus != PRIMITIVES_SUCCESS) {
@@ -201,11 +209,15 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 
 	if (newFrameRate && newFrameRate <= 60 && h264->frameRate != newFrameRate) {
 		float framerate = (float)newFrameRate;
-		if ((*h264->pEncoder)->SetOption(h264->pEncoder, ENCODER_OPTION_FRAME_RATE, &framerate)) {
+		if ((h264->pEncoder)
+						->SetOption(ENCODER_OPTION_FRAME_RATE, &framerate)) {
 			WLog_ERR(TAG, "Failed to set encoder frame rate to %f", framerate);
 			return FALSE;
 		}
-		WLog_DBG(TAG, "Changed openh264 frame rate from %"PRIu32" to %"PRIu32" (max is 60)", h264->frameRate, newFrameRate);
+		WLog_DBG(TAG,
+				"Changed openh264 frame rate from %" PRIu32 " to %" PRIu32
+				" (max is 60)",
+				h264->frameRate, newFrameRate);
 		h264->frameRate = newFrameRate;
 	}
 
@@ -220,11 +232,13 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 			SBitrateInfo bitrate;
 			bitrate.iLayer = SPATIAL_LAYER_ALL;
 			bitrate.iBitrate = newBitRate;
-			if ((*h264->pEncoder)->SetOption(h264->pEncoder, ENCODER_OPTION_BITRATE, &bitrate)) {
-				WLog_ERR(TAG, "Failed to set encoder bitrate to %d", bitrate.iBitrate);
+			if ((h264->pEncoder)->SetOption(ENCODER_OPTION_BITRATE, &bitrate)) {
+				WLog_ERR(TAG, "Failed to set encoder bitrate to %d",
+						bitrate.iBitrate);
 				return FALSE;
 			}
-			/* WLog_DBG(TAG, "Changed bitrate from %"PRIu32" to %d", h264->bitRate, bitrate.iBitrate); */
+			/* WLog_DBG(TAG, "Changed bitrate from %"PRIu32" to %d",
+			 * h264->bitRate, bitrate.iBitrate); */
 			h264->bitRate = newBitRate;
 		}
 	}
@@ -237,7 +251,7 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 	}
 
 	STOPWATCH_START(h264->swAVCEncode);
-	status = (*h264->pEncoder)->EncodeFrame(h264->pEncoder, sourcePicture, &info);
+	status = (h264->pEncoder)->EncodeFrame(sourcePicture, &info);
 	STOPWATCH_STOP(h264->swAVCEncode);
 
 	if (status != 0) {
@@ -258,7 +272,8 @@ BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
 			*pDstSize += info.sLayerInfo[i].pNalLengthInByte[j];
 		}
 	}
-	/* WLog_DBG(TAG, "ENCODED SIZE (mode=%"PRIu32"): %"PRIu32" byte (%"PRIu32" bits)", avcMode, *pDstSize, (*pDstSize) * 8); */
+	/* WLog_DBG(TAG, "ENCODED SIZE (mode=%"PRIu32"): %"PRIu32" byte (%"PRIu32"
+	 * bits)", avcMode, *pDstSize, (*pDstSize) * 8); */
 
 	/**
 	 * TODO:
@@ -299,8 +314,8 @@ void ogon_openh264_context_free(ogon_h264_context *h264) {
 	winpr_aligned_free(h264->pic2.pData[2]);
 
 #ifdef WITH_ENCODER_STATS
-        ogon_print_h264_stopwatches(h264);
-        ogon_delete_h264_stopwatches(h264);
+	ogon_print_h264_stopwatches(h264);
+	ogon_delete_h264_stopwatches(h264);
 #endif
 
 	free(h264);
@@ -308,10 +323,9 @@ void ogon_openh264_context_free(ogon_h264_context *h264) {
 	return;
 }
 
-ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
-	UINT32 scrStride)
-{
-	ogon_h264_context *h264 = NULL;
+ogon_h264_context *ogon_openh264_context_new(
+		UINT32 scrWidth, UINT32 scrHeight, UINT32 scrStride) {
+	ogon_h264_context *h264 = nullptr;
 	UINT32 h264Width;
 	UINT32 h264Height;
 	SEncParamExt encParamExt;
@@ -320,22 +334,29 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	size_t ysize, usize, vsize;
 
 	if (!h264_init_success) {
-		WLog_ERR(TAG, "Cannot create OpenH264 context: library was not initialized");
-		return NULL;
+		WLog_ERR(TAG,
+				"Cannot create OpenH264 context: library was not initialized");
+		return nullptr;
 	}
 
 	if (scrWidth < 16 || scrHeight < 16) {
-		WLog_ERR(TAG, "Error: Minimum height and width for OpenH264 is 16 but we got %"PRIu32" x %"PRIu32"", scrWidth, scrHeight);
-		return NULL;
+		WLog_ERR(TAG,
+				"Error: Minimum height and width for OpenH264 is 16 but we got "
+				"%" PRIu32 " x %" PRIu32 "",
+				scrWidth, scrHeight);
+		return nullptr;
 	}
 
 	if (scrWidth % 16) {
-		WLog_WARN(TAG, "WARNING: screen width %"PRIu32" is not a multiple of 16. Expect degraded H.264 performance!", scrWidth);
+		WLog_WARN(TAG,
+				"WARNING: screen width %" PRIu32
+				" is not a multiple of 16. Expect degraded H.264 performance!",
+				scrWidth);
 	}
 
 	if (!(h264 = (ogon_h264_context *)calloc(1, sizeof(ogon_h264_context)))) {
 		WLog_ERR(TAG, "Failed to allocate OpenH264 context");
-		return NULL;
+		return nullptr;
 	}
 
 	ZeroMemory(&sysinfo, sizeof(sysinfo));
@@ -344,12 +365,14 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	/**
 	 * [MS-RDPEGFX 2.2.4.4 RFX_AVC420_BITMAP_STREAM]
 	 *
-	 * The width and height of the MPEG-4 AVC/H.264 codec bitstream MUST be aligned to a
-	 * multiple of 16.
+	 * The width and height of the MPEG-4 AVC/H.264 codec bitstream MUST be
+	 * aligned to a multiple of 16.
 	 */
 
-	h264Width = (scrWidth + 15) & ~15;    /* codec bitstream width must be a multiple of 16 */
-	h264Height = (scrHeight + 15) & ~15;  /* codec bitstream height must be a multiple of 16 */
+	h264Width = (scrWidth + 15) &
+				~15; /* codec bitstream width must be a multiple of 16 */
+	h264Height = (scrHeight + 15) &
+				 ~15; /* codec bitstream height must be a multiple of 16 */
 
 	h264->scrWidth = scrWidth;
 	h264->scrHeight = scrHeight;
@@ -409,7 +432,7 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	}
 
 	ZeroMemory(&encParamExt, sizeof(encParamExt));
-	if ((*h264->pEncoder)->GetDefaultParams(h264->pEncoder, &encParamExt)) {
+	if ((h264->pEncoder)->GetDefaultParams(&encParamExt)) {
 		WLog_ERR(TAG, "Failed to retrieve H.264 default ext params");
 		goto err;
 	}
@@ -441,33 +464,38 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight,
 	 * test case: xfreerdp /gfx-h264 /size:128x64
 	 */
 	if (h264Width >= 320 && h264Height >= 320) {
-		encParamExt.iMultipleThreadIdc = (unsigned short) sysinfo.dwNumberOfProcessors;
+		encParamExt.iMultipleThreadIdc =
+				(unsigned short)sysinfo.dwNumberOfProcessors;
 	}
 
 	if (encParamExt.iMultipleThreadIdc > 1) {
-		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
-		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceNum = encParamExt.iMultipleThreadIdc;
+		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceMode =
+				SM_FIXEDSLCNUM_SLICE;
+		encParamExt.sSpatialLayers[0].sSliceArgument.uiSliceNum =
+				encParamExt.iMultipleThreadIdc;
 		h264->nullValue = 20 * encParamExt.iMultipleThreadIdc;
-		WLog_DBG(TAG, "Using %hu threads for h.264 encoding (nullValue=%"PRIu32")", encParamExt.iMultipleThreadIdc, h264->nullValue);
+		WLog_DBG(TAG,
+				"Using %hu threads for h.264 encoding (nullValue=%" PRIu32 ")",
+				encParamExt.iMultipleThreadIdc, h264->nullValue);
 	} else {
 		h264->nullValue = 16;
 	}
 
-	if ((*h264->pEncoder)->InitializeExt(h264->pEncoder, &encParamExt)) {
+	if (h264->pEncoder->InitializeExt(&encParamExt)) {
 		WLog_ERR(TAG, "Failed to initialize H.264 encoder");
 		goto err;
 	}
 
 	bitrate.iLayer = SPATIAL_LAYER_ALL;
 	bitrate.iBitrate = h264->bitRate;
-	if ((*h264->pEncoder)->SetOption(h264->pEncoder, ENCODER_OPTION_BITRATE, &bitrate)) {
+	if (h264->pEncoder->SetOption(ENCODER_OPTION_BITRATE, &bitrate)) {
 		WLog_ERR(TAG, "Failed to set encoder bitrate to %d", bitrate.iBitrate);
 		goto err;
 	}
 
 	bitrate.iLayer = SPATIAL_LAYER_0;
 	bitrate.iBitrate = 0;
-	if ((*h264->pEncoder)->GetOption(h264->pEncoder, ENCODER_OPTION_MAX_BITRATE, &bitrate)) {
+	if (h264->pEncoder->GetOption(ENCODER_OPTION_MAX_BITRATE, &bitrate)) {
 		WLog_ERR(TAG, "Failed to get encoder max bitrate");
 		goto err;
 	}
@@ -494,21 +522,21 @@ err:
 		winpr_aligned_free(h264->pic2.pData[0]);
 		winpr_aligned_free(h264->pic2.pData[1]);
 		winpr_aligned_free(h264->pic2.pData[2]);
-		free (h264);
+		free(h264);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void ogon_openh264_library_close(void) {
 	if (openh264lib) {
 		dlclose(openh264lib);
-		openh264lib = NULL;
+		openh264lib = nullptr;
 	}
 }
 
 BOOL ogon_openh264_library_open(void) {
-	char* libh264;
+	char *libh264;
 	OpenH264Version cver;
 
 	if (h264_init_success) {
@@ -523,7 +551,8 @@ BOOL ogon_openh264_library_open(void) {
 
 	libh264 = getenv("LIBOPENH264");
 	if (libh264) {
-		WLog_DBG(TAG, "Loading OpenH264 library specified in environment: %s", libh264);
+		WLog_DBG(TAG, "Loading OpenH264 library specified in environment: %s",
+				libh264);
 		if (!(openh264lib = dlopen(libh264, RTLD_NOW))) {
 			WLog_ERR(TAG, "Failed to load OpenH264 library: %s", dlerror());
 			/* don't fail yet, we'll try to load the default library below ! */
@@ -531,24 +560,30 @@ BOOL ogon_openh264_library_open(void) {
 	}
 
 	if (!openh264lib) {
-		WLog_DBG(TAG, "Loading default OpenH264 library: %s", OGON_OPENH264_LIBRARY);
+		WLog_DBG(TAG, "Loading default OpenH264 library: %s",
+				OGON_OPENH264_LIBRARY);
 		if (!(openh264lib = dlopen(OGON_OPENH264_LIBRARY, RTLD_NOW))) {
 			WLog_WARN(TAG, "Failed to load OpenH264 library: %s", dlerror());
 			goto fail;
 		}
 	}
 
-	if (!(create_openh264_encoder = (pfn_create_openh264_encoder)dlsym(openh264lib, "WelsCreateSVCEncoder"))) {
-		WLog_ERR(TAG, "Failed to get OpenH264 encoder creation function: %s", dlerror());
+	if (!(create_openh264_encoder = (pfn_create_openh264_encoder)dlsym(
+				  openh264lib, "WelsCreateSVCEncoder"))) {
+		WLog_ERR(TAG, "Failed to get OpenH264 encoder creation function: %s",
+				dlerror());
 		goto fail;
 	}
 
-	if (!(destroy_open_h264_encoder = (pfn_destroy_openh264_encoder)dlsym(openh264lib, "WelsDestroySVCEncoder"))) {
-		WLog_ERR(TAG, "Failed to get OpenH264 encoder destroy function: %s", dlerror());
+	if (!(destroy_open_h264_encoder = (pfn_destroy_openh264_encoder)dlsym(
+				  openh264lib, "WelsDestroySVCEncoder"))) {
+		WLog_ERR(TAG, "Failed to get OpenH264 encoder destroy function: %s",
+				dlerror());
 		goto fail;
 	}
 
-	if (!(get_openh264_version = (pfn_get_openh264_version)dlsym(openh264lib, "WelsGetCodecVersionEx"))) {
+	if (!(get_openh264_version = (pfn_get_openh264_version)dlsym(
+				  openh264lib, "WelsGetCodecVersionEx"))) {
 		WLog_ERR(TAG, "Failed to get OpenH264 version function: %s", dlerror());
 		goto fail;
 	}
@@ -557,12 +592,15 @@ BOOL ogon_openh264_library_open(void) {
 
 	get_openh264_version(&cver);
 
-	WLog_DBG(TAG, "OpenH264 codec version: %u.%u.%u.%u",
-			cver.uMajor, cver.uMinor, cver.uRevision, cver.uReserved);
+	WLog_DBG(TAG, "OpenH264 codec version: %u.%u.%u.%u", cver.uMajor,
+			cver.uMinor, cver.uRevision, cver.uReserved);
 
 	if (cver.uMajor != OPENH264_MAJOR || cver.uMinor != OPENH264_MINOR) {
-		WLog_ERR(TAG, "The loaded OpenH264 library is incompatible with this build (%d.%d.%d.%d)",
-			OPENH264_MAJOR, OPENH264_MINOR, OPENH264_REVISION, OPENH264_RESERVED);
+		WLog_ERR(TAG,
+				"The loaded OpenH264 library is incompatible with this build "
+				"(%d.%d.%d.%d)",
+				OPENH264_MAJOR, OPENH264_MINOR, OPENH264_REVISION,
+				OPENH264_RESERVED);
 		goto fail;
 	}
 
@@ -572,9 +610,9 @@ BOOL ogon_openh264_library_open(void) {
 	return TRUE;
 
 fail:
-	create_openh264_encoder = NULL;
-	destroy_open_h264_encoder = NULL;
-	get_openh264_version = NULL;
+	create_openh264_encoder = nullptr;
+	destroy_open_h264_encoder = nullptr;
+	get_openh264_version = nullptr;
 	ogon_openh264_library_close();
 	h264_init_success = FALSE;
 	return FALSE;
