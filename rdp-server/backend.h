@@ -34,6 +34,10 @@
 
 #include "eventloop.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef int(*backend_server_protocol_cb)(ogon_connection *conn, ogon_message *msg);
 
 /** @brief holds data related to the backend connection, the content provider */
@@ -106,5 +110,8 @@ BOOL ogon_backend_initialize(ogon_connection *conn, ogon_backend_connection *bac
  */
 void backend_destroy(ogon_backend_connection **backendP);
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _OGON_RDPSRV_BACKEND_H_ */

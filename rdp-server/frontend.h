@@ -25,6 +25,14 @@
 #ifndef _OGON_RDPSRV_FRONTEND_H_
 #define _OGON_RDPSRV_FRONTEND_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 void handle_wait_timer_state(ogon_connection *conn);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* _OGON_RDPSRV_FRONTEND_H_ */
