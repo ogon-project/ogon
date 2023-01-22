@@ -41,27 +41,27 @@
 
 static const char *wtsNotificationToString(int signal) {
 	switch (signal) {
-		case 0x1:
+		case WTS_CONSOLE_CONNECT:
 			return "WTS_CONSOLE_CONNECT";
-		case 0x2:
+		case WTS_CONSOLE_DISCONNECT:
 			return "WTS_CONSOLE_DISCONNECT";
-		case 0x3:
+		case WTS_REMOTE_CONNECT:
 			return "WTS_REMOTE_CONNECT";
-		case 0x4:
+		case WTS_REMOTE_DISCONNECT:
 			return "WTS_REMOTE_DISCONNECT";
-		case 0x5:
+		case WTS_SESSION_LOGON:
 			return "WTS_SESSION_LOGON";
-		case 0x6:
+		case WTS_SESSION_LOGOFF:
 			return "WTS_SESSION_LOGOFF";
-		case 0x7:
+		case WTS_SESSION_LOCK:
 			return "WTS_SESSION_LOCK";
-		case 0x8:
+		case WTS_SESSION_UNLOCK:
 			return "WTS_SESSION_UNLOCK";
-		case 0x9:
+		case WTS_SESSION_REMOTE_CONTROL:
 			return "WTS_SESSION_REMOTE_CONTROL";
-		case 0xA:
+		case WTS_SESSION_CREATE:
 			return "WTS_SESSION_CREATE";
-		case 0xB:
+		case WTS_SESSION_TERMINATE:
 			return "WTS_SESSION_TERMINATE";
 		default:
 			return "UNKNOW_MESSAGE";

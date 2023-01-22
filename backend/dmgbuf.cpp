@@ -122,8 +122,8 @@ int ogon_dmgbuf_get_id(void *handle) {
 
 UINT32 ogon_dmgbuf_get_fbsize(void *handle) {
 	if (OGON_DMGBUF_GOOD(handle)) {
-		int scanline = *OGON_DMGBUF_PTR_SCANLINE(handle);
-		int height = *OGON_DMGBUF_PTR_HEIGHT(handle);
+		auto scanline = *OGON_DMGBUF_PTR_SCANLINE(handle);
+		auto height = *OGON_DMGBUF_PTR_HEIGHT(handle);
 
 		return scanline * height;
 	}
@@ -145,7 +145,7 @@ RDP_RECT *ogon_dmgbuf_get_rects(void *handle, UINT32 *num_rects) {
 
 UINT32 ogon_dmgbuf_get_max_rects(void *handle) {
 	if (!OGON_DMGBUF_GOOD(handle)) {
-		return -1;
+		return 0;
 	}
 
 	return *OGON_DMGBUF_PTR_MAX_RECTS(handle);
@@ -168,7 +168,7 @@ int ogon_dmgbuf_set_num_rects(void *handle, UINT32 num_rects) {
 void *ogon_dmgbuf_new(int width, int height, int scanline) {
 	void *handle;
 	int shm_flag;
-	int shm_size = OGON_DMGBUF_MEM_SIZE(height, scanline);
+	auto shm_size = OGON_DMGBUF_MEM_SIZE(height, scanline);
 	int segment_id = -1;
 
 	if (width < 1 || height < 1 || scanline < width * 4) {

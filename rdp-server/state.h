@@ -68,7 +68,7 @@ typedef enum _ogon_event ogon_event;
 struct _ogon_state_machine;
 typedef struct _ogon_state_machine ogon_state_machine;
 
-ogon_state_machine *ogon_state_new();
+ogon_state_machine *ogon_state_new(void);
 void ogon_state_free(ogon_state_machine *stateMachine);
 void ogon_state_set_event(ogon_state_machine *stateMachine, ogon_event event);
 ogon_state ogon_state_get(ogon_state_machine *stateMachine);

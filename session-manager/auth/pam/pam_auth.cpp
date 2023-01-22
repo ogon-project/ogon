@@ -68,7 +68,6 @@ static void get_service_name(char* service_name)
 
 static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr)
 {
-	int i;
 	auto user_pass = static_cast<struct t_user_pass *>(appdata_ptr);
 
 	auto reply = static_cast<struct pam_response *>(
@@ -77,8 +76,7 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 		return (PAM_BUF_ERR);
 	}
 
-	for (i = 0; i < num_msg; i++)
-	{
+	for (int i = 0; i < num_msg; i++) {
 		/* make sure the values are initialized properly */
 		reply[i].resp_retcode = PAM_SUCCESS;
 
@@ -108,7 +106,7 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 	return PAM_SUCCESS;
 
 out_fail:
-	for (i = 0; i < num_msg; ++i) {
+	for (int i = 0; i < num_msg; ++i) {
 		if (reply[i].resp) {
 			memset(reply[i].resp, 0, strlen(reply[i].resp));
 			free(reply[i].resp);
