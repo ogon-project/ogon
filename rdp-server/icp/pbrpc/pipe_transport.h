@@ -21,12 +21,12 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICP_PIPETRANSPORT_H_
-#define _OGON_RDPSRV_ICP_PIPETRANSPORT_H_
+#ifndef OGON_RDPSRV_ICP_PIPETRANSPORT_H_
+#define OGON_RDPSRV_ICP_PIPETRANSPORT_H_
 
 #include "pbrpc.h"
 #include "pbrpc_transport.h"
 
 pbRPCTransportContext* tp_npipe_new();
 void tp_npipe_free(pbRPCTransportContext *context);
-#endif /* _OGON_RDPSRV_ICP_PIPETRANSPORT_H_ */
+#endif /* OGON_RDPSRV_ICP_PIPETRANSPORT_H_ */

@@ -1,5 +1,5 @@
-#ifndef _OGON_CONFIG_H_
-#define _OGON_CONFIG_H_
+#ifndef OGON_CONFIG_H
+#define OGON_CONFIG_H
 
 #define OGON_OPENH264_LIBRARY "${OGON_OPENH264_LIBRARY}"
 

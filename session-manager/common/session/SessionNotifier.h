@@ -21,9 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-
-#ifndef _OGON_SMGR_SESSION_SESSIONNOTIFIER_H_
-#define _OGON_SMGR_SESSION_SESSIONNOTIFIER_H_
+#ifndef OGON_SMGR_SESSION_SESSIONNOTIFIER_H_
+#define OGON_SMGR_SESSION_SESSIONNOTIFIER_H_
 
 #include "Connection.h"
 
@@ -67,4 +66,4 @@ class SessionNotifier {
 
 namespace sessionNS = ogon::sessionmanager::session;
 
-#endif /* _OGON_SMGR_SESSION_SESSIONNOTIFIER_H_ */
+#endif /* OGON_SMGR_SESSION_SESSIONNOTIFIER_H_ */

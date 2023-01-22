@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_SESSION_TASKCALLIN_H_
-#define _OGON_SMGR_SESSION_TASKCALLIN_H_
+#ifndef OGON_SMGR_SESSION_TASKCALLIN_H_
+#define OGON_SMGR_SESSION_TASKCALLIN_H_
 
 #include <task/Task.h>
 #include <call/CallIn.h>
@@ -46,4 +46,4 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 namespace callNS = ogon::sessionmanager::call;
 
-#endif /* _OGON_SMGR_SESSION_TASKCALLIN_H_ */
+#endif /* OGON_SMGR_SESSION_TASKCALLIN_H_ */

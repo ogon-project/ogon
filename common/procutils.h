@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_PROCUTILS_H_
-#define _OGON_PROCUTILS_H_
+#ifndef OGON_PROCUTILS_H_
+#define OGON_PROCUTILS_H_
 
 #include <sys/types.h>
 #include <winpr/wtypes.h>
@@ -39,4 +39,4 @@ char* get_process_name(const pid_t pid);
 };
 #endif /* __cplusplus */
 
-#endif /* _OGON_PROCUTILS_H_ */
+#endif /* OGON_PROCUTILS_H_ */

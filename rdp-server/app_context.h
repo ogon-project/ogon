@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_APPCONTEXT_H_
-#define _OGON_RDPSRV_APPCONTEXT_H_
+#ifndef OGON_RDPSRV_APPCONTEXT_H_
+#define OGON_RDPSRV_APPCONTEXT_H_
 
 #include <winpr/collections.h>
 
@@ -43,4 +43,4 @@ void app_context_remove_connection(long id);
 BOOL app_context_post_message_connection(long id, UINT32 type,void *wParam, void *lParam);
 BOOL app_context_stop_all_connections();
 
-#endif /* _OGON_RDPSRV_APPCONTEXT_H_ */
+#endif /* OGON_RDPSRV_APPCONTEXT_H_ */

@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_
-#define _OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_
+#ifndef OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_
+#define OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_
 
 #include <task/InformableTask.h>
 #include <session/SessionAccessor.h>
@@ -71,4 +71,4 @@ typedef std::shared_ptr<TaskStartRemoteControl> TaskStartRemoteControlPtr;
 
 namespace otsapiNS = ogon::sessionmanager::otsapi;
 
-#endif /* _OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_ */
+#endif /* OGON_SMGR_OTSAPI_TASKSTARTREMOTECONTROL_H_ */

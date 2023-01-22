@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICP_PBRPC_H_
-#define _OGON_RDPSRV_ICP_PBRPC_H_
+#ifndef OGON_RDPSRV_ICP_PBRPC_H_
+#define OGON_RDPSRV_ICP_PBRPC_H_
 
 #include <winpr/synch.h>
 #include <winpr/wtypes.h>
@@ -102,5 +102,4 @@ void pbrcp_call_method_async(pbRPCContext* context, UINT32 type, pbRPCPayload* r
 
 int pbrpc_respond_method(pbRPCContext* context, pbRPCPayload *response, UINT32 status, UINT32 type, UINT32 tag);
 
-
-#endif /* _OGON_RDPSRV_ICP_PBRPC_H_ */
+#endif /* OGON_RDPSRV_ICP_PBRPC_H_ */

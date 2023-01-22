@@ -25,8 +25,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SECURITY_H_
-#define _OGON_SECURITY_H_
+#ifndef OGON_SECURITY_H_
+#define OGON_SECURITY_H_
 
 #include <unistd.h>
 #include <winpr/wtypes.h>
@@ -51,4 +51,4 @@ BOOL ogon_socket_credentials(int fd, uid_t *uid, BOOL *haveUid, pid_t *pid, BOOL
 }
 #endif
 
-#endif /* _OGON_SECURITY_H_ */
+#endif /* OGON_SECURITY_H_ */

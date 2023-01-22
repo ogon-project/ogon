@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ENCODER_H_
-#define _OGON_RDPSRV_ENCODER_H_
+#ifndef OGON_RDPSRV_ENCODER_H_
+#define OGON_RDPSRV_ENCODER_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -128,4 +128,4 @@ BOOL ogon_bitmap_encoder_update_maxrequest_size(ogon_bitmap_encoder *encoder,
 
 void ogon_encoder_blank_client_view_area(ogon_bitmap_encoder *encoder, RECTANGLE_16 *r);
 
-#endif /* _OGON_RDPSRV_ENCODER_H_ */
+#endif /* OGON_RDPSRV_ENCODER_H_ */

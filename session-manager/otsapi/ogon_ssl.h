@@ -26,8 +26,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_OTSAPISSL_H_
-#define _OGON_SMGR_OTSAPISSL_H_
+#ifndef OGON_SMGR_OTSAPISSL_H_
+#define OGON_SMGR_OTSAPISSL_H_
 
 #include <memory>
 #include <thrift/transport/TSSLSocket.h>
@@ -136,4 +136,4 @@ public:
 
 } /*apache*/} /*thrift*/ } /*transport*/
 
-#endif /* _OGON_SMGR_OTSAPISSL_H_ */
+#endif /* OGON_SMGR_OTSAPISSL_H_ */

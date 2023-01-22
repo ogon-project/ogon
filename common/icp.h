@@ -26,8 +26,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_ICP_H_
-#define _OGON_ICP_H_
+#ifndef OGON_ICP_H_
+#define OGON_ICP_H_
 
 #include <winpr/synch.h>
 
@@ -39,4 +39,4 @@ BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor
 typedef void (*disconnected_callback)();
 void ogon_icp_set_disconnect_cb(disconnected_callback cb);
 
-#endif /* _OGON_ICP_H_ */
+#endif /* OGON_ICP_H_ */

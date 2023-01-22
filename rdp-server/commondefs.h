@@ -21,9 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-
-#ifndef _OGON_RDPSRV_COMMONDEFS_H_
-#define _OGON_RDPSRV_COMMONDEFS_H_
+#ifndef OGON_RDPSRV_COMMONDEFS_H_
+#define OGON_RDPSRV_COMMONDEFS_H_
 
 #include <winpr/wtypes.h>
 
@@ -78,4 +77,4 @@ typedef struct _ogon_connection ogon_connection;
 typedef struct _ogon_front_connection ogon_front_connection;
 typedef struct _ogon_backend_connection ogon_backend_connection;
 
-#endif /* _OGON_RDPSRV_COMMONDEFS_H_ */
+#endif /* OGON_RDPSRV_COMMONDEFS_H_ */

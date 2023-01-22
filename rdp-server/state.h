@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_STATE_H_
-#define _OGON_RDPSRV_STATE_H_
+#ifndef OGON_RDPSRV_STATE_H_
+#define OGON_RDPSRV_STATE_H_
 
 /* @brief states of the frame emitting automata
  */
@@ -75,4 +75,4 @@ ogon_state ogon_state_get(ogon_state_machine *stateMachine);
 void ogon_state_prepare_shadowing(ogon_state_machine *src, ogon_state_machine *dst);
 BOOL ogon_state_should_create_frame(ogon_state_machine *stateMachine);
 
-#endif /* _OGON_RDPSRV_STATE_H_ */
+#endif /* OGON_RDPSRV_STATE_H_ */

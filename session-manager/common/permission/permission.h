@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_PERMISSION_H_
-#define _OGON_SMGR_PERMISSION_H_
+#ifndef OGON_SMGR_PERMISSION_H_
+#define OGON_SMGR_PERMISSION_H_
 
 #define WTS_PERM_FLAGS_QUERY_INFORMATION        0x0001
 #define WTS_PERM_FLAGS_SET_INFORMATION          0x0002
@@ -38,4 +38,4 @@
 #define WTS_PERM_FLAGS_USER                     0x0049 /* WTS_PERM_FLAGS_CONNECT | WTS_PERM_FLAGS_QUERY_INFORMATION | WTS_PERM_FLAGS_LOGON */
 #define WTS_PERM_FLAGS_GUEST                    0x0008 /* WTS_PERM_FLAGS_LOGON */
 
-#endif /* _OGON_SMGR_PERMISSION_H_ */
+#endif /* OGON_SMGR_PERMISSION_H_ */

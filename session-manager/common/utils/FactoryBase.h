@@ -21,9 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_FACTORYBASE_H_
-#define _OGON_SMGR_FACTORYBASE_H_
-
+#ifndef OGON_SMGR_FACTORYBASE_H_
+#define OGON_SMGR_FACTORYBASE_H_
 
 /**
 * @file FactoryBase.h
@@ -311,4 +310,4 @@ protected:
 	std::map<UniqueIdType, createClassFunc> m_object_creator;
 };
 
-#endif /* _OGON_SMGR_FACTORYBASE_H_ */
+#endif /* OGON_SMGR_FACTORYBASE_H_ */

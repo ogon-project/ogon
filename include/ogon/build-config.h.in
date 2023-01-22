@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_BUILD_CONFIG_H_
-#define _OGON_BUILD_CONFIG_H_
+#ifndef OGON_BUILD_CONFIG_H
+#define OGON_BUILD_CONFIG_H
 
 /* Build related settings */
 #define OGON_BIN_PATH "${OGON_BIN_PATH}"
@@ -37,5 +37,5 @@
 #define OGON_MODULE_LIB_PATH "${OGON_MODULE_LIB_PATH}"
 #define OGON_AUTH_MODULE_LIB_PATH "${OGON_AUTH_MODULE_LIB_PATH}"
 
-#endif /* _OGON_BUILD_CONFIG_H_ */
+#endif /* OGON_BUILD_CONFIG_H */
 

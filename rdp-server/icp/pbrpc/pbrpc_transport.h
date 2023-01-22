@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
-#define _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
+#ifndef OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
+#define OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
 
 #include <winpr/wtypes.h>
 
@@ -43,4 +43,4 @@ struct pbrpc_transport_context
 	pTransport_get_fds get_fds;
 };
 
-#endif /* _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_ */
+#endif /* OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_ */

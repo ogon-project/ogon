@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_BACKEND_H_
-#define _OGON_BACKEND_H_
+#ifndef OGON_BACKEND_H_
+#define OGON_BACKEND_H_
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -326,5 +326,4 @@ OGON_API DWORD ogon_rdp_scancode_to_evdev_code(DWORD flags, DWORD scancode, DWOR
 }
 #endif
 
-
-#endif /* _OGON_BACKEND_H_ */
+#endif /* OGON_BACKEND_H_ */

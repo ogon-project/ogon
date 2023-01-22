@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_API_H_
-#define _OGON_API_H_
+#ifndef OGON_API_H_
+#define OGON_API_H_
 
 #if __GNUC__ >= 4
 	#define OGON_API __attribute__ ((visibility("default")))
@@ -31,4 +31,4 @@
 	#define OGON_API 
 #endif
 
-#endif /* _OGON_API_H_ */
+#endif /* OGON_API_H_ */

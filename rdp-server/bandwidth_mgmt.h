@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_BANDWIDTH_MGMT_H_
-#define _OGON_RDPSRV_BANDWIDTH_MGMT_H_
+#ifndef OGON_RDPSRV_BANDWIDTH_MGMT_H_
+#define OGON_RDPSRV_BANDWIDTH_MGMT_H_
 
 #include <freerdp/freerdp.h>
 #include "commondefs.h"
@@ -40,4 +40,4 @@ BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn);
 BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn);
 BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber);
 
-#endif /* _OGON_RDPSRV_BANDWIDTH_MGMT_H_ */
+#endif /* OGON_RDPSRV_BANDWIDTH_MGMT_H_ */

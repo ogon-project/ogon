@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_MODULE_H_
-#define _OGON_MODULE_H_
+#ifndef OGON_MODULE_H_
+#define OGON_MODULE_H_
 
 #include <winpr/wtypes.h>
 
@@ -107,4 +107,4 @@ struct rds_module_entry_points_v1
 
 typedef int (*pRdsModuleEntry)(RDS_MODULE_ENTRY_POINTS* pEntryPoints);
 
-#endif /* _OGON_MODULES_H_ */
+#endif /* OGON_MODULES_H_ */

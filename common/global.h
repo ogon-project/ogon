@@ -25,8 +25,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_GLOBAL_H_
-#define _OGON_GLOBAL_H_
+#ifndef OGON_GLOBAL_H_
+#define OGON_GLOBAL_H_
 
 #include <winpr/wlog.h>
 
@@ -34,5 +34,4 @@
 
 #define OGON_UNUSED(x) (void)(x)
 
-
-#endif /* _OGON_GLOBAL_H_ */
+#endif /* OGON_GLOBAL_H_ */

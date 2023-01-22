@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_BACK_FRONT_INTERNAL_H_
-#define _OGON_RDPSRV_BACK_FRONT_INTERNAL_H_
+#ifndef OGON_RDPSRV_BACK_FRONT_INTERNAL_H_
+#define OGON_RDPSRV_BACK_FRONT_INTERNAL_H_
 
 #include <freerdp/codec/region.h>
 #include <freerdp/utils/ringbuffer.h>
@@ -54,4 +54,4 @@ int ogon_backend_consume_damage(ogon_connection *conn);
 }
 #endif /* __cplusplus */
 
-#endif /* _OGON_RDPSRV_BACKEND_H_ */
+#endif /* OGON_RDPSRV_BACKEND_H_ */

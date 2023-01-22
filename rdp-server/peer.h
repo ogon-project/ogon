@@ -24,8 +24,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_PEER_H_
-#define _OGON_RDPSRV_PEER_H_
+#ifndef OGON_RDPSRV_PEER_H_
+#define OGON_RDPSRV_PEER_H_
 
 #include <winpr/collections.h>
 #include <winpr/synch.h>
@@ -199,5 +199,4 @@ BOOL initiate_immediate_request(ogon_connection *conn, ogon_front_connection *fr
 ogon_connection_runloop *ogon_runloop_new(freerdp_peer *peer);
 ogon_connection *ogon_connection_create(ogon_connection_runloop *runloop);
 
-
-#endif /* _OGON_RDPSRV_PEER_H_ */
+#endif /* OGON_RDPSRV_PEER_H_ */

@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_OPENH264_H_
-#define _OGON_RDPSRV_OPENH264_H_
+#ifndef OGON_RDPSRV_OPENH264_H_
+#define OGON_RDPSRV_OPENH264_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,4 +53,4 @@ ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight, 
 
 
 #endif /* WITH_OPENH264 defined   */
-#endif /* _OGON_RDPSRV_OPENH264_H_ */
+#endif /* OGON_RDPSRV_OPENH264_H_ */

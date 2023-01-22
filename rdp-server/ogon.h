@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_OGON_H_
-#define _OGON_RDPSRV_OGON_H_
+#ifndef OGON_RDPSRV_OGON_H_
+#define OGON_RDPSRV_OGON_H_
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -126,5 +126,4 @@ enum {
 	NOTIFY_USER_MESSAGE,
 };
 
-
-#endif /* _OGON_RDPSRV_OGON_H_ */
+#endif /* OGON_RDPSRV_OGON_H_ */

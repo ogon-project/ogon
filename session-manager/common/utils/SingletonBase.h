@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_SINGLETONBASE_H_
-#define _OGON_SMGR_SINGLETONBASE_H_
+#ifndef OGON_SMGR_SINGLETONBASE_H_
+#define OGON_SMGR_SINGLETONBASE_H_
 
 /**
 * @file	SingletonBase.h
@@ -148,4 +148,4 @@ Derived& SingletonBase<Derived>::instance() {
 	return _instance;
 }
 
-#endif /* _OGON_SMGR_SINGLETONBASE_H_ */
+#endif /* OGON_SMGR_SINGLETONBASE_H_ */

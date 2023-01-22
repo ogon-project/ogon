@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICP_PBRPCUTILS_H_
-#define _OGON_RDPSRV_ICP_PBRPCUTILS_H_
+#ifndef OGON_RDPSRV_ICP_PBRPCUTILS_H_
+#define OGON_RDPSRV_ICP_PBRPCUTILS_H_
 
 #include "pbRPC.pb-c.h"
 #include "pbrpc.h"
@@ -38,4 +38,4 @@ void pbrpc_prepare_error(Ogon__Pbrpc__RPCBase* msg, UINT32 tag, char* error);
 pbRPCPayload* pbrpc_payload_new();
 void pbrpc_free_payload(pbRPCPayload* response);
 
-#endif /* _OGON_RDPSRV_ICP_PBRPCUTILS_H_ */
+#endif /* OGON_RDPSRV_ICP_PBRPCUTILS_H_ */

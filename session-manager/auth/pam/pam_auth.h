@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-#ifndef _OGON_SMGR_AUTH_PAM_H_
-#define _OGON_SMGR_AUTH_PAM_H_
+#ifndef OGON_SMGR_AUTH_PAM_H_
+#define OGON_SMGR_AUTH_PAM_H_
 
 #include "../../auth.h"
 
@@ -39,4 +39,4 @@ int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS* pEntryPoints);
 }
 #endif
 
-#endif /* _OGON_SMGR_AUTH_PAM_H_ */
+#endif /* OGON_SMGR_AUTH_PAM_H_ */

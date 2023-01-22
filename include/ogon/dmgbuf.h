@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_DMGBUF_H_
-#define _OGON_DMGBUF_H_
+#ifndef OGON_DMGBUF_H_
+#define OGON_DMGBUF_H_
 
 #include <freerdp/types.h>
 #include <ogon/api.h>
@@ -108,4 +108,4 @@ OGON_API void* ogon_dmgbuf_connect(int buffer_id);
 }
 #endif
 
-#endif /* _OGON_DMGBUF_H_ */
+#endif /* OGON_DMGBUF_H_ */

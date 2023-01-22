@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_PROCESSMONITOR_H_
-#define _OGON_SMGR_PROCESSMONITOR_H_
+#ifndef OGON_SMGR_PROCESSMONITOR_H_
+#define OGON_SMGR_PROCESSMONITOR_H_
 
 #include <ogon/module.h>
 #include <winpr/wtypes.h>
@@ -75,4 +75,4 @@ namespace ogon { namespace sessionmanager { namespace process {
 
 namespace processNS = ogon::sessionmanager::process;
 
-#endif /* _OGON_SMGR_PROCESSMONITOR_H_ */
+#endif /* OGON_SMGR_PROCESSMONITOR_H_ */

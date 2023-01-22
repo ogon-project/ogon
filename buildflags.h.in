@@ -1,5 +1,5 @@
-#ifndef _OGON_BUILD_FLAGS_H_
-#define _OGON_BUILD_FLAGS_H_
+#ifndef OGON_BUILD_FLAGS_H
+#define OGON_BUILD_FLAGS_H
 
 #define CFLAGS "${CMAKE_C_FLAGS}"
 #define COMPILER_ID "${CMAKE_C_COMPILER_ID}"
@@ -7,4 +7,4 @@
 #define BUILD_CONFIG "${OGON_BUILD_CONFIG}"
 #define BUILD_TYPE "${CMAKE_BUILD_TYPE}"
 
-#endif /*_OGON_BUILD_FLAGS_H_ */
+#endif /* OGON_BUILD_FLAGS_H */
