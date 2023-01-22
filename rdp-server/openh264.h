@@ -45,8 +45,9 @@ typedef enum _ogon_openh264_compress_mode {
 BOOL ogon_openh264_library_open(void);
 void ogon_openh264_library_close(void);
 BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
-                            UINT32 targetFrameSizeInBits, BYTE *data, BYTE **ppDstData,
-                            UINT32 *pDstSize, ogon_openh264_compress_mode avcMode, BOOL *pOptimizable);
+		UINT32 targetFrameSizeInBits, const BYTE *data, BYTE **ppDstData,
+		UINT32 *pDstSize, ogon_openh264_compress_mode avcMode,
+		BOOL *pOptimizable);
 void ogon_openh264_context_free(ogon_h264_context *h264);
 ogon_h264_context *ogon_openh264_context_new(UINT32 scrWidth, UINT32 scrHeight, UINT32 scrStride);
 

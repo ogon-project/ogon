@@ -344,8 +344,9 @@ int ogon_resize_frontend(
 }
 
 static int ogon_server_framebuffer_info(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_framebuffer_info *msg = (ogon_msg_framebuffer_info *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_framebuffer_info *msg =
+			(const ogon_msg_framebuffer_info *)rawmsg;
 	ogon_backend_connection *backend = connection->backend;
 	ogon_screen_infos *screenInfos = &backend->screenInfos;
 	BOOL newSize;
@@ -593,7 +594,8 @@ static BOOL ogon_new_pointer_to_mono_color_pointer(
 	return TRUE;
 }
 
-void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_pointer *msg) {
+void ogon_connection_set_pointer(
+		ogon_connection *connection, const ogon_msg_set_pointer *msg) {
 	POINTER_CACHED_UPDATE pointerCached = { 0 };
 	POINTER_NEW_UPDATE pointerNew = { 0 };
 	POINTER_COLOR_UPDATE* pointerColor = &(pointerNew.colorPtrAttr);
@@ -662,8 +664,8 @@ void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_point
 }
 
 static int ogon_server_set_pointer(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_set_pointer *msg = (ogon_msg_set_pointer *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_set_pointer *msg = (const ogon_msg_set_pointer *)rawmsg;
 	ogon_backend_connection *backend = connection->backend;
 	ogon_msg_set_pointer *last = &backend->lastSetPointer;
 	BYTE *newAlloc;
@@ -749,8 +751,9 @@ static int ogon_server_set_pointer(
 }
 
 static int ogon_server_set_system_pointer(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_set_system_pointer *msg = (ogon_msg_set_system_pointer *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_set_system_pointer *msg =
+			(const ogon_msg_set_system_pointer *)rawmsg;
 	ogon_backend_connection *backend = connection->backend;
 
 	backend->lastSetSystemPointer = msg->ptrType;
@@ -782,8 +785,9 @@ static int ogon_server_set_system_pointer(
 	return 0;
 }
 
-static int ogon_server_beep(ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_beep *msg = (ogon_msg_beep *)rawmsg;
+static int ogon_server_beep(
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_beep *msg = (const ogon_msg_beep *)rawmsg;
 	ogon_backend_connection *backend = connection->backend;
 
 	if (!backend->active) {
@@ -881,8 +885,8 @@ cleanup_exit:
 }
 
 static int ogon_server_sbp_request(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_sbp_request *msg = (ogon_msg_sbp_request *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_sbp_request *msg = (const ogon_msg_sbp_request *)rawmsg;
 	sbp_context *sbpContext;
 	pbRPCContext *pbContext;
 	pbRPCPayload payload;
@@ -906,9 +910,9 @@ static int ogon_server_sbp_request(
 }
 
 static int ogon_server_framebuffer_sync_reply(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_framebuffer_sync_reply *msg =
-			(ogon_msg_framebuffer_sync_reply *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_framebuffer_sync_reply *msg =
+			(const ogon_msg_framebuffer_sync_reply *)rawmsg;
 	ogon_backend_connection *backend = connection->shadowing->backend;
 
 	if (!connection->backend->active) {
@@ -925,8 +929,8 @@ static int ogon_server_framebuffer_sync_reply(
 }
 
 static int ogon_server_message_reply(
-		ogon_connection *connection, ogon_message *rawmsg) {
-	ogon_msg_message_reply *msg = (ogon_msg_message_reply *)rawmsg;
+		ogon_connection *connection, const ogon_message *rawmsg) {
+	const ogon_msg_message_reply *msg = (const ogon_msg_message_reply *)rawmsg;
 	int error = 0;
 	message_answer *answer_helper;
 	ogon_backend_connection *backend = connection->backend;
@@ -1162,7 +1166,7 @@ ogon_backend_connection *backend_new(ogon_connection *conn, ogon_backend_props *
 	client->SeatRemoved = backend_seat_removed;
 	client->Message = backend_message;
 
-	ret->server = &serverCallbacks[0];
+	ret->server = serverCallbacks;
 
 	ret->writeReady = TRUE;
 	ret->stateWaitingHeader = TRUE;

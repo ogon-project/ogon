@@ -38,7 +38,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef int(*backend_server_protocol_cb)(ogon_connection *conn, ogon_message *msg);
+typedef int (*backend_server_protocol_cb)(
+		ogon_connection *conn, const ogon_message *msg);
 
 /** @brief holds data related to the backend connection, the content provider */
 struct _ogon_backend_connection {
@@ -72,7 +73,7 @@ struct _ogon_backend_connection {
 	UINT32 next_message_id;
 
 	ogon_client_interface client;
-	backend_server_protocol_cb *server;
+	const backend_server_protocol_cb *server;
 	ogon_backend_props properties;
 	BOOL version_exchanged;
 	BOOL multiseatCapable;

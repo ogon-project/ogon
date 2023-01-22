@@ -262,7 +262,7 @@ static int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 	wStream *s;
 	UINT32 i;
 	RFX_MESSAGE *message;
-	BYTE *buf;
+	const BYTE *buf;
 	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
 	RFX_RECT r;
 	ogon_backend_connection *backend = conn->backend;
@@ -1025,10 +1025,9 @@ static int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 
 	s = encoder->stream;
 
-	if (!(message = rfx_encode_message(encoder->rfx_context,
-		(RFX_RECT*)rects, numRects, data, settings->DesktopWidth,
-		settings->DesktopHeight, encoder->scanLine)))
-	{
+	if (!(message = rfx_encode_message(encoder->rfx_context, rects, numRects,
+				  data, settings->DesktopWidth, settings->DesktopHeight,
+				  encoder->scanLine))) {
 		WLog_ERR(TAG, "failed to encode rfx message (numRects = %"PRIu32")", numRects);
 		return 0;
 	}
@@ -1082,7 +1081,7 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 	BITMAP_UPDATE bitmapUpdate = { 0 };
 	const RDP_RECT *pr;
 	RDP_RECT r;
-	BYTE *src;
+	const BYTE *src;
 	int w, h, mod, e, sp;
 	BITMAP_DATA *bitmapData;
 	void *tmp;

@@ -145,11 +145,10 @@ fail:
 }
 #endif /* WITH_ENCODER_STATS */
 
-
 BOOL ogon_openh264_compress(ogon_h264_context *h264, UINT32 newFrameRate,
-	UINT32 targetFrameSizeInBits, BYTE *data, BYTE **ppDstData,
-	UINT32 *pDstSize, ogon_openh264_compress_mode avcMode, BOOL *pOptimizable)
-{
+		UINT32 targetFrameSizeInBits, const BYTE *data, BYTE **ppDstData,
+		UINT32 *pDstSize, ogon_openh264_compress_mode avcMode,
+		BOOL *pOptimizable) {
 	SFrameBSInfo info;
 	SSourcePicture *sourcePicture = NULL;
 	prim_size_t screenSize;

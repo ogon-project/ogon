@@ -41,7 +41,8 @@
 
 int ogon_send_surface_bits(ogon_connection *conn);
 
-void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_pointer* msg);
+void ogon_connection_set_pointer(
+		ogon_connection *connection, const ogon_msg_set_pointer *msg);
 
 void ogon_connection_clear_pointer_cache(ogon_connection *connection);
 
