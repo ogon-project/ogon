@@ -37,11 +37,16 @@ BOOL ogon_bwmgmt_update_data_usage(ogon_connection *conn);
 UINT32 ogon_bwmgtm_calc_max_target_frame_size(ogon_connection *conn);
 
 BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn);
-BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenceNumber);
+
+BOOL ogon_bwmgmt_client_rtt_measure_response(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber);
 
 BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn);
 BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn);
-BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber);
+
+BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 responseType,
+		UINT16 sequenceNumber);
 
 #ifdef __cplusplus
 }

@@ -251,9 +251,10 @@ BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn) {
 	return TRUE;
 }
 
-BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenceNumber) {
+BOOL ogon_bwmgmt_client_rtt_measure_response(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber) {
 	OGON_UNUSED(sequenceNumber);
-	ogon_connection *connection = (ogon_connection*) context;
+	ogon_connection *connection = (ogon_connection *)autodetect->context;
 	ogon_front_connection *frontend = &connection->front;
 	freerdp_peer *peer = connection->context.peer;
 	ogon_bandwidth_mgmt *bwmgmt = &connection->front.bandwidthMgmt;
@@ -297,13 +298,15 @@ static UINT32 ogon_bwmgmt_client_bandwidth_meassure_average(
 	return totaltimedelta ? totalBitrates / totaltimedelta : 0;
 }
 
-BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber) {
+BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 responseType,
+		UINT16 sequenceNumber) {
 	OGON_UNUSED(sequenceNumber);
-	ogon_connection *connection = (ogon_connection*) context;
+	ogon_connection *connection = (ogon_connection *)autodetect->context;
 	ogon_bandwidth_mgmt *bwmgmt = &connection->front.bandwidthMgmt;
 	UINT32 average_bit_rate;
-	UINT32 byte_count = context->autodetect->bandwidthMeasureByteCount;
-	UINT32 time_delta = context->autodetect->bandwidthMeasureTimeDelta;
+	UINT32 byte_count = autodetect->bandwidthMeasureByteCount;
+	UINT32 time_delta = autodetect->bandwidthMeasureTimeDelta;
 
 	if (byte_count < MIN_DATA_SIZE) {
 		return TRUE;
@@ -372,12 +375,11 @@ BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 se
 	if (average_bit_rate) {
 		bwmgmt->autodetect_bitRateKBit = average_bit_rate;
 	} else {
-		bwmgmt->autodetect_bitRateKBit = context->autodetect->netCharBandwidth;
+		bwmgmt->autodetect_bitRateKBit = autodetect->netCharBandwidth;
 	}
 
 	return TRUE;
 }
-
 
 BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn) {
 	freerdp_peer *peer = conn->context.peer;

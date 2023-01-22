@@ -19,7 +19,7 @@ set(${MODULE_PREFIX}_SRCS
 	eventloop.h
 	ogon.c
 	ogon.h
-	frontend.c
+	frontend.cpp
 	graphics.c
 	peer.c
 	peer.h
