@@ -33,7 +33,7 @@ static void periodicTimerCb(void *data) {
 	*counter += 1;
 }
 
-extern "C" int TestOgonTimer(int argc, char *argv[]) {
+int TestOgonTimer(int argc, char *argv[]) {
 	OGON_UNUSED(argc);
 	OGON_UNUSED(argv);
 	ogon_event_loop *loop;

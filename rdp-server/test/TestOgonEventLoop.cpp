@@ -82,13 +82,13 @@ static int handle_pipe_connection(int mask, int fd, HANDLE handle, void *data) {
 
 	if ((mask & OGON_EVENTLOOP_READ) == 0) return -1;
 
-	if (!ConnectNamedPipe(context->listenHandle, NULL) &&
+	if (!ConnectNamedPipe(context->listenHandle, nullptr) &&
 			(GetLastError() != ERROR_PIPE_CONNECTED))
 		return -1;
 
 	dwPipeMode = PIPE_NOWAIT;
 	newHandle = context->listenHandle;
-	SetNamedPipeHandleState(newHandle, &dwPipeMode, NULL, NULL);
+	SetNamedPipeHandleState(newHandle, &dwPipeMode, nullptr, nullptr);
 
 	return context->clientFactory(context, newHandle);
 }
@@ -103,7 +103,7 @@ int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data) {
 
 	if (!(mask & OGON_EVENTLOOP_READ)) return 0;
 
-	if (!ReadFile(handle, buffer, sizeof(buffer), &readBytes, NULL) ||
+	if (!ReadFile(handle, buffer, sizeof(buffer), &readBytes, nullptr) ||
 			!readBytes) {
 		if (GetLastError() == ERROR_NO_DATA) return 0;
 
@@ -148,7 +148,7 @@ int client1_factory(pipe_server_context *serverContext, HANDLE handle) {
 #define CLIENT1_BYTES (10 * 1000)
 #define CLIENT1_WRITE_LIMIT 300
 
-static void *client1_thread(void *arg) {
+static DWORD WINAPI client1_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	HANDLE clientHandle;
 	DWORD written, toWrite;
@@ -162,7 +162,7 @@ static void *client1_thread(void *arg) {
 	for (i = 0; i < CLIENT1_BYTES; i++) sendPtr[i] = (char)i;
 
 	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+			0, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (clientHandle == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "%s: unable to connect on the named pipe\n",
 				__FUNCTION__);
@@ -176,7 +176,7 @@ static void *client1_thread(void *arg) {
 		if (!WriteFile(clientHandle, sendPtr,
 					(toWrite > CLIENT1_WRITE_LIMIT) ? CLIENT1_WRITE_LIMIT
 													: toWrite,
-					&written, NULL)) {
+					&written, nullptr)) {
 			fprintf(stderr, "error writing");
 			break;
 		}
@@ -199,7 +199,7 @@ static void *client1_thread(void *arg) {
 
 #define PINPONG_LOOPS 10
 
-static void *pingpong_thread(void *arg) {
+static DWORD WINAPI pingpong_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	int i;
 
@@ -257,7 +257,7 @@ static int handle_big_writer(int mask, int fd, HANDLE handle, void *data) {
 		if (context->writtenBytes + toWrite > SLOW_READER_BYTES)
 			toWrite = SLOW_READER_BYTES - context->writtenBytes;
 
-		if (!WriteFile(handle, inBuffer, toWrite, &written, NULL)) {
+		if (!WriteFile(handle, inBuffer, toWrite, &written, nullptr)) {
 			break;
 		}
 
@@ -300,14 +300,14 @@ int big_writer_factory(pipe_server_context *context, HANDLE handle) {
 	return 0;
 }
 
-static void *slow_reader_thread(void *arg) {
+static DWORD WINAPI slow_reader_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	HANDLE clientHandle;
 	DWORD readBytes, totalRead;
 	char buffer[200];
 
 	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+			0, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (clientHandle == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "%s: unable to connect on the named pipe\n",
 				__FUNCTION__);
@@ -316,7 +316,8 @@ static void *slow_reader_thread(void *arg) {
 
 	totalRead = 0;
 	while (totalRead != SLOW_READER_BYTES) {
-		if (!ReadFile(clientHandle, buffer, sizeof(buffer), &readBytes, NULL) &&
+		if (!ReadFile(clientHandle, buffer, sizeof(buffer), &readBytes,
+					nullptr) &&
 				GetLastError() != ERROR_NO_DATA)
 			break;
 
@@ -332,7 +333,7 @@ static void *slow_reader_thread(void *arg) {
 	return 0;
 }
 
-extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
+int TestOgonEventLoop(int argc, char *argv[]) {
 	ogon_event_source *source;
 	pipe_server_context context;
 	char *filename;
@@ -350,7 +351,7 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 
 	context.listenHandle = CreateNamedPipeA(LISTEN_PIPE_NAME,
 			PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-			PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
+			PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, nullptr);
 	if (context.listenHandle == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "unable to create listening pipe\n");
 		return -1;
@@ -359,7 +360,7 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 	context.evloop = eventloop_create();
 	if (!context.evloop) return -1;
 
-	context.finishClient = CreateEventA(NULL, TRUE, FALSE, NULL);
+	context.finishClient = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!context.finishClient) {
 		fprintf(stderr, "unable to create finishClien1 event\n");
 		return -1;
@@ -374,8 +375,8 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 		return -1;
 	}
 
-	clientThread = CreateThread(
-			NULL, 0, (LPTHREAD_START_ROUTINE)client1_thread, &context, 0, NULL);
+	clientThread =
+			CreateThread(nullptr, 0, client1_thread, &context, 0, nullptr);
 	if (!clientThread) {
 		fprintf(stderr, "unable to start client thread\n");
 		return -1;
@@ -487,12 +488,12 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 	 * We do some pingpong between the client thread and the notifications.
 	 */
 	fprintf(stderr, "%d: testing an Event in the event loop\n", ++testNo);
-	context.pingPong1 = CreateEventA(NULL, TRUE, FALSE, NULL);
+	context.pingPong1 = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!context.pingPong1) {
 		fprintf(stderr, "unable to create pingPong1 event\n");
 		return -1;
 	}
-	context.pingPong2 = CreateEventA(NULL, TRUE, FALSE, NULL);
+	context.pingPong2 = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!context.pingPong2) {
 		CloseHandle(context.pingPong1);
 		fprintf(stderr, "unable to create pingPong2 event\n");
@@ -506,8 +507,8 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 		return -1;
 	}
 
-	clientThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE)pingpong_thread, &context, 0, NULL);
+	clientThread =
+			CreateThread(nullptr, 0, pingpong_thread, &context, 0, nullptr);
 	if (!clientThread) {
 		fprintf(stderr, "unable to start pingpong thread\n");
 		return -1;
@@ -532,8 +533,8 @@ extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 
 	context.clientFactory = big_writer_factory;
 
-	clientThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE)slow_reader_thread, &context, 0, NULL);
+	clientThread =
+			CreateThread(nullptr, 0, slow_reader_thread, &context, 0, nullptr);
 	if (!clientThread) {
 		fprintf(stderr, "unable to start slow reader thread\n");
 		return -1;

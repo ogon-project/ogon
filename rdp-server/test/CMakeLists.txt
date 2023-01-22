@@ -2,7 +2,7 @@
 set(MODULE_NAME "TestOgonCore")
 set(MODULE_PREFIX "TEST_OGON_CORE")
 
-set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
+set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.cpp)
 
 set(${MODULE_PREFIX}_TESTS
 	TestOgonEventLoop.cpp
