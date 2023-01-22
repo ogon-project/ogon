@@ -34,7 +34,8 @@ typedef struct pbrpc_transport_context pbRPCTransportContext;
 
 typedef int (*pTransport_open)(pbRPCTransportContext* context, int timeout);
 typedef int (*pTransport_close)(pbRPCTransportContext* context);
-typedef int (*pTransport_write)(pbRPCTransportContext* context, char* data, unsigned int datalen);
+typedef int (*pTransport_write)(
+		pbRPCTransportContext *context, const char *data, unsigned int datalen);
 typedef int (*pTransport_read)(pbRPCTransportContext* context, char* data, unsigned int datalen);
 typedef HANDLE (*pTransport_get_fds)(pbRPCTransportContext* context);
 

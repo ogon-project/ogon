@@ -63,8 +63,8 @@ static int tp_npipe_close(pbRPCTransportContext *context) {
 	return 0;
 }
 
-static int tp_npipe_write(
-		pbRPCTransportContext *context, char *data, unsigned int datalen) {
+static int tp_npipe_write(pbRPCTransportContext *context, const char *data,
+		unsigned int datalen) {
 	DWORD bytesWritten;
 	BOOL fSuccess = FALSE;
 	NpTransportContext *np = (NpTransportContext *)context;
