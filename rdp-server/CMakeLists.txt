@@ -17,7 +17,7 @@ set(${MODULE_PREFIX}_SRCS
 	encoder.h
 	eventloop.c
 	eventloop.h
-	ogon.c
+	ogon.cpp
 	ogon.h
 	frontend.cpp
 	graphics.c
