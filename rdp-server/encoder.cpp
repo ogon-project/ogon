@@ -35,11 +35,9 @@
 
 #include "encoder.h"
 
-
 #define TAG OGON_TAG("core.encoder")
 
 #define OGON_ENCODER_MIN_MULTIFRAG_REQUEST_SIZE 1024
-
 
 static void ogon_delete_encoder_bmp_context(ogon_bitmap_encoder *e) {
 	ogon_bmp_context *ctx;
@@ -53,14 +51,13 @@ static void ogon_delete_encoder_bmp_context(ogon_bitmap_encoder *e) {
 	Stream_Free(ctx->bts, TRUE);
 	winpr_aligned_free(ctx->imageCopyBuffer);
 	free(ctx->rects);
-	free(ctx);
+	delete (ctx);
 
-	e->bmpContext = NULL;
+	e->bmpContext = nullptr;
 }
 
-
 static BOOL ogon_create_encoder_bmp_context(ogon_bitmap_encoder *encoder) {
-	ogon_bmp_context *ctx = NULL;
+	ogon_bmp_context *ctx = nullptr;
 	UINT32 bufferSize;
 	UINT32 maxBitmapSize;
 
@@ -68,31 +65,34 @@ static BOOL ogon_create_encoder_bmp_context(ogon_bitmap_encoder *encoder) {
 		return FALSE;
 	}
 
-	if (!(ctx = calloc(1, sizeof(ogon_bmp_context)))) {
+	if (!(ctx = new (ogon_bmp_context))) {
 		goto fail;
 	}
 	encoder->bmpContext = ctx;
 
 	if (!(ctx->planar = freerdp_bitmap_planar_context_new(
-		PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE, 64, 64)))
-	{
+				  PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE, 64,
+				  64))) {
 		goto fail;
 	}
 
-	maxBitmapSize = 64 * 64 * encoder->dstBytesPerPixel + 3; /* 3 == RLE header */
+	maxBitmapSize =
+			64 * 64 * encoder->dstBytesPerPixel + 3; /* 3 == RLE header */
 
-	if (!(ctx->imageCopyBuffer = winpr_aligned_malloc(maxBitmapSize, 16))) {
+	if (!(ctx->imageCopyBuffer = static_cast<BYTE *>(
+				  winpr_aligned_malloc(maxBitmapSize, 16)))) {
 		goto fail;
 	}
 
-	bufferSize = encoder->desktopWidth * encoder->desktopHeight * encoder->dstBytesPerPixel;
+	bufferSize = encoder->desktopWidth * encoder->desktopHeight *
+				 encoder->dstBytesPerPixel;
 	bufferSize += bufferSize / 10;
 
-	if (!(ctx->bs = Stream_New(NULL, bufferSize))) {
+	if (!(ctx->bs = Stream_New(nullptr, bufferSize))) {
 		goto fail;
 	}
 
-	if (!(ctx->bts = Stream_New(NULL, maxBitmapSize))) {
+	if (!(ctx->bts = Stream_New(nullptr, maxBitmapSize))) {
 		goto fail;
 	}
 
@@ -106,24 +106,33 @@ fail:
 #ifdef WITH_ENCODER_STATS
 static void ogon_print_encoder_stopwatchxx(STOPWATCH *sw, const char *title) {
 	double s = stopwatch_get_elapsed_time_in_seconds(sw);
-	double avg = sw->count == 0 ? 0 : s/sw->count;
-	WLog_DBG(TAG, "%-20s | %10u | %10.4fs | %8.6fs | %6.0f",
-			 title, sw->count, s, avg, sw->count/s);
+	double avg = sw->count == 0 ? 0 : s / sw->count;
+	WLog_DBG(TAG, "%-20s | %10u | %10.4fs | %8.6fs | %6.0f", title, sw->count,
+			s, avg, sw->count / s);
 }
 
 static void ogon_print_encoder_stopwatches(ogon_bitmap_encoder *e) {
-	WLog_DBG(TAG, "------------------------------------------------------------+-------");
-	WLog_DBG(TAG, "STOPWATCH            |      COUNT |       TOTAL |       AVG |    IPS");
-	WLog_DBG(TAG, "---------------------+------------+-------------+-----------+-------");
+	WLog_DBG(TAG,
+			"------------------------------------------------------------+-----"
+			"--");
+	WLog_DBG(TAG,
+			"STOPWATCH            |      COUNT |       TOTAL |       AVG |    "
+			"IPS");
+	WLog_DBG(TAG,
+			"---------------------+------------+-------------+-----------+-----"
+			"--");
 	ogon_print_encoder_stopwatchxx(e->swSendSurfaceBits, "sendSurfaceBits");
 	ogon_print_encoder_stopwatchxx(e->swSimplifyDamage, "simplifyDamage");
 	ogon_print_encoder_stopwatchxx(e->swSendGraphicsBits, "sendGraphicsBits");
-	ogon_print_encoder_stopwatchxx(e->swFramebufferCompare, "framebufferCompare");
+	ogon_print_encoder_stopwatchxx(
+			e->swFramebufferCompare, "framebufferCompare");
 	ogon_print_encoder_stopwatchxx(e->swSendBitmapUpdate, "sendBitmapUpdate");
 	ogon_print_encoder_stopwatchxx(e->swBitmapCompress, "bitmapCompress");
 	ogon_print_encoder_stopwatchxx(e->swH264Compress, "h264Compress");
 	ogon_print_encoder_stopwatchxx(e->swImageCopy, "imageCopy");
-	WLog_DBG(TAG, "------------------------------------------------------------+-------");
+	WLog_DBG(TAG,
+			"------------------------------------------------------------+-----"
+			"--");
 }
 
 static void ogon_delete_encoder_stopwatches(ogon_bitmap_encoder *e) {
@@ -192,13 +201,13 @@ fail:
 }
 #endif /* WITH_ENCODER_STATS */
 
-ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight,
-	int bitsPerPixel, int bytesPerPixel, int scanLine, int dstBitsPerPixel,
-	unsigned int multifragMaxRequestSize)
-{
+ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth,
+		int desktopHeight, int bitsPerPixel, int bytesPerPixel, int scanLine,
+		int dstBitsPerPixel, unsigned int multifragMaxRequestSize) {
 	ogon_bitmap_encoder *encoder;
 
-	if ((desktopWidth < 1) || (desktopHeight < 1) || (scanLine < desktopWidth * bytesPerPixel)) {
+	if ((desktopWidth < 1) || (desktopHeight < 1) ||
+			(scanLine < desktopWidth * bytesPerPixel)) {
 		WLog_ERR(TAG, "invalid encoder parameters");
 		goto out;
 	}
@@ -209,7 +218,8 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	}
 
 	if (multifragMaxRequestSize < OGON_ENCODER_MIN_MULTIFRAG_REQUEST_SIZE) {
-		WLog_ERR(TAG, "error, multifragMaxRequestSize %u is too low", multifragMaxRequestSize);
+		WLog_ERR(TAG, "error, multifragMaxRequestSize %u is too low",
+				multifragMaxRequestSize);
 		goto out;
 	}
 
@@ -240,7 +250,8 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 			break;
 #endif
 		default:
-			WLog_ERR(TAG, "error, unsupported client color depth: %d", dstBitsPerPixel);
+			WLog_ERR(TAG, "error, unsupported client color depth: %d",
+					dstBitsPerPixel);
 			goto fail;
 	}
 
@@ -260,9 +271,9 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 		goto fail;
 	}
 
-	ogon_encoder_blank_client_view_area(encoder, NULL);
+	ogon_encoder_blank_client_view_area(encoder, nullptr);
 
-	if (!(encoder->stream = Stream_New(NULL, 4096))) {
+	if (!(encoder->stream = Stream_New(nullptr, 4096))) {
 		goto fail;
 	}
 
@@ -282,16 +293,18 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	} else if (encoder->bytesPerPixel == 3) {
 		rfx_context_set_pixel_format(encoder->rfx_context, PIXEL_FORMAT_BGR24);
 	} else {
-		WLog_ERR(TAG, "don't know how to handle bytesPerPixel=%"PRIu32"", encoder->bytesPerPixel);
+		WLog_ERR(TAG, "don't know how to handle bytesPerPixel=%" PRIu32 "",
+				encoder->bytesPerPixel);
 	}
 
 	if (!(encoder->debug_context = freerdp_bitmap_planar_context_new(
-		PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE, desktopWidth, 8)))
-	{
+				  PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE,
+				  desktopWidth, 8))) {
 		goto fail;
 	}
 
-	if (!(encoder->debug_buffer = calloc(desktopWidth * 8, 4))) {
+	if (!(encoder->debug_buffer =
+						static_cast<BYTE *>(calloc(desktopWidth * 8, 4)))) {
 		goto fail;
 	}
 
@@ -305,9 +318,9 @@ ogon_bitmap_encoder *ogon_bitmap_encoder_new(int desktopWidth, int desktopHeight
 	}
 #endif
 #ifdef WITH_OPENH264
-	if (!(encoder->h264_context = ogon_openh264_context_new(
-		encoder->desktopWidth, encoder->desktopHeight, encoder->scanLine)))
-	{
+	if (!(encoder->h264_context =
+						ogon_openh264_context_new(encoder->desktopWidth,
+								encoder->desktopHeight, encoder->scanLine))) {
 		WLog_DBG(TAG, "failed to initialize the OpenH264 encoder");
 		/* don't fail, the codec library might not be installed */
 	}
@@ -325,7 +338,7 @@ fail:
 	ogon_bitmap_encoder_free(encoder);
 out:
 	WLog_ERR(TAG, "encoder creation failed");
-	return NULL;
+	return nullptr;
 }
 
 void ogon_bitmap_encoder_free(ogon_bitmap_encoder *encoder) {
@@ -360,9 +373,8 @@ void ogon_bitmap_encoder_free(ogon_bitmap_encoder *encoder) {
 	free(encoder);
 }
 
-BOOL ogon_bitmap_encoder_update_maxrequest_size(ogon_bitmap_encoder *encoder,
-	unsigned int multifragMaxRequestSize)
-{
+BOOL ogon_bitmap_encoder_update_maxrequest_size(
+		ogon_bitmap_encoder *encoder, unsigned int multifragMaxRequestSize) {
 	if (!encoder) {
 		return FALSE;
 	}
@@ -376,22 +388,23 @@ BOOL ogon_bitmap_encoder_update_maxrequest_size(ogon_bitmap_encoder *encoder,
 	return TRUE;
 }
 
-void ogon_encoder_blank_client_view_area(ogon_bitmap_encoder *encoder,
-	RECTANGLE_16 *r)
-{
-	BYTE *dst = NULL;
+void ogon_encoder_blank_client_view_area(
+		ogon_bitmap_encoder *encoder, RECTANGLE_16 *r) {
+	BYTE *dst = nullptr;
 	int i;
 
 	/**
-	 * Set the requested rectangle of the encoder client view to 1 so that the alpha
-	 * channel will be set: In the backend the pixels' alpha values are most likely
-	 * set to 0x00 or 0xFF. This prevents the damage region simplification from
-	 * optimizing out this region for cases where we must assume that the client
-	 * view buffer is not in sync with the rdp client's view.
+	 * Set the requested rectangle of the encoder client view to 1 so that the
+	 * alpha channel will be set: In the backend the pixels' alpha values are
+	 * most likely set to 0x00 or 0xFF. This prevents the damage region
+	 * simplification from optimizing out this region for cases where we must
+	 * assume that the client view buffer is not in sync with the rdp client's
+	 * view.
 	 */
 
 	if (!r) {
-		memset(encoder->clientView, 1, encoder->desktopHeight * encoder->scanLine);
+		memset(encoder->clientView, 1,
+				encoder->desktopHeight * encoder->scanLine);
 		return;
 	}
 
@@ -414,11 +427,11 @@ void ogon_encoder_blank_client_view_area(ogon_bitmap_encoder *encoder,
 		return;
 	}
 
-	dst = encoder->clientView + (r->top * encoder->scanLine) + (r->left * encoder->bytesPerPixel);
+	dst = encoder->clientView + (r->top * encoder->scanLine) +
+		  (r->left * encoder->bytesPerPixel);
 
 	for (i = r->top; i < r->bottom; i++) {
-		memset(dst, 1, (r->right-r->left) * encoder->bytesPerPixel);
+		memset(dst, 1, (r->right - r->left) * encoder->bytesPerPixel);
 		dst += encoder->scanLine;
 	}
 }
-

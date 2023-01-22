@@ -13,7 +13,7 @@ set(${MODULE_PREFIX}_SRCS
 	backend.cpp
 	channels.cpp
 	channels.h
-	encoder.c
+	encoder.cpp
 	encoder.h
 	eventloop.cpp
 	eventloop.h
