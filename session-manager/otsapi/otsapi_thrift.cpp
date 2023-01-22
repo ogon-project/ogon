@@ -192,7 +192,7 @@ static int getAuthToken(std::string &authToken, DWORD &sessionId) {
 
 static UINT32 getSessionId(TSessionInfo *con, UINT32 sessionId) {
 	if (sessionId == (UINT32)WTS_CURRENT_SESSION){
-		if (con != NULL) {
+		if (con != nullptr) {
 			return con->sessionId;
 		}
 	}
@@ -205,7 +205,7 @@ static TSessionInfo *getSessionInfo(HANDLE serverHandle) {
 		return &gCurrentServer;
 	}
 
-	TSessionInfo *returnValue = NULL;
+	TSessionInfo *returnValue = nullptr;
 
 	EnterCriticalSection(&gCSection);
 	TSessionMap::iterator it = gSessionMap.find(serverHandle);
@@ -218,7 +218,7 @@ static TSessionInfo *getSessionInfo(HANDLE serverHandle) {
 }
 
 static BOOL initSessionInfo(TSessionInfo *info) {
-	if (info == NULL) {
+	if (info == nullptr) {
 		return FALSE;
 	}
 	info->authToken = "";
@@ -234,17 +234,17 @@ static BOOL initSessionInfo(TSessionInfo *info) {
 
 static TSessionInfo *newSessionInfo(void) {
 	TSessionInfo *info = new TSessionInfo();
-	if(info != NULL) {
+	if (info != nullptr) {
 		if (!initSessionInfo(info)) {
 			delete(info);
-			info = NULL;
+			info = nullptr;
 		}
 	}
 	return info;
 }
 
 static BOOL freeSessionInfo(TSessionInfo *info) {
-	if (info == NULL) {
+	if (info == nullptr) {
 		return FALSE;
 	}
 	DeleteCriticalSection(&info->cSection);
@@ -299,8 +299,8 @@ static HANDLE connect2Pipe(const std::string &pipeName) {
 		return INVALID_HANDLE_VALUE;
 	}
 
-	hNamedPipe = CreateFileA(pipeName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
-			OPEN_EXISTING, 0, NULL);
+	hNamedPipe = CreateFileA(pipeName.c_str(), GENERIC_READ | GENERIC_WRITE, 0,
+			nullptr, OPEN_EXISTING, 0, nullptr);
 
 	if ((!hNamedPipe) || (hNamedPipe == INVALID_HANDLE_VALUE)) {
 		fprintf(stderr, "%s: failed to create named pipe %s\n", __FUNCTION__, pipeName.c_str());
@@ -326,7 +326,7 @@ static BOOL WINAPI ogon_WTSStartRemoteControlSessionExA(LPSTR pTargetServerName,
 	}
 
 	currentCon = getSessionInfo(WTS_CURRENT_SERVER_HANDLE);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -380,7 +380,7 @@ static BOOL WINAPI ogon_WTSStopRemoteControlSession(ULONG LogonId) {
 	BOOL bSuccess;
 
 	currentCon = getSessionInfo(WTS_CURRENT_SERVER_HANDLE);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -448,7 +448,7 @@ static BOOL WINAPI ogon_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved,
 
 static HANDLE WINAPI ogon_WTSOpenServerA(LPSTR pServerName) {
 	TSessionInfo *sessionInfo = newSessionInfo();
-	if (sessionInfo == NULL) {
+	if (sessionInfo == nullptr) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -487,7 +487,7 @@ static void WINAPI ogon_WTSCloseServer(HANDLE hServer) {
 		return;
 	}
 
-	TSessionInfo *returnValue = NULL;
+	TSessionInfo *returnValue = nullptr;
 
 	EnterCriticalSection(&gCSection);
 	if (gSessionMap.find(hServer) != gSessionMap.end()) {
@@ -506,17 +506,17 @@ static BOOL WINAPI ogon_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
 	OGON_UNUSED(Reserved);
 
 	ogon::TReturnEnumerateSession result;
-	PWTS_SESSION_INFOA pSessionInfoA = NULL;
+	PWTS_SESSION_INFOA pSessionInfoA = nullptr;
 	TSessionInfo *currentCon;
 
 	/* Check parameters. */
-	if ((Version != 1) || (ppSessionInfo == NULL) || (pCount == NULL)) {
+	if ((Version != 1) || (ppSessionInfo == nullptr) || (pCount == nullptr)) {
 		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
 	}
 
 	currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -544,7 +544,7 @@ static BOOL WINAPI ogon_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
 	DWORD count = (DWORD)result.sessionInfoList.size();
 	if (!count) {
 		*pCount = 0;
-		*ppSessionInfo = NULL;
+		*ppSessionInfo = nullptr;
 		return TRUE;
 	}
 
@@ -591,7 +591,7 @@ static BOOL WINAPI ogon_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
 	}
 
 	if (!count) {
-		*ppSessionInfo = 0;
+		*ppSessionInfo = nullptr;
 		*pCount = 0;
 		return TRUE;
 	}
@@ -695,13 +695,13 @@ static BOOL WINAPI ogon_WTSQuerySessionInformationA(HANDLE hServer,
 	ogon::TReturnQuerySessionInformation result;
 	TSessionInfo *currentCon;
 
-	if ((ppBuffer == NULL) || (pBytesReturned == NULL)) {
+	if ((ppBuffer == nullptr) || (pBytesReturned == nullptr)) {
 		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
 	}
 
 	currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -709,7 +709,7 @@ static BOOL WINAPI ogon_WTSQuerySessionInformationA(HANDLE hServer,
 	CHECK_AUTH_TOKEN(currentCon);
 	CHECK_CLIENT_CONNECTION(currentCon);
 
-	*ppBuffer = NULL;
+	*ppBuffer = nullptr;
 	*pBytesReturned = 0;
 
 	try {
@@ -881,7 +881,7 @@ static BOOL WINAPI ogon_WTSQuerySessionInformationW(HANDLE hServer,
 	DWORD cbBuffer;
 	BOOL bSuccess;
 
-	*ppBuffer = NULL;
+	*ppBuffer = nullptr;
 	*pBytesReturned = 0;
 
 	bSuccess = ogon_WTSQuerySessionInformationA(hServer, SessionId, WTSInfoClass, &pBuffer, &cbBuffer);
@@ -1022,7 +1022,7 @@ static BOOL WINAPI ogon_WTSSendMessageA(HANDLE hServer, DWORD SessionId,
 	DWORD result = 0;
 	TSessionInfo *currentCon;
 
-	if ((pMessage == NULL) || (MessageLength == 0)) {
+	if ((pMessage == nullptr) || (MessageLength == 0)) {
 		return FALSE;
 	}
 
@@ -1030,7 +1030,7 @@ static BOOL WINAPI ogon_WTSSendMessageA(HANDLE hServer, DWORD SessionId,
 	std::string message(pMessage);
 
 	currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		return FALSE;
 	}
 
@@ -1056,7 +1056,7 @@ static BOOL WINAPI ogon_WTSDisconnectSession(
 	TSessionInfo *currentCon;
 
 	currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -1087,7 +1087,7 @@ static BOOL WINAPI ogon_WTSLogoffSession(
 	TSessionInfo *currentCon;
 
 	currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -1135,7 +1135,7 @@ static HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(
 	if (!(flags & WTS_CHANNEL_OPTION_DYNAMIC) && virtualName.length() > 8) {
 		/* static channels are limited to 8 char */
 		SetLastError(ERROR_NOT_FOUND);
-		return NULL;
+		return nullptr;
 	}
 	TSessionInfo *currentCon = getSessionInfo(WTS_CURRENT_SERVER_HANDLE);
 	CHECK_AUTH_TOKEN(currentCon);
@@ -1150,29 +1150,29 @@ static HANDLE WINAPI ogon_WTSVirtualChannelOpenEx(
 	} catch (TException &ex) {
 		fprintf(stderr, "%s: TException: %s\n", __FUNCTION__, ex.what());
 		SetLastError(ERROR_INTERNAL_ERROR);
-		return NULL;
+		return nullptr;
 	} catch (...) {
 		fprintf(stderr, "%s: unhandled exception during call\n", __FUNCTION__);
 		SetLastError(ERROR_INTERNAL_ERROR);
-		return NULL;
+		return nullptr;
 	}
 
 	if (result.pipeName.size() == 0) {
 		SetLastError(ERROR_NOT_FOUND);
-		return NULL;
+		return nullptr;
 	}
 
 	HANDLE hNamedPipe = connect2Pipe(result.pipeName);
 	if (hNamedPipe == INVALID_HANDLE_VALUE) {
 		SetLastError(ERROR_NOT_FOUND);
-		return NULL;
+		return nullptr;
 	}
 
 	DWORD dwPipeMode = PIPE_NOWAIT;
-	if (!SetNamedPipeHandleState(hNamedPipe, &dwPipeMode, NULL, NULL)) {
+	if (!SetNamedPipeHandleState(hNamedPipe, &dwPipeMode, nullptr, nullptr)) {
 		CloseHandle(hNamedPipe);
 		SetLastError(ERROR_NOT_FOUND);
-		return NULL;
+		return nullptr;
 	}
 
 	THandleInfo info;
@@ -1193,7 +1193,7 @@ static HANDLE WINAPI ogon_WTSVirtualChannelOpen(
 		HANDLE hServer, DWORD SessionId, LPSTR pVirtualName) {
 	if (hServer != WTS_CURRENT_SERVER_HANDLE) {
 		SetLastError(ERROR_INVALID_HANDLE);
-		return NULL;
+		return nullptr;
 	}
 	return ogon_WTSVirtualChannelOpenEx(SessionId, pVirtualName, 0);
 }
@@ -1240,7 +1240,7 @@ out:
 
 static BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle,
 		ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead) {
-	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL)) {
+	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, nullptr)) {
 		return TRUE;
 	}
 
@@ -1257,7 +1257,8 @@ static BOOL WINAPI ogon_WTSVirtualChannelRead(HANDLE hChannelHandle,
 	DWORD result = WaitForSingleObject(hChannelHandle, TimeOut);
 	switch (result) {
 		case WAIT_OBJECT_0:
-			return ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, NULL);
+			return ReadFile(
+					hChannelHandle, Buffer, BufferSize, pBytesRead, nullptr);
 
 		case WAIT_TIMEOUT:
 		case WAIT_FAILED:
@@ -1290,7 +1291,8 @@ static BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle,
 			Sleep(10);
 		}
 		reentry = TRUE;
-		success = WriteFile(hChannelHandle, buffer + writtenTotal, 4 - writtenTotal, &written, NULL);
+		success = WriteFile(hChannelHandle, buffer + writtenTotal,
+				4 - writtenTotal, &written, nullptr);
 		if (!success) {
 			*pBytesWritten = 0;
 			return FALSE;
@@ -1306,7 +1308,8 @@ static BOOL WINAPI ogon_WTSVirtualChannelWrite(HANDLE hChannelHandle,
 			Sleep(10);
 		}
 		reentry = TRUE;
-		success = WriteFile(hChannelHandle, Buffer + writtenTotal, Length - writtenTotal, &written, NULL);
+		success = WriteFile(hChannelHandle, Buffer + writtenTotal,
+				Length - writtenTotal, &written, nullptr);
 		if (!success) {
 			*pBytesWritten = 4 + writtenTotal;
 			return FALSE;
@@ -1338,7 +1341,7 @@ static BOOL WINAPI ogon_WTSVirtualChannelQuery(HANDLE hChannelHandle,
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
-	if ((ppBuffer == NULL) || (pBytesReturned == NULL)) {
+	if ((ppBuffer == nullptr) || (pBytesReturned == nullptr)) {
 		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
 	}
@@ -1605,7 +1608,7 @@ static DWORD WINAPI ogon_WTSGetActiveConsoleSessionId(void) {
 static BOOL CDECL ogon_WTSLogoffUser(HANDLE hServer) {
 	BOOL retVal = FALSE;
 	TSessionInfo *currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return retVal;
 	}
@@ -1641,13 +1644,13 @@ static BOOL CDECL ogon_WTSLogoffUser(HANDLE hServer) {
 
 static BOOL CDECL ogon_WTSLogonUser(
 		HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain) {
-	if ((username == NULL) || ( password== NULL)) {
+	if ((username == nullptr) || (password == nullptr)) {
 		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
 	}
 
 	TSessionInfo *currentCon = getSessionInfo(hServer);
-	if (currentCon == NULL) {
+	if (currentCon == nullptr) {
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
 	}
@@ -1664,7 +1667,7 @@ static BOOL CDECL ogon_WTSLogonUser(
 	std::string stdpassword(password);
 	std::string stddomain;
 
-	if (domain != NULL) {
+	if (domain != nullptr) {
 		stddomain.assign(domain);
 	}
 

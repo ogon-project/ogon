@@ -31,15 +31,13 @@
 
 namespace ogon { namespace sessionmanager { namespace call {
 
-	CallOut::CallOut() : mAnswer(NULL) {
-		initAnswerHandle();
-	}
+CallOut::CallOut() : mAnswer(nullptr) { initAnswerHandle(); }
 
-	CallOut::~CallOut() {
-		if (mAnswer) {
-			CloseHandle(mAnswer);
-			mAnswer = NULL;
-		}
+CallOut::~CallOut() {
+	if (mAnswer) {
+		CloseHandle(mAnswer);
+		mAnswer = nullptr;
+	}
 	}
 
 	std::string CallOut::getEncodedRequest() const {
@@ -51,8 +49,8 @@ namespace ogon { namespace sessionmanager { namespace call {
 	}
 
 	void CallOut::initAnswerHandle() {
-		if (mAnswer == NULL) {
-			if (!(mAnswer = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (mAnswer == nullptr) {
+			if (!(mAnswer = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 				throw std::bad_alloc();
 			}
 		}

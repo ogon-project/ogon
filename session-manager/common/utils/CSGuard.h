@@ -35,13 +35,13 @@ public:
 
 	void leaveGuard() {
 		LeaveCriticalSection(mCriticalSection);
-		mCriticalSection = NULL;
+		mCriticalSection = nullptr;
 	}
 
 	~CSGuard() {
-		if (mCriticalSection != NULL) {
+		if (mCriticalSection != nullptr) {
 			LeaveCriticalSection(mCriticalSection);
-		}			
+		}
 	}
 
 private:

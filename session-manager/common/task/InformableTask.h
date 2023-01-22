@@ -35,7 +35,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 	class InformableTask: public Task {
 	public:
 		InformableTask(){
-			if (!(mhDone = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+			if (!(mhDone = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 				throw std::bad_alloc();
 			}
 		}

@@ -50,7 +50,7 @@ namespace ogon { namespace sessionmanager { namespace process {
 	static wLog *logger_ProcessMonitor = WLog_Get("ogon.sessionmanager.process.processmonitor");
 
 	ProcessMonitor::ProcessMonitor() {
-		if (!(mhStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mhStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			WLog_Print(logger_ProcessMonitor, WLOG_FATAL,
 				"Failed to create process monitor stop event");
 			throw std::bad_alloc();
@@ -60,7 +60,7 @@ namespace ogon { namespace sessionmanager { namespace process {
 				"Failed to initialize process monitor critical section");
 			throw std::bad_alloc();
 		}
-		mhServerThread = NULL;
+		mhServerThread = nullptr;
 		mRunning = false;
 	}
 
@@ -78,10 +78,9 @@ namespace ogon { namespace sessionmanager { namespace process {
 			return false;
 		}
 
-		if (!(mhServerThread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) ProcessMonitor::execThread, (void*) this,
-				0, NULL)))
-		{
+		if (!(mhServerThread = CreateThread(nullptr, 0,
+					  (LPTHREAD_START_ROUTINE)ProcessMonitor::execThread,
+					  (void *)this, 0, nullptr))) {
 			WLog_Print(logger_ProcessMonitor, WLOG_ERROR, "failed to create thread");
 			return false;
 		}
@@ -97,7 +96,7 @@ namespace ogon { namespace sessionmanager { namespace process {
 			SetEvent(mhStopEvent);
 			WaitForSingleObject(mhServerThread, INFINITE);
 			CloseHandle(mhServerThread);
-			mhServerThread = NULL;
+			mhServerThread = nullptr;
 		} else {
 			WLog_Print(logger_ProcessMonitor, WLOG_ERROR,
 				"Executor was not started before.");
@@ -203,7 +202,7 @@ namespace ogon { namespace sessionmanager { namespace process {
 		monitor->run();
 
 		WLog_Print(logger_ProcessMonitor, WLOG_INFO, "stopped ProcessMonitor thread");
-		return NULL;
+		return nullptr;
 	}
 
 

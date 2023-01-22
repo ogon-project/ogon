@@ -34,7 +34,7 @@ public:
 		if (!InitializeCriticalSectionAndSpinCount(&mCSection, 0x00000400)) {
 			throw std::bad_alloc();
 		}
-		if (!(mSignalHandle = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mSignalHandle = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			throw std::bad_alloc();
 		}
 	}

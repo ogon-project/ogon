@@ -67,7 +67,7 @@ static BOOL ogon_read_capabilities(wStream *s, ogon_message *raw) {
 	Ogon__Backend__Capabilities *proto;
 
 	proto = ogon__backend__capabilities__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -80,7 +80,7 @@ static BOOL ogon_read_capabilities(wStream *s, ogon_message *raw) {
 	msg->keyboardSubType = proto->keyboardsubtype;
 	msg->clientId = proto->clientid;
 
-	ogon__backend__capabilities__free_unpacked(proto, NULL);
+	ogon__backend__capabilities__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -102,7 +102,7 @@ static int ogon_prepare_capabilities(
 }
 
 static message_descriptor capabilities_descriptor = {"capabilities",
-		ogon_read_capabilities, ogon_prepare_capabilities, NULL, NULL};
+		ogon_read_capabilities, ogon_prepare_capabilities, nullptr, nullptr};
 
 /* === version ============================================================ */
 
@@ -112,7 +112,7 @@ static BOOL ogon_read_version(wStream *s, ogon_message *raw) {
 	BOOL ret = TRUE;
 
 	proto = ogon__backend__version_reply__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -126,10 +126,10 @@ static BOOL ogon_read_version(wStream *s, ogon_message *raw) {
 			ret = FALSE;
 		}
 	} else {
-		msg->cookie = NULL;
+		msg->cookie = nullptr;
 	}
 
-	ogon__backend__version_reply__free_unpacked(proto, NULL);
+	ogon__backend__version_reply__free_unpacked(proto, nullptr);
 	return ret;
 }
 
@@ -152,7 +152,7 @@ static void ogon_free_version(ogon_message *msg) {
 }
 
 static message_descriptor version_descriptor = {"version", ogon_read_version,
-		ogon_prepare_version, NULL, ogon_free_version};
+		ogon_prepare_version, nullptr, ogon_free_version};
 
 /* === synchronize keyboard event ========================================= */
 
@@ -163,14 +163,14 @@ static BOOL ogon_read_synchronize_keyboard_event(
 			(ogon_msg_synchronize_keyboard_event *)raw;
 
 	proto = ogon__backend__keyboard_sync__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto || !msg) {
 		return FALSE;
 	}
 
 	msg->flags = proto->flags;
 	msg->clientId = proto->clientid;
-	ogon__backend__keyboard_sync__free_unpacked(proto, NULL);
+	ogon__backend__keyboard_sync__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -188,7 +188,7 @@ static int ogon_prepare_synchronize_keyboard_event(
 
 static message_descriptor synchronize_keyboard_descriptor = {
 		"Synchronize keyboard", ogon_read_synchronize_keyboard_event,
-		ogon_prepare_synchronize_keyboard_event, NULL, NULL};
+		ogon_prepare_synchronize_keyboard_event, nullptr, nullptr};
 
 /* === scancode keyboard event ============================================ */
 
@@ -198,7 +198,7 @@ static BOOL ogon_read_scancode_keyboard_event(wStream *s, ogon_message *raw) {
 	Ogon__Backend__KeyboardScanCode *proto;
 
 	proto = ogon__backend__keyboard_scan_code__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -207,7 +207,7 @@ static BOOL ogon_read_scancode_keyboard_event(wStream *s, ogon_message *raw) {
 	msg->code = proto->code;
 	msg->keyboardType = proto->keyboardtype;
 	msg->clientId = proto->clientid;
-	ogon__backend__keyboard_scan_code__free_unpacked(proto, NULL);
+	ogon__backend__keyboard_scan_code__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -227,7 +227,7 @@ static int ogon_prepare_scancode_keyboard_event(
 
 static message_descriptor scancode_keyboard_descriptor = {"Scancode keyboard",
 		ogon_read_scancode_keyboard_event, ogon_prepare_scancode_keyboard_event,
-		NULL, NULL};
+		nullptr, nullptr};
 
 /* === unicode keyboard event ============================================= */
 
@@ -237,7 +237,7 @@ static BOOL ogon_read_unicode_keyboard_event(wStream *s, ogon_message *raw) {
 	Ogon__Backend__KeyboardUnicode *proto;
 
 	proto = ogon__backend__keyboard_unicode__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -245,7 +245,7 @@ static BOOL ogon_read_unicode_keyboard_event(wStream *s, ogon_message *raw) {
 	msg->flags = proto->flags;
 	msg->code = proto->code;
 	msg->clientId = proto->clientid;
-	ogon__backend__keyboard_unicode__free_unpacked(proto, NULL);
+	ogon__backend__keyboard_unicode__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -264,7 +264,7 @@ static int ogon_prepare_unicode_keyboard_event(
 
 static message_descriptor unicode_keyboard_descriptor = {"unicode keyboard",
 		ogon_read_unicode_keyboard_event, ogon_prepare_unicode_keyboard_event,
-		NULL, NULL};
+		nullptr, nullptr};
 
 /* === mouse event ======================================================== */
 
@@ -273,7 +273,7 @@ static BOOL ogon_read_mouse_event(wStream *s, ogon_message *raw) {
 	Ogon__Backend__MouseEvent *proto;
 
 	proto = ogon__backend__mouse_event__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -282,7 +282,7 @@ static BOOL ogon_read_mouse_event(wStream *s, ogon_message *raw) {
 	msg->x = proto->x;
 	msg->y = proto->y;
 	msg->clientId = proto->clientid;
-	ogon__backend__mouse_event__free_unpacked(proto, NULL);
+	ogon__backend__mouse_event__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -299,7 +299,7 @@ static int ogon_prepare_mouse_event(
 }
 
 static message_descriptor mouse_descriptor = {"mouse event",
-		ogon_read_mouse_event, ogon_prepare_mouse_event, NULL, NULL};
+		ogon_read_mouse_event, ogon_prepare_mouse_event, nullptr, nullptr};
 
 /* === extended mouse event =============================================== */
 
@@ -308,7 +308,7 @@ static BOOL ogon_read_extended_mouse_event(wStream *s, ogon_message *raw) {
 	Ogon__Backend__MouseExtendedEvent *proto;
 
 	proto = ogon__backend__mouse_extended_event__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -317,7 +317,7 @@ static BOOL ogon_read_extended_mouse_event(wStream *s, ogon_message *raw) {
 	msg->x = proto->x;
 	msg->y = proto->y;
 	msg->clientId = proto->clientid;
-	ogon__backend__mouse_extended_event__free_unpacked(proto, NULL);
+	ogon__backend__mouse_extended_event__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -335,8 +335,8 @@ static int ogon_prepare_extended_mouse_event(
 }
 
 static message_descriptor extended_mouse_descriptor = {"extended mouse event",
-		ogon_read_extended_mouse_event, ogon_prepare_extended_mouse_event, NULL,
-		NULL};
+		ogon_read_extended_mouse_event, ogon_prepare_extended_mouse_event,
+		nullptr, nullptr};
 
 /* === framebuffer sync request =========================================== */
 
@@ -346,13 +346,13 @@ static BOOL ogon_read_framebuffer_sync_request(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SyncRequest *proto;
 
 	proto = ogon__backend__sync_request__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->bufferId = proto->bufferid;
-	ogon__backend__sync_request__free_unpacked(proto, NULL);
+	ogon__backend__sync_request__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -368,7 +368,7 @@ static int ogon_prepare_framebuffer_sync_request(
 
 static message_descriptor framebuffer_sync_request_descriptor = {
 		"framebuffer sync request", ogon_read_framebuffer_sync_request,
-		ogon_prepare_framebuffer_sync_request, NULL, NULL};
+		ogon_prepare_framebuffer_sync_request, nullptr, nullptr};
 
 /* === sbp reply ========================================================== */
 
@@ -378,7 +378,7 @@ static BOOL ogon_read_sbp_reply(wStream *s, ogon_message *raw) {
 	BOOL ret = FALSE;
 
 	proto = ogon__backend__sbp_reply__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -404,7 +404,7 @@ static BOOL ogon_read_sbp_reply(wStream *s, ogon_message *raw) {
 
 	ret = TRUE;
 out:
-	ogon__backend__sbp_reply__free_unpacked(proto, NULL);
+	ogon__backend__sbp_reply__free_unpacked(proto, nullptr);
 	return ret;
 }
 
@@ -428,12 +428,13 @@ static void ogon_sbp_reply_free(ogon_message *raw) {
 }
 
 static message_descriptor sbp_reply_descriptor = {"sbp reply",
-		ogon_read_sbp_reply, ogon_prepare_sbp_reply, NULL, ogon_sbp_reply_free};
+		ogon_read_sbp_reply, ogon_prepare_sbp_reply, nullptr,
+		ogon_sbp_reply_free};
 
 static message_descriptor immediate_sync_request_descriptor = {
 		"framebuffer immediate sync request",
 		ogon_read_framebuffer_sync_request,
-		ogon_prepare_framebuffer_sync_request, NULL, NULL};
+		ogon_prepare_framebuffer_sync_request, nullptr, nullptr};
 
 /* === seat new =========================================================== */
 
@@ -442,7 +443,7 @@ static BOOL ogon_read_seat_new(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SeatNew *proto;
 
 	proto = ogon__backend__seat_new__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -451,7 +452,7 @@ static BOOL ogon_read_seat_new(wStream *s, ogon_message *raw) {
 	msg->keyboardLayout = proto->keyboardlayout;
 	msg->keyboardType = proto->keyboardtype;
 	msg->keyboardSubType = proto->keyboardsubtype;
-	ogon__backend__seat_new__free_unpacked(proto, NULL);
+	ogon__backend__seat_new__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -468,7 +469,7 @@ static int ogon_prepare_seat_new(
 }
 
 static message_descriptor seat_new_descriptor = {"new seat announce",
-		ogon_read_seat_new, ogon_prepare_seat_new, NULL, NULL};
+		ogon_read_seat_new, ogon_prepare_seat_new, nullptr, nullptr};
 
 /* === seat removed ======================================================= */
 
@@ -477,13 +478,13 @@ static BOOL ogon_read_seat_removed(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SeatRemoved *proto;
 
 	proto = ogon__backend__seat_removed__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->clientId = proto->clientid;
-	ogon__backend__seat_removed__free_unpacked(proto, NULL);
+	ogon__backend__seat_removed__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -497,7 +498,7 @@ static int ogon_prepare_seat_removed(
 }
 
 static message_descriptor seat_removed_descriptor = {"removed seat announce",
-		ogon_read_seat_removed, ogon_prepare_seat_removed, NULL, NULL};
+		ogon_read_seat_removed, ogon_prepare_seat_removed, nullptr, nullptr};
 
 /* === message ============================================================ */
 
@@ -508,7 +509,7 @@ static BOOL ogon_read_string(char *parameter, char **data, UINT32 *len) {
 
 	*data = strdup(parameter);
 	*len = strlen(parameter);
-	return *data != NULL;
+	return *data != nullptr;
 }
 
 static BOOL ogon_read_user_message(wStream *s, ogon_message *raw) {
@@ -517,7 +518,7 @@ static BOOL ogon_read_user_message(wStream *s, ogon_message *raw) {
 	BOOL ret = FALSE;
 
 	proto = ogon__backend__message__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -566,7 +567,7 @@ static BOOL ogon_read_user_message(wStream *s, ogon_message *raw) {
 
 	ret = TRUE;
 out:
-	ogon__backend__message__free_unpacked(proto, NULL);
+	ogon__backend__message__free_unpacked(proto, nullptr);
 	return ret;
 }
 
@@ -579,7 +580,7 @@ static int ogon_prepare_user_message(
 	target->messagetype = msg->message_type;
 	target->style = msg->style;
 	target->timeout = msg->timeout;
-	target->parameters = NULL;
+	target->parameters = nullptr;
 	target->n_parameters = 0;
 
 	if (msg->parameter_num) {
@@ -647,7 +648,7 @@ static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
 	BOOL ret = FALSE;
 
 	proto = ogon__backend__set_pointer_shape__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -691,11 +692,11 @@ static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
 out:
 	if (!ret) {
 		free(msg->andMaskData);
-		msg->andMaskData = NULL;
+		msg->andMaskData = nullptr;
 		free(msg->xorMaskData);
-		msg->xorMaskData = NULL;
+		msg->xorMaskData = nullptr;
 	}
-	ogon__backend__set_pointer_shape__free_unpacked(proto, NULL);
+	ogon__backend__set_pointer_shape__free_unpacked(proto, nullptr);
 	return ret;
 }
 
@@ -735,7 +736,7 @@ static void ogon_set_pointer_free(ogon_message *raw) {
 }
 
 static message_descriptor set_pointer_descriptor = {"SetPointer",
-		ogon_read_set_pointer, ogon_prepare_set_pointer, NULL,
+		ogon_read_set_pointer, ogon_prepare_set_pointer, nullptr,
 		ogon_set_pointer_free};
 
 /* === set system pointer ================================================= */
@@ -745,14 +746,14 @@ static BOOL ogon_read_set_system_pointer(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SetSystemPointer *proto;
 
 	proto = ogon__backend__set_system_pointer__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->ptrType = proto->type;
 	msg->clientId = proto->clientid;
-	ogon__backend__set_system_pointer__free_unpacked(proto, NULL);
+	ogon__backend__set_system_pointer__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -768,8 +769,8 @@ static int ogon_prepare_set_system_pointer(
 }
 
 static message_descriptor set_system_pointer_descriptor = {"SetSystemPointer",
-		ogon_read_set_system_pointer, ogon_prepare_set_system_pointer, NULL,
-		NULL};
+		ogon_read_set_system_pointer, ogon_prepare_set_system_pointer, nullptr,
+		nullptr};
 
 /* === framebuffer info
  * ============================================================ */
@@ -779,7 +780,7 @@ static BOOL ogon_read_framebuffer_info(wStream *s, ogon_message *raw) {
 	Ogon__Backend__FramebufferInfos *proto;
 
 	proto = ogon__backend__framebuffer_infos__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -793,7 +794,7 @@ static BOOL ogon_read_framebuffer_info(wStream *s, ogon_message *raw) {
 	msg->userId = proto->userid;
 	msg->multiseatCapable =
 			(proto->flags & OGON__BACKEND__BACKEND__FLAGS__MULTISEAT);
-	ogon__backend__framebuffer_infos__free_unpacked(proto, NULL);
+	ogon__backend__framebuffer_infos__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -817,7 +818,8 @@ static int ogon_prepare_framebuffer_info(
 }
 
 static message_descriptor framebuffer_info_descriptor = {"FramebufferInfo",
-		ogon_read_framebuffer_info, ogon_prepare_framebuffer_info, NULL, NULL};
+		ogon_read_framebuffer_info, ogon_prepare_framebuffer_info, nullptr,
+		nullptr};
 
 /* === beep ============================================================ */
 
@@ -826,14 +828,14 @@ static BOOL ogon_read_beep(wStream *s, ogon_message *raw) {
 	Ogon__Backend__Beep *proto;
 
 	proto = ogon__backend__beep__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->duration = proto->duration;
 	msg->frequency = proto->frequency;
-	ogon__backend__beep__free_unpacked(proto, NULL);
+	ogon__backend__beep__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -847,7 +849,7 @@ static int ogon_prepare_beep(ogon_message *mraw, ogon_protobuf_message *traw) {
 }
 
 static message_descriptor beep_descriptor = {
-		"Beep", ogon_read_beep, ogon_prepare_beep, NULL, NULL};
+		"Beep", ogon_read_beep, ogon_prepare_beep, nullptr, nullptr};
 
 /* === sbp request ======================================================== */
 
@@ -857,7 +859,7 @@ static BOOL ogon_read_sbp_request(wStream *s, ogon_message *raw) {
 	BOOL ret = FALSE;
 
 	proto = ogon__backend__sbp_request__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -882,7 +884,7 @@ static BOOL ogon_read_sbp_request(wStream *s, ogon_message *raw) {
 
 	ret = TRUE;
 out:
-	ogon__backend__sbp_request__free_unpacked(proto, NULL);
+	ogon__backend__sbp_request__free_unpacked(proto, nullptr);
 	return ret;
 }
 
@@ -904,7 +906,7 @@ static void ogon_sbp_request_free(ogon_message *raw) {
 }
 
 static message_descriptor sbp_request_descriptor = {"sbp request",
-		ogon_read_sbp_request, ogon_prepare_sbp_request, NULL,
+		ogon_read_sbp_request, ogon_prepare_sbp_request, nullptr,
 		ogon_sbp_request_free};
 
 /* === framebuffer sync reply ============================================= */
@@ -915,13 +917,13 @@ static BOOL ogon_read_framebuffer_sync_reply(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SyncReply *proto;
 
 	proto = ogon__backend__sync_reply__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->bufferId = proto->bufferid;
-	ogon__backend__sync_reply__free_unpacked(proto, NULL);
+	ogon__backend__sync_reply__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -937,7 +939,7 @@ static int ogon_write_framebuffer_sync_reply(
 
 static message_descriptor framebuffer_sync_reply_descriptor = {
 		"framebuffer sync reply", ogon_read_framebuffer_sync_reply,
-		ogon_write_framebuffer_sync_reply, NULL, NULL};
+		ogon_write_framebuffer_sync_reply, nullptr, nullptr};
 
 /* === message reply ====================================================== */
 
@@ -946,14 +948,14 @@ static BOOL ogon_read_message_reply(wStream *s, ogon_message *raw) {
 	Ogon__Backend__MessageReply *proto;
 
 	proto = ogon__backend__message_reply__unpack(
-			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
+			nullptr, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto || !msg) {
 		return FALSE;
 	}
 
 	msg->message_id = proto->messageid;
 	msg->result = proto->result;
-	ogon__backend__message_reply__free_unpacked(proto, NULL);
+	ogon__backend__message_reply__free_unpacked(proto, nullptr);
 	return TRUE;
 }
 
@@ -968,7 +970,7 @@ static int ogon_prepare_message_reply(
 }
 
 static message_descriptor message_reply_descriptor = {"message reply",
-		ogon_read_message_reply, ogon_prepare_message_reply, NULL, NULL};
+		ogon_read_message_reply, ogon_prepare_message_reply, nullptr, nullptr};
 
 /* ######################################################################## */
 

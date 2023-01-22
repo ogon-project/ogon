@@ -106,7 +106,7 @@ int ogon_dmgbuf_set_user(void *handle, unsigned int user_id) {
 
 BYTE *ogon_dmgbuf_get_data(void *handle) {
 	if (!OGON_DMGBUF_GOOD(handle)) {
-		return NULL;
+		return nullptr;
 	}
 
 	return OGON_DMGBUF_PTR_DATA(handle);
@@ -133,7 +133,7 @@ UINT32 ogon_dmgbuf_get_fbsize(void *handle) {
 
 RDP_RECT *ogon_dmgbuf_get_rects(void *handle, UINT32 *num_rects) {
 	if (!OGON_DMGBUF_GOOD(handle)) {
-		return NULL;
+		return nullptr;
 	}
 
 	if (num_rects) {
@@ -174,7 +174,7 @@ void *ogon_dmgbuf_new(int width, int height, int scanline) {
 	if (width < 1 || height < 1 || scanline < width * 4) {
 		WLog_ERR(TAG, "invalid parameters: width=%d height=%d scanline=%d",
 				width, height, scanline);
-		return NULL;
+		return nullptr;
 	}
 
 	/* allocate shared memory segment */
@@ -182,22 +182,22 @@ void *ogon_dmgbuf_new(int width, int height, int scanline) {
 	segment_id = shmget(IPC_PRIVATE, shm_size, shm_flag);
 	if (segment_id == -1) {
 		WLog_ERR(TAG, "shmget failed, error=%s(%d)", strerror(errno), errno);
-		return NULL;
+		return nullptr;
 	}
 
 	/* attach the shared memory segment */
-	handle = shmat(segment_id, 0, 0);
+	handle = shmat(segment_id, nullptr, 0);
 	if (handle == ((void *)(size_t)(-1))) {
 		WLog_ERR(TAG, "shmat failed, error=%s(%d)", strerror(errno), errno);
-		return NULL;
+		return nullptr;
 	}
 	WLog_DBG(TAG, "attached to new shared memory segment 0x%08X", segment_id);
 
 	/* mark the shared memory segment for automatic deletion */
-	if (shmctl(segment_id, IPC_RMID, 0) < 0) {
+	if (shmctl(segment_id, IPC_RMID, nullptr) < 0) {
 		WLog_ERR(TAG, "error unreferencing SHM segment %d, error=%s(%d)",
 				segment_id, strerror(errno), errno);
-		return NULL;
+		return nullptr;
 	}
 
 	memset(handle, 0, shm_size);
@@ -213,7 +213,7 @@ void *ogon_dmgbuf_new(int width, int height, int scanline) {
 			OGON_DMGBUF_DATA_ALIGNMENT) {
 		WLog_ERR(TAG,
 				"internal error: damage buffer data is not correctly aligned!");
-		return NULL;
+		return nullptr;
 	}
 
 	return handle;
@@ -235,11 +235,11 @@ void ogon_dmgbuf_free(void *handle) {
 }
 
 void *ogon_dmgbuf_connect(int buffer_id) {
-	void *handle = shmat(buffer_id, 0, 0);
+	void *handle = shmat(buffer_id, nullptr, 0);
 	if (handle == ((void *)(size_t)(-1))) {
 		WLog_ERR(TAG, "shmat(%d) failed, error=%s(%d)", buffer_id,
 				strerror(errno), errno);
-		return NULL;
+		return nullptr;
 	}
 
 	WLog_DBG(TAG, "attached to an existing shared memory segment 0x%08X",
@@ -247,7 +247,7 @@ void *ogon_dmgbuf_connect(int buffer_id) {
 	if (!OGON_DMGBUF_GOOD(handle)) {
 		WLog_ERR(TAG, "error, invalid magic");
 		shmdt(handle);
-		return NULL;
+		return nullptr;
 	}
 
 	return handle;

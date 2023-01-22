@@ -59,7 +59,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 
 	bool CallIn::putInSessionExecutor_conId(UINT32 connectionId) {
 		sessionNS::ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(connectionId);
-		if (currentConnection == NULL) {
+		if (currentConnection == nullptr) {
 			WLog_Print(logger_CallIn, WLOG_ERROR,
 				"Cannot get Connection %" PRIu32 "", connectionId);
 			goto abort;

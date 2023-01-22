@@ -33,11 +33,17 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 	static wLog *logger_LocalModule = WLog_Get("ogon.sessionmanager.module.localmodule");
 
-	LocalModule::LocalModule() : mfpInit(0), mfpNew(0), mfpFree(0), mfpStart(0), mfpStop(0),
-		mfpDestroy(0), mfpGetCustomInfo(0), mfpConnect(0), mfpDisconnect(0),
-		mLoadedLib(NULL)
-	{
-	}
+	LocalModule::LocalModule()
+		: mfpInit(nullptr),
+		  mfpNew(nullptr),
+		  mfpFree(nullptr),
+		  mfpStart(nullptr),
+		  mfpStop(nullptr),
+		  mfpDestroy(nullptr),
+		  mfpGetCustomInfo(nullptr),
+		  mfpConnect(nullptr),
+		  mfpDisconnect(nullptr),
+		  mLoadedLib(nullptr) {}
 
 	int LocalModule::initModule(const std::string &moduleFileName,
 		RDS_MODULE_ENTRY_POINTS *entrypoints) {
@@ -108,7 +114,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 	RDS_MODULE_COMMON* LocalModule::newContext() {
 		if (mfpNew)
 			return mfpNew();
-		return NULL;
+		return nullptr;
 	}
 
 	void LocalModule::freeContext(RDS_MODULE_COMMON *context) {
@@ -157,7 +163,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 		if (!mfpGetCustomInfo)
 			return "";
 		customInfo = mfpGetCustomInfo(context);
-		if (customInfo == NULL) {
+		if (customInfo == nullptr) {
 			return getName() + ":";
 		}
 		customInfoStr.assign(customInfo);

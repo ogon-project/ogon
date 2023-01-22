@@ -46,7 +46,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 	UINT32 TaskDisconnect::disconnect_Connection() {
 		sessionNS::ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(mConnectionId);
-		if (currentConnection == NULL) {
+		if (currentConnection == nullptr) {
 			WLog_Print(logger_TaskDisconnect, WLOG_DEBUG,
 				"No connection found for connectionId %" PRIu32 "!",
 				mConnectionId);

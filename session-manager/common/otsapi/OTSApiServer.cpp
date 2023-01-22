@@ -58,12 +58,12 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 				"Failed to initialize OTSApiServer critical section");
 			throw std::bad_alloc();
 		}
-		if (!(mhStarted = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mhStarted = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			WLog_Print(logger_OTSApiServer, WLOG_FATAL,
 					   "Failed to create OTSApiServer started event");
 			throw std::bad_alloc();
 		}
-		mServerThread = NULL;
+		mServerThread = nullptr;
 		mPort = 9091;
 		mSuccess = false;
 	}
@@ -146,10 +146,9 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		DWORD result;
 		CSGuard guard(&mCSection);
 
-		if (!(mServerThread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) OTSApiServer::serverThread,
-				(void*) this, 0, NULL)))
-		{
+		if (!(mServerThread = CreateThread(nullptr, 0,
+					  (LPTHREAD_START_ROUTINE)OTSApiServer::serverThread,
+					  (void *)this, 0, nullptr))) {
 			WLog_Print(logger_OTSApiServer, WLOG_ERROR, "failed to create thread");
 			return false;
 		}
@@ -164,12 +163,12 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 
 	bool OTSApiServer::stopOTSApi() {
 		CSGuard guard(&mCSection);
-		if (mServer != NULL) {
+		if (mServer != nullptr) {
 			WLog_Print(logger_OTSApiServer, WLOG_INFO, "Stopping OTSApiServer ...");
 			mServer->stop();
 			WaitForSingleObject(mServerThread,INFINITE);
 			CloseHandle(mServerThread);
-			mServerThread = NULL;
+			mServerThread = nullptr;
 			mServer.reset();
 		}
 		return true;

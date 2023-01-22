@@ -35,14 +35,20 @@ namespace ogon { namespace launcher {
 
 	static wLog *logger_ModuleCommunication = WLog_Get("ogon.launcher.modulecommunication");
 
-
-	ModuleCommunication::ModuleCommunication(pgetPropertyBool getPropBool, pgetPropertyNumber getPropNumber,
-	 	pgetPropertyString getPropString, pAddMonitoringProcess addMonitoring, pRemoveMonitoringProcess removeMonitoring,
- 		pSignalStop signalStop) :
-			mGetPropertyBool(getPropBool), mGetPropertyNumber(getPropNumber), mGetPropertyString(getPropString),
-			mAddMonitoringProcess(addMonitoring), mRemoveMonitoringProcess(removeMonitoring), mStop(signalStop),
-			mUserToken(NULL), mModuleLib(NULL), mModuleContext(NULL), mStartSystemSession(false) {
-
+	ModuleCommunication::ModuleCommunication(pgetPropertyBool getPropBool,
+			pgetPropertyNumber getPropNumber, pgetPropertyString getPropString,
+			pAddMonitoringProcess addMonitoring,
+			pRemoveMonitoringProcess removeMonitoring, pSignalStop signalStop)
+		: mGetPropertyBool(getPropBool),
+		  mGetPropertyNumber(getPropNumber),
+		  mGetPropertyString(getPropString),
+		  mAddMonitoringProcess(addMonitoring),
+		  mRemoveMonitoringProcess(removeMonitoring),
+		  mStop(signalStop),
+		  mUserToken(nullptr),
+		  mModuleLib(nullptr),
+		  mModuleContext(nullptr),
+		  mStartSystemSession(false) {
 		memset(&mEntrypoints, 0, sizeof(RDS_MODULE_ENTRY_POINTS));
 	}
 
@@ -50,14 +56,14 @@ namespace ogon { namespace launcher {
 		if (mEntrypoints.Free) {
 			if (mModuleContext) {
 				mEntrypoints.Free(mModuleContext);
-				mModuleContext = NULL;
+				mModuleContext = nullptr;
 			}
 			mEntrypoints.Destroy();
 			memset(&mEntrypoints, 0, sizeof(RDS_MODULE_ENTRY_POINTS));
 		}
 		if (mModuleLib) {
 			FreeLibrary(mModuleLib);
-			mModuleLib = NULL;
+			mModuleLib = nullptr;
 		}
 		CloseHandle(mUserToken);
 	}
@@ -142,7 +148,7 @@ namespace ogon { namespace launcher {
 	}
 
 	UINT ModuleCommunication::doRead() {
-		return serveOneCall(mContext, NULL);
+		return serveOneCall(mContext, nullptr);
 	}
 
 	void ModuleCommunication::initHandles(HANDLE readHandle, HANDLE writeHandle) {
@@ -159,11 +165,14 @@ namespace ogon { namespace launcher {
 
 		if (mUserToken) {
 			CloseHandle(mUserToken);
-			mUserToken = NULL;
+			mUserToken = nullptr;
 		}
 
-		return LogonUserA(mUserName.c_str(), mDomain.c_str(), NULL, LOGON32_LOGON_INTERACTIVE,
-						  LOGON32_PROVIDER_DEFAULT, &mUserToken) ? REMOTE_CLIENT_SUCCESS : REMOTE_CLIENT_ERROR;
+		return LogonUserA(mUserName.c_str(), mDomain.c_str(), nullptr,
+					   LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
+					   &mUserToken)
+					   ? REMOTE_CLIENT_SUCCESS
+					   : REMOTE_CLIENT_ERROR;
 	}
 
 	UINT ModuleCommunication::loadModule() {
@@ -214,7 +223,7 @@ namespace ogon { namespace launcher {
 		memset(&mEntrypoints, 0, sizeof(RDS_MODULE_ENTRY_POINTS));
 	out_free:
 		FreeLibrary(mModuleLib);
-		mModuleLib = NULL;
+		mModuleLib = nullptr;
 		return REMOTE_CLIENT_ERROR;
 	}
 
@@ -321,7 +330,7 @@ namespace ogon { namespace launcher {
 		return error;
 	out_init:
 		free(mModuleContext->envBlock);
-		mModuleContext->envBlock = NULL;
+		mModuleContext->envBlock = nullptr;
 	out_context:
 		ogonModule(mModuleContext);
 		return REMOTE_CLIENT_ERROR;

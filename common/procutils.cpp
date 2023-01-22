@@ -47,8 +47,8 @@ BOOL get_parent_pid(const pid_t pid, pid_t *ppid) {
 	/* For format details see man 5 proc */
 	/* %d (%s) %c %d .. == pid (comm) state ppid */
 	strtok(buffer, ")");
-	strtok(NULL, " ");
-	ptr = strtok(NULL, " ");
+	strtok(nullptr, " ");
+	ptr = strtok(nullptr, " ");
 	*ppid = atoi(ptr);
 	return TRUE;
 }
@@ -62,12 +62,12 @@ char *get_process_name(const pid_t pid) {
 	snprintf(path, sizeof(path), "/proc/%lu/cmdline", (unsigned long)pid);
 
 	if (!(fp = fopen(path, "r"))) {
-		return NULL;
+		return nullptr;
 	}
 
 	memset(buffer, 0, sizeof(buffer));
 	size = fread(buffer, sizeof(char), sizeof(buffer) - 1, fp);
 	fclose(fp);
 
-	return size < 1 ? NULL : strdup(buffer);
+	return size < 1 ? nullptr : strdup(buffer);
 }

@@ -251,7 +251,7 @@ public:
 		FactoryIterator iter = m_object_creator.find(unique_id);
 
 		if (iter == m_object_creator.end()){
-			return 0;
+			return nullptr;
 		}
 
 		return ((*iter).second)();

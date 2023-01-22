@@ -68,7 +68,7 @@ ogon_backend_service *ogon_service_new(DWORD sessionId, const char *endPoint) {
 	ogon_backend_service *ret = new ogon_backend_service;
 
 	if (!ret) {
-		return NULL;
+		return nullptr;
 	}
 
 	ret->expectedBytes = RDS_ORDER_HEADER_LENGTH;
@@ -80,11 +80,11 @@ ogon_backend_service *ogon_service_new(DWORD sessionId, const char *endPoint) {
 		goto fail;
 	}
 
-	if (!(ret->inStream = Stream_New(NULL, 8192))) {
+	if (!(ret->inStream = Stream_New(nullptr, 8192))) {
 		goto fail;
 	}
 
-	if (!(ret->outStream = Stream_New(NULL, 8192))) {
+	if (!(ret->outStream = Stream_New(nullptr, 8192))) {
 		goto fail;
 	}
 
@@ -93,7 +93,7 @@ ogon_backend_service *ogon_service_new(DWORD sessionId, const char *endPoint) {
 fail:
 	ogon_service_free(ret);
 	WLog_ERR(TAG, "error creating rdsService");
-	return NULL;
+	return nullptr;
 }
 
 int ogon_service_server_fd(ogon_backend_service *service) {
@@ -125,7 +125,7 @@ ogon_incoming_bytes_result ogon_service_incoming_bytes(
 	BOOL success = TRUE;
 
 	if (!ReadFile(service->remotePipe, Stream_Pointer(service->inStream),
-				service->expectedBytes, &readBytes, NULL) ||
+				service->expectedBytes, &readBytes, nullptr) ||
 			!readBytes) {
 		if (GetLastError() == ERROR_NO_DATA) {
 			return OGON_INCOMING_BYTES_WANT_MORE_DATA;
@@ -289,7 +289,7 @@ BOOL ogon_service_write_message(
 	toWrite = Stream_Length(service->outStream);
 	ptr = Stream_Buffer(service->outStream);
 	while (toWrite) {
-		if (!WriteFile(service->remotePipe, ptr, toWrite, &written, NULL)) {
+		if (!WriteFile(service->remotePipe, ptr, toWrite, &written, nullptr)) {
 			ret = FALSE;
 			goto out;
 		}

@@ -116,7 +116,7 @@ out_fail:
 	}
 	memset(reply, 0, sizeof(struct pam_response) * num_msg);
 	free(reply);
-	*resp = NULL;
+	*resp = nullptr;
 	return PAM_CONV_ERR;
 }
 
@@ -138,7 +138,8 @@ long ogon_authenticate_pam(const char* username, const char* password, int* erro
 	}
 	auth_info->pamc.conv = &verify_pam_conv;
 	auth_info->pamc.appdata_ptr = &(auth_info->user_pass);
-	error = pam_start(service_name, 0, &(auth_info->pamc), &(auth_info->ph));
+	error = pam_start(
+			service_name, nullptr, &(auth_info->pamc), &(auth_info->ph));
 
 	if (error != PAM_SUCCESS) {
 		fprintf(stderr, "pam_start failed: %s\n", pam_strerror(auth_info->ph, error));

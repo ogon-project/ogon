@@ -69,11 +69,11 @@ static DWORD weston_clean_up_process(PROCESS_INFORMATION *pi) {
 	if (pi->hProcess) {
 		GetExitCodeProcess(pi->hProcess, &ret);
 		CloseHandle(pi->hProcess);
-		pi->hProcess = NULL;
+		pi->hProcess = nullptr;
 	}
 	if (pi->hThread) {
 		CloseHandle(pi->hThread);
-		pi->hThread = NULL;
+		pi->hThread = nullptr;
 	}	return ret;
 }
 
@@ -89,7 +89,8 @@ static int weston_rds_stop_process(PROCESS_INFORMATION *pi, unsigned int wait_se
 	WaitForSingleObject(pi->hProcess, 5);
 #else
 	if (gStatus.removeMonitoringProcess(pi->dwProcessId)) {
-		TerminateChildProcess(pi->dwProcessId, wait_sec * 1000, NULL, sessionId);
+		TerminateChildProcess(
+				pi->dwProcessId, wait_sec * 1000, nullptr, sessionId);
 	}
 #endif
 	weston_clean_up_process(pi);
@@ -101,7 +102,7 @@ static RDS_MODULE_COMMON* weston_rds_module_new(void)
 	rdsModuleWeston* weston = (rdsModuleWeston *)calloc(1, sizeof(*weston));
 	if (!weston) {
 		fprintf(stderr, "%s: error allocating weston module memory\n", __FUNCTION__);
-		return NULL;
+		return nullptr;
 	}
 
 	WLog_Print(gModuleLog, WLOG_DEBUG, "RdsModuleNew");
@@ -132,9 +133,10 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 	rdsModuleWeston *weston = (rdsModuleWeston *)module;
 	DWORD SessionId = module->sessionId;
 
-	if (getpwnam_r(module->userName, &pw, buf, BUF_SIZE, &result_pwd) != 0 || result_pwd == NULL) {
+	if (getpwnam_r(module->userName, &pw, buf, BUF_SIZE, &result_pwd) != 0 ||
+			result_pwd == nullptr) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": getpwnam failed", module->sessionId);
-		return NULL;
+		return nullptr;
 	}
 
 	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": RdsModuleStart: Endpoint: %s", SessionId, endpoint);
@@ -148,7 +150,7 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 	if (!getPropertyStringWrapper(module->baseConfigPath, &gConfig, SessionId, "cmd", cmd, 256)) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not query %s.cmd, stopping weston module, because of missing command ",
 				   SessionId, module->baseConfigPath);
-		return NULL;
+		return nullptr;
 	}
 
 	sprintf_s(lpCommandLine, sizeof(lpCommandLine),	"%s --backend=ogon-backend.so --session-id=%" PRIu32 " --width=%ld --height=%ld",
@@ -156,8 +158,9 @@ static char* weston_rds_module_start(RDS_MODULE_COMMON* module)
 
 	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": Starting process with command line: %s", SessionId, lpCommandLine);
 
-	status = CreateProcessAsUserA(module->userToken, NULL, lpCommandLine, NULL,
-			NULL, FALSE, 0, module->envBlock, pw.pw_dir,	&(weston->si), &(weston->pi));
+	status = CreateProcessAsUserA(module->userToken, nullptr, lpCommandLine,
+			nullptr, nullptr, FALSE, 0, module->envBlock, pw.pw_dir,
+			&(weston->si), &(weston->pi));
 	if (!status) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not start weston application %s", SessionId, cmd);
 		goto out_create_process_error;
@@ -188,7 +191,7 @@ out_wait_pipe_error:
 out_pipe_name_error:
 	weston_rds_stop_process(&(weston->pi), 2, SessionId);
 out_create_process_error:
-	return NULL;
+	return nullptr;
 }
 
 static int weston_rds_module_stop(RDS_MODULE_COMMON *module)
@@ -207,7 +210,7 @@ static char *weston_get_custom_info(RDS_MODULE_COMMON *module)
 	char *customInfo = (char *)malloc(11);
 	if (!customInfo) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": malloc failed", module->sessionId);
-		return NULL;
+		return nullptr;
 	}
 
 	snprintf(customInfo, 11, "%" PRIu32 "", weston->pi.dwProcessId);

@@ -41,23 +41,20 @@
 
 using namespace std;
 
-static struct option long_options[] = {
-		{"help", no_argument, 0, 'h' },
-		{"list", no_argument, 0, 'l' },
-		{"listdetail",  no_argument, 0, 'x' },
-		{"user", required_argument, 0, 'u' },
-		{"password", required_argument, 0, 'p'},
-		{"session", required_argument, 0, 's' },
-		{"server", required_argument, 0, 'e' },
-		{"disconnect", no_argument, 0, 'd' },
-		{"logoff", no_argument, 0, 'o' },
-		{"disconnectUser", required_argument, 0, 'D' },
-		{"logoffUser", required_argument, 0, 'O' },
-		{"startShadow", no_argument, 0,  'm' },
-		{"stopShadow", no_argument, 0,  't' },
-		{"text", required_argument, 0,  'g' },
-		{0, 0, 0, 0 }
-};
+static struct option long_options[] = {{"help", no_argument, nullptr, 'h'},
+		{"list", no_argument, nullptr, 'l'},
+		{"listdetail", no_argument, nullptr, 'x'},
+		{"user", required_argument, nullptr, 'u'},
+		{"password", required_argument, nullptr, 'p'},
+		{"session", required_argument, nullptr, 's'},
+		{"server", required_argument, nullptr, 'e'},
+		{"disconnect", no_argument, nullptr, 'd'},
+		{"logoff", no_argument, nullptr, 'o'},
+		{"disconnectUser", required_argument, nullptr, 'D'},
+		{"logoffUser", required_argument, nullptr, 'O'},
+		{"startShadow", no_argument, nullptr, 'm'},
+		{"stopShadow", no_argument, nullptr, 't'},
+		{"text", required_argument, nullptr, 'g'}, {nullptr, 0, nullptr, 0}};
 
 #define SHORT_OPTS "hlxu:p:s:e:doD:O:mtg:"
 
@@ -125,7 +122,7 @@ static const char *addrFamToString(DWORD type) {
 
 static BOOL printSessionDetailed(
 		UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer) {
-	LPSTR pBuffer = NULL;
+	LPSTR pBuffer = nullptr;
 	BOOL bSuccess;
 	DWORD bytesReturned = 0;
 	char buffer[25];
@@ -267,8 +264,8 @@ static BOOL printSessionDetailed(
 
 static BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState,
 		HANDLE hServer, BOOL printHeader) {
-	LPSTR pUsername = NULL;
-	LPSTR pDomain = NULL;
+	LPSTR pUsername = nullptr;
+	LPSTR pDomain = nullptr;
 	BOOL bSuccess;
 	DWORD bytesReturned = 0;
 
@@ -311,7 +308,7 @@ static bool listSessions(HANDLE hServer, bool detailed) {
 	BOOL first = true;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessions(hServer, 0, 1, &pSessionInfo, &count);
 
@@ -343,13 +340,13 @@ static bool terminateUserSessions(
 	DWORD count;
 	BOOL bSuccess;
 	PWTS_SESSION_INFO pSessionInfo;
-	LPSTR pUserName = NULL;
+	LPSTR pUserName = nullptr;
 	DWORD bytesReturned = 0;
 	UINT32 sessionId;
 	BOOL bReturnValue = true;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessions(hServer, 0, 1, &pSessionInfo, &count);
 
@@ -375,7 +372,7 @@ static bool terminateUserSessions(
 
 		bSuccess = strcmp(pUserName, user) == 0;
 		WTSFreeMemory(pUserName);
-		pUserName = NULL;
+		pUserName = nullptr;
 
 		if (!bSuccess) {
 			continue;
@@ -457,7 +454,7 @@ int main(int argc,char * const argv[]) {
 	bool stopShadow = false;
 	bool textMessage = false;
 	std::string message;
-	char *envval = NULL;
+	char *envval = nullptr;
 	std::string servername = "";
 
 	while (1) {
@@ -551,7 +548,8 @@ int main(int argc,char * const argv[]) {
 	}
 
 	if (username.size() > 0 ) {
-		if (!WTSLogonUser(serverHandle, username.c_str(), password.c_str(), NULL)) {
+		if (!WTSLogonUser(serverHandle, username.c_str(), password.c_str(),
+					nullptr)) {
 			printf("Incorrect username or password!\n");
 			goto out;
 		}

@@ -30,13 +30,13 @@ namespace ogon { namespace sessionmanager { namespace task {
 
 	class ThreadTask: public Task {
 	public:
-		ThreadTask():mhStarted(0), mhStop(0){}
-		virtual ~ThreadTask() {}
-		virtual void run() = 0;
+	 ThreadTask() : mhStarted(nullptr), mhStop(nullptr) {}
+	 virtual ~ThreadTask() {}
+	 virtual void run() = 0;
 
-		void setHandles(HANDLE stopHandle,HANDLE startedHandle) {
-			mhStop = stopHandle;
-			mhStarted = startedHandle;
+	 void setHandles(HANDLE stopHandle, HANDLE startedHandle) {
+		 mhStop = stopHandle;
+		 mhStarted = startedHandle;
 		}
 
 		virtual void preProcess(){

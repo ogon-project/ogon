@@ -55,16 +55,26 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 	static wLog *logger_Session = WLog_Get("ogon.sessionmanager.session.session");
 
-	Session::Session(UINT32 sessionID) : mSessionID(sessionID),
-		mSessionStarted(false), mPermissions(0), mMaxXRes(0), mMaxYRes(0),
-		mUserToken(NULL), mpEnvBlock(NULL), mCurrentModuleContext(NULL),
-		mAuthModuleContext(NULL), mCurrentState(WTSInit), mUserUID(0),
-		mGroupUID(0), mAllowedChannelsParsed(false),
-		mhExecutorStopEvent(INVALID_HANDLE_VALUE),
-		mhExecutorThreadStartedEvent(INVALID_HANDLE_VALUE),
-		mhExecutorThread(NULL), mExecutorRunning(false),
-		mSBPVersionCompatible(false), mCurrentModule(NULL)
-	{
+	Session::Session(UINT32 sessionID)
+		: mSessionID(sessionID),
+		  mSessionStarted(false),
+		  mPermissions(0),
+		  mMaxXRes(0),
+		  mMaxYRes(0),
+		  mUserToken(nullptr),
+		  mpEnvBlock(nullptr),
+		  mCurrentModuleContext(nullptr),
+		  mAuthModuleContext(nullptr),
+		  mCurrentState(WTSInit),
+		  mUserUID(0),
+		  mGroupUID(0),
+		  mAllowedChannelsParsed(false),
+		  mhExecutorStopEvent(INVALID_HANDLE_VALUE),
+		  mhExecutorThreadStartedEvent(INVALID_HANDLE_VALUE),
+		  mhExecutorThread(nullptr),
+		  mExecutorRunning(false),
+		  mSBPVersionCompatible(false),
+		  mCurrentModule(nullptr) {
 		if (!InitializeCriticalSectionAndSpinCount(&mCSection, 0x00000400)) {
 			WLog_Print(logger_Session, WLOG_FATAL,
 				"Failed to initialize session critical section (mCSection)");
@@ -77,13 +87,15 @@ namespace ogon { namespace sessionmanager { namespace session {
 			throw std::bad_alloc();
 		}
 
-		if (!(mhExecutorStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mhExecutorStopEvent =
+							CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			WLog_Print(logger_Session, WLOG_FATAL,
 				"Failed to create session executor stop event");
 			throw std::bad_alloc();
 		}
 
-		if (!(mhExecutorThreadStartedEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mhExecutorThreadStartedEvent =
+							CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			WLog_Print(logger_Session, WLOG_FATAL,
 				"Failed to create session executor thread started event");
 			throw std::bad_alloc();
@@ -106,7 +118,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 		if (mhExecutorThread) {
 			CloseHandle(mhExecutorThread);
-			mhExecutorThread = NULL;
+			mhExecutorThread = nullptr;
 		}
 		CloseHandle(mhExecutorStopEvent);
 		CloseHandle(mhExecutorThreadStartedEvent);
@@ -194,11 +206,12 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 		if (mUserToken) {
 			CloseHandle(mUserToken);
-			mUserToken = NULL;
+			mUserToken = nullptr;
 		}
 
-		return LogonUserA(mUsername.c_str(), mDomain.c_str(), NULL, LOGON32_LOGON_INTERACTIVE,
-				LOGON32_PROVIDER_DEFAULT, &mUserToken);
+		return LogonUserA(mUsername.c_str(), mDomain.c_str(), nullptr,
+				LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
+				&mUserToken);
 	}
 
 	void Session::applyEnvironmentFilterAndAdd(char **envBlock) {
@@ -256,7 +269,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 	}
 
 	bool Session::checkEnvironmentPath(char **envBlock) {
-		if (!GetEnvironmentVariableEBA(*envBlock, "PATH", NULL, 0)) {
+		if (!GetEnvironmentVariableEBA(*envBlock, "PATH", nullptr, 0)) {
 			// did not find PATH, so set default
 			if (!SetEnvironmentVariableEBA(envBlock, "PATH", STD_PATH)) {
 				return false;
@@ -282,7 +295,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 		if (mpEnvBlock) {
 			free(mpEnvBlock);
-			mpEnvBlock = NULL;
+			mpEnvBlock = nullptr;
 		}
 
 		applyEnvironmentFilterAndAdd(&mpEnvBlock);
@@ -404,7 +417,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		char envstr[256];
 		if (mpEnvBlock) {
 			free(mpEnvBlock);
-			mpEnvBlock = NULL;
+			mpEnvBlock = nullptr;
 		}
 
 		applyEnvironmentFilterAndAdd(&mpEnvBlock);
@@ -511,8 +524,8 @@ namespace ogon { namespace sessionmanager { namespace session {
 		int length;
 		int currentLength;
 		char *lpszEnvironmentBlock;
-		if (orgBlock == NULL) {
-			return NULL;
+		if (orgBlock == nullptr) {
+			return nullptr;
 		}
 
 		length = 0;
@@ -525,7 +538,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		lpszEnvironmentBlock = (char *)malloc((length + 2) * sizeof(char));
 		if (!lpszEnvironmentBlock) {
             WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": malloc failed!", mSessionID);
-            return NULL;
+			return nullptr;
 		}
 		memcpy(lpszEnvironmentBlock, orgBlock, length + 1);
 
@@ -640,7 +653,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		}
 	freeContext:
 		mCurrentModule->freeContext(mCurrentModuleContext);
-		mCurrentModuleContext = NULL;
+		mCurrentModuleContext = nullptr;
 		return false;
 	}
 
@@ -693,7 +706,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 			mCurrentModule->stop(mCurrentModuleContext);
 			freeModuleContext(mCurrentModuleContext);
 			mCurrentModule->freeContext(mCurrentModuleContext);
-			mCurrentModuleContext = NULL;
+			mCurrentModuleContext = nullptr;
 		}
 		mPipeName.clear();
 		mSessionStarted = false;
@@ -883,12 +896,13 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 		if ((fd = open(filename.c_str(), O_RDWR | O_CREAT, S_IRUSR)) >= 0) {
 			f = fdopen(fd, "w");
-			if(f != NULL) {
+			if (f != nullptr) {
 				fprintf(f, "%s", mAuthToken.c_str());
 				fclose(f);
 			} else {
-				 WLog_Print(logger_Session, WLOG_ERROR,
-					"s %" PRIu32 ": fdopen: cannot open tokenfile %s", mSessionID, filename.c_str());
+				WLog_Print(logger_Session, WLOG_ERROR,
+						"s %" PRIu32 ": fdopen: cannot open tokenfile %s",
+						mSessionID, filename.c_str());
 			}
 		} else {
 			 WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": open: cannot create tokenfile %s",
@@ -958,7 +972,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		mAuthModuleContext = mCurrentModuleContext;
 		mAuthModelName = mModuleName;
 		mCurrentAuthModule = mCurrentModule;
-		mCurrentModuleContext = NULL;
+		mCurrentModuleContext = nullptr;
 		mPipeName.clear();
 		mSessionStarted = false;
 		return true;
@@ -970,8 +984,8 @@ namespace ogon { namespace sessionmanager { namespace session {
 		mCurrentModuleContext = mAuthModuleContext;
 		mModuleName = mAuthModelName;
 		mCurrentModule = mCurrentAuthModule;
-		mAuthModuleContext = NULL;
-		mCurrentAuthModule = NULL;
+		mAuthModuleContext = nullptr;
+		mCurrentAuthModule = nullptr;
 		mAuthModelName.clear();
 		mSessionStarted = true;
 		return;
@@ -993,7 +1007,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		mCurrentAuthModule->stop(mAuthModuleContext);
 		freeModuleContext(mAuthModuleContext);
 		mCurrentAuthModule->freeContext(mAuthModuleContext);
-		mAuthModuleContext = NULL;
+		mAuthModuleContext = nullptr;
 	}
 
 	bool Session::isCurrentModule(RDS_MODULE_COMMON *context) const {
@@ -1112,10 +1126,9 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 		SessionPtr currentSession = shared_from_this();
 
-		if (!(mhExecutorThread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) Session::executorThread, (void*) &currentSession,
-				0, NULL)))
-		{
+		if (!(mhExecutorThread = CreateThread(nullptr, 0,
+					  (LPTHREAD_START_ROUTINE)Session::executorThread,
+					  (void *)&currentSession, 0, nullptr))) {
 			WLog_Print(logger_Session, WLOG_ERROR, "s %" PRIu32 ": faile to create thread", mSessionID);
 			return false;
 		}

@@ -83,7 +83,7 @@ int main( int /*argc*/, const char** /*argv[]*/ ) {
 		fprintf(stderr, "Connection error (%s)\n", err.message);
 		dbus_error_free(&err);
 	}
-	if (NULL == conn) {
+	if (nullptr == conn) {
 		exit(1);
 	}
 
@@ -100,7 +100,7 @@ int main( int /*argc*/, const char** /*argv[]*/ ) {
 		msg = dbus_connection_pop_message(conn);
 		sessionid = 0;
 
-		if (NULL == msg) {
+		if (nullptr == msg) {
 			usleep(100);
 			continue;
 		}

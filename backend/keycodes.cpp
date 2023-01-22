@@ -809,7 +809,7 @@ static const char *EVDEV_KEY_NAMES[EVDEV_KEY_MAX + 1] = {
 
 const char *ogon_evdev_keyname(DWORD evdevcode) {
 	if (evdevcode > EVDEV_KEY_MAX) {
-		return NULL;
+		return nullptr;
 	}
 	return EVDEV_KEY_NAMES[evdevcode];
 }

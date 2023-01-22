@@ -101,9 +101,9 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 	char buf[BUF_SIZE];
 	pid_t pid = 0;
 	int numArgs = 0;
-	LPSTR *pArgs = NULL;
-	char **envp = NULL;
-	LPTCH lpszEnvironmentBlock = NULL;
+	LPSTR *pArgs = nullptr;
+	char **envp = nullptr;
+	LPTCH lpszEnvironmentBlock = nullptr;
 	sigset_t oldSigMask;
 	sigset_t newSigMask;
 	BOOL restoreSigMask = FALSE;
@@ -219,11 +219,11 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 		act.sa_flags = 0;
 		sigemptyset(&act.sa_mask);
 		for (sig = 1; sig < NSIG; sig++) {
-			sigaction(sig, &act, NULL);
+			sigaction(sig, &act, nullptr);
 		}
 		/* unblock all signals */
 		sigfillset(&set);
-		pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+		pthread_sigmask(SIG_UNBLOCK, &set, nullptr);
 
 #ifdef __sun	/* block all signals so that the child can safely reset the caller's handlers */
 		closefrom(3);
@@ -286,13 +286,13 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 		if ((status = poll(&pfd, 1, ticks_end - ticks_current)) < 1) {
 			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": could not get display id (poll error: %s)",
 					commonModule->sessionId, strerror(errno));
-			TerminateChildProcess(pid, 1, NULL, commonModule->sessionId);
+			TerminateChildProcess(pid, 1, nullptr, commonModule->sessionId);
 			goto finish;
 		}
 		if ((status = read(comm_fds[0], buf_ptr, BUF_SIZE - bytes_read)) <= 0) {
 			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": problem while reading the display id",
 					commonModule->sessionId);
-			TerminateChildProcess(pid, 1, NULL, commonModule->sessionId);
+			TerminateChildProcess(pid, 1, nullptr, commonModule->sessionId);
 			goto finish;
 		}
 		bytes_read += status;
@@ -301,7 +301,7 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 			if (sscanf(buf, "%u", &x11_module->displayNum) != 1) {
 				WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": problem parsing the received displayid data",
 						commonModule->sessionId);
-				TerminateChildProcess(pid, 1, NULL, commonModule->sessionId);
+				TerminateChildProcess(pid, 1, nullptr, commonModule->sessionId);
 				goto finish;
 			} else {
 				break;
@@ -310,7 +310,7 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 		ticks_current =  GetTickCount();
 		if (ticks_current >= ticks_end) {
 			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": reading display id timed out", commonModule->sessionId);
-			TerminateChildProcess(pid, 1 ,NULL, commonModule->sessionId);
+			TerminateChildProcess(pid, 1, nullptr, commonModule->sessionId);
 			goto finish;
 		}
 	}
@@ -321,7 +321,7 @@ static BOOL start_x_backend(rdsModuleX11 *x11_module, passwd *pwd,
 finish:
 	/* restore caller's original signal mask */
 	if (restoreSigMask) {
-		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
+		pthread_sigmask(SIG_SETMASK, &oldSigMask, nullptr);
 	}
 
 	if (pArgs) {
@@ -362,12 +362,12 @@ static DWORD clean_up_process(PROCESS_INFORMATION *pi) {
 	if (pi->hProcess) {
 		GetExitCodeProcess(pi->hProcess, &ret);
 		CloseHandle(pi->hProcess);
-		pi->hProcess = NULL;
+		pi->hProcess = nullptr;
 		pi->dwProcessId = 0;
 	}
 	if (pi->hThread) {
 		CloseHandle(pi->hThread);
-		pi->hThread = NULL;
+		pi->hThread = nullptr;
 		pi->dwThreadId = 0;
 	}
 
@@ -378,7 +378,7 @@ static RDS_MODULE_COMMON *x11_rds_module_new(void) {
 	rdsModuleX11 *module = (rdsModuleX11 *) calloc(1, sizeof(rdsModuleX11));
 	if (!module) {
 		fprintf(stderr, "%s: error allocating x11 module memory\n", __FUNCTION__);
-		return NULL;
+		return nullptr;
 	}
 	return (RDS_MODULE_COMMON *) module;
 }
@@ -414,7 +414,8 @@ static int x11_rds_stop_process(PROCESS_INFORMATION *pi,
 	WaitForSingleObject(pi->hProcess, 5);
 #else
 	if (gStatus.removeMonitoringProcess(pi->dwProcessId)) {
-		TerminateChildProcess(pi->dwProcessId, timeout_sec * 1000, NULL, sessionID);
+		TerminateChildProcess(
+				pi->dwProcessId, timeout_sec * 1000, nullptr, sessionID);
 	}
 #endif
 	clean_up_process(pi);
@@ -422,9 +423,9 @@ static int x11_rds_stop_process(PROCESS_INFORMATION *pi,
 }
 
 static BOOL x11_rds_module_init_xauth(const char *xauthFileName, uid_t uid, gid_t gid) {
-	FILE *fp = NULL;
+	FILE *fp = nullptr;
 	int fd;
-	Xauth *pxau = NULL;
+	Xauth *pxau = nullptr;
 	Xauth xauth;
 	char localhost[256];
 	BOOL found = FALSE;
@@ -447,7 +448,7 @@ static BOOL x11_rds_module_init_xauth(const char *xauthFileName, uid_t uid, gid_
 	xauth.data = cookie;
 	xauth.data_length = sizeof(cookie);
 
-	if ((fp = fopen(xauthFileName, "r")) != NULL) {
+	if ((fp = fopen(xauthFileName, "r")) != nullptr) {
 		while (!found && (pxau = XauReadAuth(fp))) {
 			if (	pxau->family == xauth.family &&
 				pxau->name_length == xauth.name_length &&
@@ -486,7 +487,7 @@ static BOOL x11_rds_module_init_xauth(const char *xauthFileName, uid_t uid, gid_
 
 	fchown(fd, uid, gid);
 
-	if ((fp = fdopen(fd, "w+")) == NULL) {
+	if ((fp = fdopen(fd, "w+")) == nullptr) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "error opening xauth file descriptor");
 		memset(cookie, 0, sizeof(cookie));
 		close(fd);
@@ -510,11 +511,11 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 	rdsModuleX11 *x11;
 	char buf[BUF_SIZE];
 	char xauthFileName[BUF_SIZE];
-	char *pipeName = NULL;
-	char *cwd = NULL;
+	char *pipeName = nullptr;
+	char *cwd = nullptr;
 	unsigned long tmpLen = 0;
 	passwd pw;
-	passwd *result_pwd = NULL;
+	passwd *result_pwd = nullptr;
 
 	x11 = (rdsModuleX11 *) module;
 	x11_rds_module_reset_process_informations(&(x11->VCStartupInfo),
@@ -524,10 +525,10 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 
 	SessionId = x11->commonModule.sessionId;
 
-
-	if (getpwnam_r(module->userName, &pw, buf, BUF_SIZE, &result_pwd) != 0 || result_pwd == NULL) {
+	if (getpwnam_r(module->userName, &pw, buf, BUF_SIZE, &result_pwd) != 0 ||
+			result_pwd == nullptr) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": getpwnam failed", SessionId);
-		return NULL;
+		return nullptr;
 	}
 
 	if (getPropertyStringWrapper(module->baseConfigPath, &gConfig,
@@ -535,11 +536,12 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 		WLog_Print(gModuleLog, WLOG_DEBUG, "config: xAuthorityPath = %s", buf);
 		sprintf_s(xauthFileName, sizeof(xauthFileName), "%s/.Xauthority.ogon.%" PRIu32 "", buf, SessionId);
 	} else {
-		tmpLen = GetEnvironmentVariableEBA(module->envBlock, "HOME", NULL, 0);
+		tmpLen =
+				GetEnvironmentVariableEBA(module->envBlock, "HOME", nullptr, 0);
 		if (tmpLen) {
 			if (!(cwd = (char *) malloc(tmpLen))) {
 				WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": couldn't allocate cwd", SessionId);
-				return NULL;
+				return nullptr;
 			}
 			GetEnvironmentVariableEBA(module->envBlock, "HOME", cwd, tmpLen);
 		} else {
@@ -598,8 +600,9 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 		strncpy(buf, "ogonXsession", BUF_SIZE);
 	}
 
-	status = CreateProcessAsUserA(module->userToken, NULL, buf, NULL, NULL, FALSE,
-				0, module->envBlock, cwd, &(x11->WMStartupInfo), &(x11->WMProcessInformation));
+	status = CreateProcessAsUserA(module->userToken, nullptr, buf, nullptr,
+			nullptr, FALSE, 0, module->envBlock, cwd, &(x11->WMStartupInfo),
+			&(x11->WMProcessInformation));
 
 	if (!status) {
 		WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": problem starting %s (status %" PRId32 ")",
@@ -622,7 +625,7 @@ static char *x11_rds_module_start(RDS_MODULE_COMMON *module) {
 out_fail:
 	free(cwd);
 	free(pipeName);
-	return NULL;
+	return nullptr;
 }
 
 static void x11_execute_stop_script(rdsModuleX11 *x11) {
@@ -630,7 +633,7 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 	STARTUPINFO StopInfo;
 	BOOL status;
 	int tmpLen;
-	char *cwd = NULL;
+	char *cwd = nullptr;
 	RDS_MODULE_COMMON *commonModule = &x11->commonModule;
 	UINT32 sessionID = commonModule->sessionId;
 
@@ -640,7 +643,8 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 
 	x11_rds_module_reset_process_informations(&StopInfo, &StopProcessInformation);
 
-	tmpLen = GetEnvironmentVariableEBA(commonModule->envBlock, "HOME", NULL, 0);
+	tmpLen = GetEnvironmentVariableEBA(
+			commonModule->envBlock, "HOME", nullptr, 0);
 	if (tmpLen) {
 		if (!(cwd = (char *) malloc(tmpLen))) {
 			WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": problem allocating cwd buffer",
@@ -650,10 +654,9 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 		GetEnvironmentVariableEBA(commonModule->envBlock, "HOME", cwd, tmpLen);
 	}
 
-	status = CreateProcessAsUserA(commonModule->userToken,
-	                              NULL, x11->wmStop,
-	                              NULL, NULL, FALSE, 0, commonModule->envBlock, cwd,
-	                              &StopInfo, &StopProcessInformation);
+	status = CreateProcessAsUserA(commonModule->userToken, nullptr, x11->wmStop,
+			nullptr, nullptr, FALSE, 0, commonModule->envBlock, cwd, &StopInfo,
+			&StopProcessInformation);
 
 	free(cwd);
 
@@ -667,7 +670,8 @@ static void x11_execute_stop_script(rdsModuleX11 *x11) {
 	           "s %" PRIu32 ": stopwm script [%s] started with pid %" PRIu32 ")",
 	           sessionID, x11->wmStop, StopProcessInformation.dwProcessId);
 
-	TerminateChildProcessAfterTimeout(StopProcessInformation.dwProcessId, 5000, NULL, sessionID);
+	TerminateChildProcessAfterTimeout(
+			StopProcessInformation.dwProcessId, 5000, nullptr, sessionID);
 }
 
 static int x11_rds_module_stop(RDS_MODULE_COMMON *module) {
@@ -759,7 +763,7 @@ static int x11_rds_module_connect(RDS_MODULE_COMMON *module) {
 	BOOL status = TRUE;
 	UINT32 sessionID = x11->commonModule.sessionId;
 	int tmpLen;
-	char *cwd = NULL;
+	char *cwd = nullptr;
 
 	if (x11->VCProcessInformation.dwProcessId) {
 		clean_up_process(&x11->VCProcessInformation);
@@ -768,7 +772,8 @@ static int x11_rds_module_connect(RDS_MODULE_COMMON *module) {
 	// starting the virtual channel script
 	if (getPropertyStringWrapper(x11->commonModule.baseConfigPath, &gConfig,
 	                             x11->commonModule.sessionId, "startvc", buf, BUF_SIZE)) {
-		tmpLen = GetEnvironmentVariableEBA(x11->commonModule.envBlock, "HOME", NULL, 0);
+		tmpLen = GetEnvironmentVariableEBA(
+				x11->commonModule.envBlock, "HOME", nullptr, 0);
 		if (tmpLen) {
 			if (!(cwd = (char *) malloc(tmpLen))) {
 				WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": error allocating cwd", sessionID);
@@ -777,10 +782,9 @@ static int x11_rds_module_connect(RDS_MODULE_COMMON *module) {
 			GetEnvironmentVariableEBA(x11->commonModule.envBlock, "HOME", cwd, tmpLen);
 		}
 
-		status = CreateProcessAsUserA(x11->commonModule.userToken,
-		                              NULL, buf,
-		                              NULL, NULL, FALSE, 0, x11->commonModule.envBlock, cwd,
-		                              &(x11->VCStartupInfo), &(x11->VCProcessInformation));
+		status = CreateProcessAsUserA(x11->commonModule.userToken, nullptr, buf,
+				nullptr, nullptr, FALSE, 0, x11->commonModule.envBlock, cwd,
+				&(x11->VCStartupInfo), &(x11->VCProcessInformation));
 
 		free(cwd);
 

@@ -41,7 +41,7 @@ public:
 		/* Hack to prevent closing socket from forked processes */
 		if (firstProcessId != getpid()) {
 			socket_  = -1;
-			ssl_ = NULL;
+			ssl_ = nullptr;
 		}
 	};
 

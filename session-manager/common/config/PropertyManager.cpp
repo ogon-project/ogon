@@ -102,7 +102,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 			// requesting session values
 			std::string actualPath = localPath.substr(gConnectionPrefix.size());
 			sessionNS::SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(sessionID);
-			if (NULL == currentSession) {
+			if (nullptr == currentSession) {
 				WLog_Print(logger_PropertyManager, WLOG_ERROR,
 					"Cannot get Session for sessionID %" PRIu32 "", sessionID);
 				return false;
@@ -198,7 +198,7 @@ namespace ogon { namespace sessionmanager { namespace config {
 			} else {
 				// for a given sessionID we try to get the username from the sessionstore
 				sessionNS::SessionPtr session = APP_CONTEXT.getSessionStore()->getSession(sessionID);
-				if (NULL == session) {
+				if (nullptr == session) {
 					return false;
 				}
 				currentUserName = session->getUserName();

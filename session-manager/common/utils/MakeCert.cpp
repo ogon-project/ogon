@@ -80,7 +80,7 @@ int ogon_generate_certificate(std::string &certFile, std::string &keyFile) {
 		goto out;
 	}
 
-	if (makecert_context_output_certificate_file(context, NULL) < 0) {
+	if (makecert_context_output_certificate_file(context, nullptr) < 0) {
 		WLog_Print(logger_makeCert, WLOG_ERROR, "failed to create certfile %s!", certFile.c_str());
 		goto out;
 	}
@@ -90,7 +90,7 @@ int ogon_generate_certificate(std::string &certFile, std::string &keyFile) {
 		goto out;
 	}
 
-	if (makecert_context_output_private_key_file(context, NULL) < 0)	{
+	if (makecert_context_output_private_key_file(context, nullptr) < 0) {
 		WLog_Print(logger_makeCert, WLOG_ERROR, "failed to create keyfile %s!", keyFile.c_str());
 		goto out;
 	}

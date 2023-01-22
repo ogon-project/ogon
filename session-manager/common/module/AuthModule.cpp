@@ -33,9 +33,11 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 	static wLog *logger_AuthModule = WLog_Get("ogon.sessionmanager.module.authmodule");
 
-	AuthModule::AuthModule() : mfpNew(0), mfpFree(0), mfpLogonUser(0),
-		mLoadedLib(NULL) {
-	}
+	AuthModule::AuthModule()
+		: mfpNew(nullptr),
+		  mfpFree(nullptr),
+		  mfpLogonUser(nullptr),
+		  mLoadedLib(nullptr) {}
 
 	int AuthModule::initModule(const std::string &moduleFileName, RDS_AUTH_MODULE_ENTRY_POINTS *entrypoints) {
 

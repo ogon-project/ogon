@@ -49,7 +49,7 @@ namespace ogon { namespace sessionmanager { namespace otsapi {
 
 		sessionNS::SessionPtr session = APP_CONTEXT.getSessionStore()->getSession(mSessionId);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_TaskLogoff, WLOG_ERROR, "s %" PRIu32 ": Session not found!", mSessionId);
 			return false;
 		}

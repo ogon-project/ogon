@@ -47,7 +47,7 @@
 using namespace std;
 
 static HANDLE gMainEvent;
-char *g_configFileName = 0;
+char *g_configFileName = nullptr;
 static wLog *logger_sessionManager = WLog_Get("ogon.sessionmanager");
 
 int checkConfigFile(std::string checkConfigFileName);
@@ -133,18 +133,27 @@ static void signal_handler_internal(int signal) {
 #endif /* WIN32 not defined */
 
 static COMMAND_LINE_ARGUMENT_A ogon_session_manager_args[] = {
-	{ "help", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "prints help" },
-	{ "h", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "prints help" },
-	{ "kill", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "kill daemon" },
-	{ "nodaemon", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "no daemon" },
-	{ "config", COMMAND_LINE_VALUE_REQUIRED, "<configfile>", NULL, NULL, -1, NULL, "set config file" },
-	{ "version", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print version" },
-	{ "checkconfig", COMMAND_LINE_VALUE_REQUIRED, "<configfile>", "", NULL, -1, NULL, "config file to check" },
-	{ "log", COMMAND_LINE_VALUE_REQUIRED, "<syslog> or <journald>", "", NULL, -1, NULL, "Log type to use" },
-	{ "loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", NULL, -1, NULL, "logging level"},
-	{ "buildconfig", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print build configuration"},
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
+		{"help", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"prints help"},
+		{"h", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"prints help"},
+		{"kill", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"kill daemon"},
+		{"nodaemon", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"no daemon"},
+		{"config", COMMAND_LINE_VALUE_REQUIRED, "<configfile>", nullptr,
+				nullptr, -1, nullptr, "set config file"},
+		{"version", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"print version"},
+		{"checkconfig", COMMAND_LINE_VALUE_REQUIRED, "<configfile>", "",
+				nullptr, -1, nullptr, "config file to check"},
+		{"log", COMMAND_LINE_VALUE_REQUIRED, "<syslog> or <journald>", "",
+				nullptr, -1, nullptr, "Log type to use"},
+		{"loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", nullptr, -1,
+				nullptr, "logging level"},
+		{"buildconfig", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1,
+				nullptr, "print build configuration"},
+		{nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr}};
 
 static void printhelprow(
 		const char *kshort, const char *klong, const char *helptext) {
@@ -159,13 +168,15 @@ static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
 	printhelprow("-h", "--help", "prints this help screen");
-	printhelprow(NULL, "--kill", "kills a running daemon");
-	printhelprow(NULL, "--config=<filename>", "path to the config file");
-	printhelprow(NULL, "--checkconfig=<filename>", "checks the given config file");
-	printhelprow(NULL, "--version","print the version");
-	printhelprow(NULL, "--log=<system> syslog or journald", "log type to use");
-	printhelprow(NULL, "--loglevel=<level>", "level for logging");
-	printhelprow(NULL, "--buildconfig", "Print build configuration");
+	printhelprow(nullptr, "--kill", "kills a running daemon");
+	printhelprow(nullptr, "--config=<filename>", "path to the config file");
+	printhelprow(nullptr, "--checkconfig=<filename>",
+			"checks the given config file");
+	printhelprow(nullptr, "--version", "print the version");
+	printhelprow(
+			nullptr, "--log=<system> syslog or journald", "log type to use");
+	printhelprow(nullptr, "--loglevel=<level>", "level for logging");
+	printhelprow(nullptr, "--buildconfig", "Print build configuration");
 }
 
 static void parseCommandLine(int argc, char **argv, int &no_daemon,
@@ -188,7 +199,8 @@ static void parseCommandLine(int argc, char **argv, int &no_daemon,
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 	flags |= COMMAND_LINE_SEPARATOR_EQUAL;
 
-	status = CommandLineParseArgumentsA(argc, (LPSTR *) argv, ogon_session_manager_args, flags, NULL, NULL, NULL);
+	status = CommandLineParseArgumentsA(argc, (LPSTR *)argv,
+			ogon_session_manager_args, flags, nullptr, nullptr, nullptr);
 
 	if (status != COMMAND_LINE_STATUS_PRINT_HELP && status != 0)
 	{
@@ -265,7 +277,7 @@ static void parseCommandLine(int argc, char **argv, int &no_daemon,
 			exit(0);
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 }
 
 static void initWLog(unsigned wlog_appender_type, DWORD logLevel) {
@@ -338,7 +350,7 @@ void killProcess(char *pid_file) {
 
 	WLog_Print(logger_sessionManager, WLOG_INFO, "stopping ogon");
 
-	fp = NULL;
+	fp = nullptr;
 
 	if (PathFileExistsA(pid_file)) {
 		fp = fopen(pid_file, "r");
@@ -488,15 +500,15 @@ static void setupSignalHandler() {
 	/* block all signals during execution of signal handler */
 	sigfillset(&act.sa_mask);
 	/* handle the following signals */
-	sigaction(SIGINT, &act, NULL);
-	sigaction(SIGTERM, &act, NULL);
-	sigaction(SIGHUP, &act, NULL);
+	sigaction(SIGINT, &act, nullptr);
+	sigaction(SIGTERM, &act, nullptr);
+	sigaction(SIGHUP, &act, nullptr);
 	/* and unblock them as well */
 	sigemptyset(&set);
 	sigaddset(&set, SIGINT);
 	sigaddset(&set, SIGTERM);
 	sigaddset(&set, SIGHUP);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+	pthread_sigmask(SIG_UNBLOCK, &set, nullptr);
 #endif
 }
 
@@ -546,7 +558,7 @@ int main(int argc, char **argv) {
 #ifndef WIN32
 	/* block all signals per default */
 	sigfillset(&set);
-	if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
+	if (pthread_sigmask(SIG_BLOCK, &set, nullptr)) {
 		fprintf(stderr, "failed to block all signals\n");
 		return 1;
 	}
@@ -564,7 +576,7 @@ int main(int argc, char **argv) {
 		killProcess(pid_file);
 	}
 
-	if (!(gMainEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(gMainEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_Print(logger_sessionManager, WLOG_FATAL, "Failed to create main event");
 		return 1;
 	}
