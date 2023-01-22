@@ -111,7 +111,7 @@ static BOOL process_switch_pipe(ogon_connection *conn, wMessage *msg) {
 	}
 
 	conn->backend = backend_new(conn, &notification->props);
-	ret = (conn->backend != NULL);
+	ret = (conn->backend != nullptr);
 
 	/* backend was created successfully send capabilities */
 	if (ret) {
@@ -123,14 +123,15 @@ static BOOL process_switch_pipe(ogon_connection *conn, wMessage *msg) {
 		}
 	}
 
-	if (ogon_icp_sendResponse(notification->tag, msg->id, 0, ret, NULL) != 0) {
+	if (ogon_icp_sendResponse(notification->tag, msg->id, 0, ret, nullptr) !=
+			0) {
 		WLog_ERR(TAG, "problem occurred while sending switchPipe response");
 		ret = FALSE;
 	}
 
 	/* note: if everything went well the backend took ownership of
 	 * notification->props (and so all pointers in notification->props are
-	 * NULL), otherwise we will free them here */
+	 * nullptr), otherwise we will free them here */
 	ogon_backend_props_free(&notification->props);
 	free(notification);
 
@@ -175,7 +176,7 @@ static BOOL process_logoff(ogon_connection *conn, wMessage *msg) {
 		virtual_manager_close_all_channels(conn->front.vcm);
 	}
 
-	error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, NULL);
+	error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, nullptr);
 	if (error != 0) {
 		WLog_ERR(TAG, "problem occured while sending logging off response");
 		ret = FALSE;
@@ -220,7 +221,7 @@ static BOOL process_vc_connect(ogon_connection *conn, wMessage *msg) {
 		WLog_ERR(TAG, "processing vc connect: no virtual channel manager");
 		int error = 0;
 		error = ogon_icp_sendResponse(
-				notification->tag, msg->id, 0, FALSE, NULL);
+				notification->tag, msg->id, 0, FALSE, nullptr);
 		if (error != 0) {
 			WLog_ERR(TAG, "ogon_icp_sendResponse failed");
 		}
@@ -265,7 +266,7 @@ out_exit:
 static BOOL process_start_remote_control(ogon_connection *conn, wMessage *msg) {
 	struct ogon_notification_start_remote_control *notification =
 			(struct ogon_notification_start_remote_control *)msg->wParam;
-	struct rds_notification_new_shadowing_frontend *new_shadow_peer = NULL;
+	struct rds_notification_new_shadowing_frontend *new_shadow_peer = nullptr;
 	ogon_front_connection *front = &conn->front;
 	int mask, fd, error;
 	ogon_source_state stateRdp;
@@ -297,7 +298,7 @@ static BOOL process_start_remote_control(ogon_connection *conn, wMessage *msg) {
 	conn->backend->active = FALSE;
 
 	if (!app_context_post_message_connection(notification->targetId,
-				NOTIFY_NEW_SHADOWING_FRONTEND, new_shadow_peer, NULL)) {
+				NOTIFY_NEW_SHADOWING_FRONTEND, new_shadow_peer, nullptr)) {
 		WLog_ERR(TAG, "destination session %" PRIu32 " not found",
 				notification->targetId);
 		goto out_post_error;
@@ -329,7 +330,7 @@ out_post_error:
 
 out_error:
 	error = ogon_icp_sendResponse(
-			notification->tag, NOTIFY_START_REMOTE_CONTROL, 0, FALSE, NULL);
+			notification->tag, NOTIFY_START_REMOTE_CONTROL, 0, FALSE, nullptr);
 	if (error != 0) {
 		WLog_ERR(TAG, "error sending startRemoteControl response");
 	}
@@ -462,8 +463,8 @@ static BOOL post_rewire_original_backend(
 	rewireNotif->rdpMask = mask;
 	rewireNotif->rewire = TRUE;
 
-	if (!app_context_post_message_connection(
-				conn->id, NOTIFY_REWIRE_ORIGINAL_BACKEND, rewireNotif, NULL)) {
+	if (!app_context_post_message_connection(conn->id,
+				NOTIFY_REWIRE_ORIGINAL_BACKEND, rewireNotif, nullptr)) {
 		WLog_ERR(TAG, "error posting notification to %ld", conn->id);
 		free(rewireNotif);
 		return FALSE;
@@ -640,7 +641,7 @@ static BOOL process_new_shadowing_frontend(
 	}
 out:
 	error = ogon_icp_sendResponse(notif->startRemoteControl.tag,
-			NOTIFY_START_REMOTE_CONTROL, 0, ret, NULL);
+			NOTIFY_START_REMOTE_CONTROL, 0, ret, nullptr);
 	if (error != 0) {
 		WLog_ERR(TAG,
 				"problem occured while sending startRemoteControl response");
@@ -740,11 +741,11 @@ static BOOL process_unwire_spy(ogon_connection *conn, wMessage *msg) {
 		WLog_ERR(TAG,
 				"strange the spy to remove(%ld) is not in the frontConnections",
 				spy->id);
-		if (msg != 0 && msg->lParam != 0) {
+		if (msg != nullptr && msg->lParam != nullptr) {
 			notification =
 					(struct rds_notification_stop_remote_control *)msg->lParam;
-			ogon_icp_sendResponse(
-					notification->tag, NOTIFY_STOP_SHADOWING, 0, FALSE, NULL);
+			ogon_icp_sendResponse(notification->tag, NOTIFY_STOP_SHADOWING, 0,
+					FALSE, nullptr);
 			free(notification);
 		}
 		return FALSE;
@@ -763,11 +764,11 @@ static BOOL process_stop_shadowing(ogon_connection *conn, wMessage *msg) {
 
 	if (conn->shadowing == conn) {
 		WLog_ERR(TAG, "%ld wasn't shadowing", conn->id);
-		if (msg != 0 && msg->wParam != 0) {
+		if (msg != nullptr && msg->wParam != nullptr) {
 			notification =
 					(struct rds_notification_stop_remote_control *)msg->wParam;
-			ogon_icp_sendResponse(
-					notification->tag, NOTIFY_STOP_SHADOWING, 0, FALSE, NULL);
+			ogon_icp_sendResponse(notification->tag, NOTIFY_STOP_SHADOWING, 0,
+					FALSE, nullptr);
 			free(notification);
 		}
 		ret = FALSE;
@@ -784,9 +785,9 @@ out:
 }
 
 static void fillParameter(char *source, UINT32 *dest_len, char **dest) {
-	if (source == NULL) {
+	if (source == nullptr) {
 		*dest_len = 0;
-		*dest = NULL;
+		*dest = nullptr;
 	} else {
 		*dest_len = strlen(source) + 1;
 		*dest = source;
@@ -1051,7 +1052,7 @@ static int pre_connect_handler(int mask, int fd, HANDLE handle, void *data) {
 		read(peer->sockfd, pre_blob,
 				sizeof(pre_blob_magic)); /* skip the pre blob magic */
 
-		context->inStream = Stream_New(NULL, 128);
+		context->inStream = Stream_New(nullptr, 128);
 		if (!context->inStream) {
 			WLog_ERR(TAG, "error creating stream to read RDPEPS blob");
 			context->state = PRECONNECT_ERROR;
@@ -1206,18 +1207,18 @@ static void ogon_connection_free(freerdp_peer *peer, rdpContext *context) {
 			}
 			free(msg.wParam);
 			/* send back a failed (1) to session-manager */
-			error = ogon_icp_sendResponse(tag, msg.id, 1, FALSE, NULL);
+			error = ogon_icp_sendResponse(tag, msg.id, 1, FALSE, nullptr);
 			if (error != 0) {
 				WLog_ERR(TAG, "error sending logging off response");
 			}
 		}
 		MessageQueue_Free(conn->commandQueue);
-		conn->commandQueue = NULL;
+		conn->commandQueue = nullptr;
 	}
 
 	if (conn->stopEvent) {
 		CloseHandle(conn->stopEvent);
-		conn->stopEvent = NULL;
+		conn->stopEvent = nullptr;
 	}
 
 	if (conn->runloop->evloop) {
@@ -1230,10 +1231,10 @@ static void ogon_connection_free(freerdp_peer *peer, rdpContext *context) {
 	}
 
 	free(conn->runloop);
-	conn->runloop = NULL;
+	conn->runloop = nullptr;
 
 	LinkedList_Free(conn->frontConnections);
-	conn->frontConnections = NULL;
+	conn->frontConnections = nullptr;
 }
 
 static BOOL socket_activate_keepalive(int sock, int idle, int maxpkt) {
@@ -1259,13 +1260,13 @@ static BOOL socket_activate_keepalive(int sock, int idle, int maxpkt) {
 	return TRUE;
 }
 
-static int *connection_thread(void *args) {
+static WINAPI DWORD connection_thread(void *args) {
 	ogon_connection *connection;
 	ogon_event_source *pre_eventsource, *timeout_eventsource;
 	ogon_preconnect_context preconnect_context;
 	ogon_connection_runloop *runloop = (ogon_connection_runloop *)args;
 	freerdp_peer *peer = runloop->peer;
-	char *keepaliveParams = NULL;
+	char *keepaliveParams = nullptr;
 	int idle, maxPkt;
 
 	/* ================================================================================
@@ -1383,9 +1384,9 @@ static int *connection_thread(void *args) {
 		 * is already closed, from the rdp-server point of view, free the
 		 * command queue and do some clean up. To make sure this isn't done
 		 * twice when the freerdp context is finally freed set the callback to
-		 * NULL.
+		 * nullptr.
 		 */
-		peer->ContextFree = NULL;
+		peer->ContextFree = nullptr;
 		ogon_connection_free(peer, peer->context);
 
 		/**
@@ -1418,7 +1419,7 @@ ogon_connection_runloop *ogon_runloop_new(freerdp_peer *peer) {
 
 	ret = (ogon_connection_runloop *)calloc(1, sizeof(*ret));
 	if (!ret) {
-		return NULL;
+		return nullptr;
 	}
 
 	if (!(ret->evloop = eventloop_create())) {
@@ -1427,8 +1428,8 @@ ogon_connection_runloop *ogon_runloop_new(freerdp_peer *peer) {
 	}
 
 	ret->peer = peer;
-	ret->workThread = CreateThread(
-			NULL, 0, (LPTHREAD_START_ROUTINE)connection_thread, ret, 0, NULL);
+	ret->workThread =
+			CreateThread(nullptr, 0, connection_thread, ret, 0, nullptr);
 	if (!ret->workThread) {
 		WLog_ERR(TAG, "unable to create client connection thread");
 		goto error_thread;
@@ -1440,7 +1441,7 @@ error_thread:
 	eventloop_destroy(&ret->evloop);
 error_eventloop:
 	free(ret);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL ogon_connection_new(freerdp_peer *peer, rdpContext *context) {
@@ -1448,14 +1449,14 @@ static BOOL ogon_connection_new(freerdp_peer *peer, rdpContext *context) {
 	ogon_front_connection *front;
 
 	conn->id = app_context_get_connectionid();
-	conn->stopEvent = NULL;
+	conn->stopEvent = nullptr;
 	conn->fps = 20;
 	conn->sendDisconnect = TRUE;
 	conn->shadowing = conn;
 	conn->runloop = (ogon_connection_runloop *)peer->ContextExtra;
 
 	/* stop event */
-	if (!(conn->stopEvent = CreateEventA(NULL, TRUE, FALSE, NULL))) {
+	if (!(conn->stopEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_ERR(TAG, "error creating create stop event");
 		goto out_evloop;
 	}
@@ -1466,7 +1467,7 @@ static BOOL ogon_connection_new(freerdp_peer *peer, rdpContext *context) {
 	}
 
 	/* command queue */
-	if (!(conn->commandQueue = MessageQueue_New(NULL))) {
+	if (!(conn->commandQueue = MessageQueue_New(nullptr))) {
 		WLog_ERR(TAG, "error creating command message queue");
 		goto out_stopEvent;
 	}
@@ -1502,10 +1503,10 @@ out_eventSource:
 	eventloop_remove_source(&front->rdpEventSource);
 out_commandQueue:
 	MessageQueue_Free(conn->commandQueue);
-	conn->commandQueue = 0;
+	conn->commandQueue = nullptr;
 out_stopEvent:
 	CloseHandle(conn->stopEvent);
-	conn->stopEvent = NULL;
+	conn->stopEvent = nullptr;
 out_evloop:
 	eventloop_destroy(&conn->runloop->evloop);
 	// out_error:
@@ -1532,7 +1533,7 @@ ogon_connection *ogon_connection_create(ogon_connection_runloop *runloop) {
 
 	if (!freerdp_peer_context_new(peer)) {
 		WLog_ERR(TAG, "freerdp_peer_context_new failed");
-		return NULL;
+		return nullptr;
 	}
 
 	return (ogon_connection *)peer->context;
@@ -1557,7 +1558,7 @@ BOOL ogon_post_exit_shadow_notification(
 	eventloop_remove_source(&conn->front.rdpEventSource);
 
 	if (!app_context_post_message_connection(
-				conn->id, NOTIFY_REWIRE_ORIGINAL_BACKEND, notif, NULL)) {
+				conn->id, NOTIFY_REWIRE_ORIGINAL_BACKEND, notif, nullptr)) {
 		WLog_ERR(TAG, "error posting notification to %ld", conn->id);
 		free(notif);
 		goto out;
@@ -1566,11 +1567,11 @@ BOOL ogon_post_exit_shadow_notification(
 	returnValue = TRUE;
 out:
 
-	if (msg != 0 && msg->lParam != 0) {
+	if (msg != nullptr && msg->lParam != nullptr) {
 		notification =
 				(struct rds_notification_stop_remote_control *)msg->lParam;
-		ogon_icp_sendResponse(
-				notification->tag, NOTIFY_STOP_SHADOWING, 0, returnValue, NULL);
+		ogon_icp_sendResponse(notification->tag, NOTIFY_STOP_SHADOWING, 0,
+				returnValue, nullptr);
 		free(notification);
 	} else {
 		if (returnValue && ogon_icp_RemoteControlEnded(conn->id, spiedId) !=
@@ -1598,7 +1599,7 @@ void ogon_connection_close(ogon_connection *conn) {
 				conn->id); /* we don't care about the result */
 
 		conn->shadowing = conn;
-		if (!ogon_post_exit_shadow_notification(conn, NULL, FALSE)) {
+		if (!ogon_post_exit_shadow_notification(conn, nullptr, FALSE)) {
 			WLog_ERR(TAG,
 					"unable to post a 'rewire backend notification' to "
 					"connection %ld",
@@ -1620,7 +1621,7 @@ void ogon_connection_close(ogon_connection *conn) {
 			if (c == conn) /* don't post to ourself */
 				continue;
 
-			if (!ogon_post_exit_shadow_notification(c, NULL, TRUE)) {
+			if (!ogon_post_exit_shadow_notification(c, nullptr, TRUE)) {
 				WLog_ERR(TAG,
 						"unable to post a 'rewire backend notification' to "
 						"spying connection %ld",

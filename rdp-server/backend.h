@@ -32,6 +32,7 @@
 
 #include <ogon/backend.h>
 
+#include "commondefs.h"
 #include "eventloop.h"
 
 #ifdef __cplusplus
