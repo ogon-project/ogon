@@ -37,17 +37,16 @@
 #include "../common/global.h"
 #include "protocol.h"
 
-
-
 #define TAG OGON_TAG("backend.protocol")
 
 typedef BOOL (*pfn_ogon_message_read)(wStream *s, ogon_message *msg);
-typedef int (*pfn_ogon_message_prepare)(ogon_message *msg, ogon_protobuf_message *target);
+typedef int (*pfn_ogon_message_prepare)(
+		ogon_message *msg, ogon_protobuf_message *target);
 typedef void (*pfn_ogon_message_unprepare)(ogon_protobuf_message *msg);
 typedef void (*pfn_ogon_message_free)(ogon_message *msg);
 
 typedef struct _message_descriptor {
-	const char* Name;
+	const char *Name;
 	pfn_ogon_message_read Read;
 	pfn_ogon_message_prepare Prepare;
 	pfn_ogon_message_unprepare Unprepare;
@@ -59,11 +58,7 @@ void ogon_read_message_header(wStream *s, UINT16 *type, UINT32 *len) {
 	Stream_Read_UINT32(s, *len);
 }
 
-
-
 /* ### CLIENT MESSAGES #################################################### */
-
-
 
 /* === capabilities ======================================================= */
 
@@ -71,13 +66,14 @@ static BOOL ogon_read_capabilities(wStream *s, ogon_message *raw) {
 	ogon_msg_capabilities *msg = (ogon_msg_capabilities *)raw;
 	Ogon__Backend__Capabilities *proto;
 
-	proto = ogon__backend__capabilities__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__capabilities__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	msg->desktopWidth = proto->desktopwidth;
-	msg->desktopHeight= proto->desktopheight;
+	msg->desktopHeight = proto->desktopheight;
 	msg->colorDepth = proto->colordepth;
 	msg->keyboardLayout = proto->keyboardlayout;
 	msg->keyboardType = proto->keyboardtype;
@@ -99,7 +95,7 @@ static int ogon_prepare_capabilities(
 	target->colordepth = msg->colorDepth;
 	target->keyboardlayout = msg->keyboardLayout;
 	target->keyboardtype = msg->keyboardType;
-	target->keyboardsubtype =  msg->keyboardSubType;
+	target->keyboardsubtype = msg->keyboardSubType;
 	target->clientid = msg->clientId;
 
 	return ogon__backend__capabilities__get_packed_size(target);
@@ -115,7 +111,8 @@ static BOOL ogon_read_version(wStream *s, ogon_message *raw) {
 	Ogon__Backend__VersionReply *proto;
 	BOOL ret = TRUE;
 
-	proto = ogon__backend__version_reply__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__version_reply__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -165,7 +162,8 @@ static BOOL ogon_read_synchronize_keyboard_event(
 	ogon_msg_synchronize_keyboard_event *msg =
 			(ogon_msg_synchronize_keyboard_event *)raw;
 
-	proto = ogon__backend__keyboard_sync__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__keyboard_sync__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto || !msg) {
 		return FALSE;
 	}
@@ -199,7 +197,8 @@ static BOOL ogon_read_scancode_keyboard_event(wStream *s, ogon_message *raw) {
 			(ogon_msg_scancode_keyboard_event *)raw;
 	Ogon__Backend__KeyboardScanCode *proto;
 
-	proto = ogon__backend__keyboard_scan_code__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__keyboard_scan_code__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -237,7 +236,8 @@ static BOOL ogon_read_unicode_keyboard_event(wStream *s, ogon_message *raw) {
 			(ogon_msg_unicode_keyboard_event *)raw;
 	Ogon__Backend__KeyboardUnicode *proto;
 
-	proto = ogon__backend__keyboard_unicode__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__keyboard_unicode__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -272,7 +272,8 @@ static BOOL ogon_read_mouse_event(wStream *s, ogon_message *raw) {
 	ogon_msg_mouse_event *msg = (ogon_msg_mouse_event *)raw;
 	Ogon__Backend__MouseEvent *proto;
 
-	proto = ogon__backend__mouse_event__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__mouse_event__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -306,7 +307,8 @@ static BOOL ogon_read_extended_mouse_event(wStream *s, ogon_message *raw) {
 	ogon_msg_extended_mouse_event *msg = (ogon_msg_extended_mouse_event *)raw;
 	Ogon__Backend__MouseExtendedEvent *proto;
 
-	proto = ogon__backend__mouse_extended_event__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__mouse_extended_event__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -343,7 +345,8 @@ static BOOL ogon_read_framebuffer_sync_request(wStream *s, ogon_message *raw) {
 			(ogon_msg_framebuffer_sync_request *)raw;
 	Ogon__Backend__SyncRequest *proto;
 
-	proto = ogon__backend__sync_request__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__sync_request__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -374,21 +377,25 @@ static BOOL ogon_read_sbp_reply(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SbpReply *proto;
 	BOOL ret = FALSE;
 
-	proto = ogon__backend__sbp_reply__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__sbp_reply__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
 
 	memset(msg, 0, sizeof(*msg));
 
-	msg->status = proto->status;
+	msg->status = static_cast<SBP_REPLY_STATUS>(proto->status);
 	msg->tag = proto->tag;
 	msg->sbpType = proto->sbptype;
 
 	if (proto->data.len) {
-		if (!(msg->data = malloc(proto->data.len))) {
-			WLog_ERR(TAG, "read ipcs reply: unable to allocate data blob (len=%"PRIuz")",
-				proto->data.len);
+		msg->data = static_cast<char *>(malloc(proto->data.len));
+		if (!msg->data) {
+			WLog_ERR(TAG,
+					"read ipcs reply: unable to allocate data blob (len=%" PRIuz
+					")",
+					proto->data.len);
 			goto out;
 		}
 		memcpy(msg->data, proto->data.data, proto->data.len);
@@ -410,7 +417,7 @@ static int ogon_prepare_sbp_reply(
 	target->tag = msg->tag;
 	target->sbptype = msg->sbpType;
 	target->data.len = msg->dataLen;
-	target->data.data = (uint8_t*)msg->data;
+	target->data.data = (uint8_t *)msg->data;
 	target->data.len = msg->dataLen;
 	return ogon__backend__sbp_reply__get_packed_size(target);
 }
@@ -434,7 +441,8 @@ static BOOL ogon_read_seat_new(wStream *s, ogon_message *raw) {
 	ogon_msg_seat_new *msg = (ogon_msg_seat_new *)raw;
 	Ogon__Backend__SeatNew *proto;
 
-	proto = ogon__backend__seat_new__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__seat_new__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -468,7 +476,8 @@ static BOOL ogon_read_seat_removed(wStream *s, ogon_message *raw) {
 	ogon_msg_seat_removed *msg = (ogon_msg_seat_removed *)raw;
 	Ogon__Backend__SeatRemoved *proto;
 
-	proto = ogon__backend__seat_removed__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__seat_removed__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -507,7 +516,8 @@ static BOOL ogon_read_user_message(wStream *s, ogon_message *raw) {
 	Ogon__Backend__Message *proto;
 	BOOL ret = FALSE;
 
-	proto = ogon__backend__message__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__message__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -520,31 +530,36 @@ static BOOL ogon_read_user_message(wStream *s, ogon_message *raw) {
 	msg->parameter_num = proto->n_parameters;
 
 	if (msg->parameter_num >= 1) {
-		if (!ogon_read_string(proto->parameters[0], &msg->parameter1, &msg->parameter1_len)) {
+		if (!ogon_read_string(proto->parameters[0], &msg->parameter1,
+					&msg->parameter1_len)) {
 			goto out;
 		}
 	}
 
 	if (msg->parameter_num >= 2) {
-		if (!ogon_read_string(proto->parameters[1], &msg->parameter2, &msg->parameter2_len)) {
+		if (!ogon_read_string(proto->parameters[1], &msg->parameter2,
+					&msg->parameter2_len)) {
 			goto out;
 		}
 	}
 
 	if (msg->parameter_num >= 3) {
-		if (!ogon_read_string(proto->parameters[2], &msg->parameter3, &msg->parameter3_len)) {
+		if (!ogon_read_string(proto->parameters[2], &msg->parameter3,
+					&msg->parameter3_len)) {
 			goto out;
 		}
 	}
 
 	if (msg->parameter_num >= 4) {
-		if (!ogon_read_string(proto->parameters[3], &msg->parameter4, &msg->parameter4_len)) {
+		if (!ogon_read_string(proto->parameters[3], &msg->parameter4,
+					&msg->parameter4_len)) {
 			goto out;
 		}
 	}
 
 	if (msg->parameter_num >= 5) {
-		if (!ogon_read_string(proto->parameters[4], &msg->parameter5, &msg->parameter5_len)) {
+		if (!ogon_read_string(proto->parameters[4], &msg->parameter5,
+					&msg->parameter5_len)) {
 			goto out;
 		}
 	}
@@ -568,9 +583,13 @@ static int ogon_prepare_user_message(
 	target->n_parameters = 0;
 
 	if (msg->parameter_num) {
-		if (!(target->parameters = calloc(msg->parameter_num, sizeof(char *)))) {
-			WLog_ERR(TAG, "prepare user message: unable to allocate parameters (len=%"PRIu32")",
-				msg->parameter_num);
+		target->parameters = static_cast<char **>(
+				calloc(msg->parameter_num, sizeof(char *)));
+		if (!target->parameters) {
+			WLog_ERR(TAG,
+					"prepare user message: unable to allocate parameters "
+					"(len=%" PRIu32 ")",
+					msg->parameter_num);
 			return -1;
 		}
 		target->n_parameters = msg->parameter_num;
@@ -620,8 +639,6 @@ static message_descriptor user_message_descriptor = {"Message",
 
 /* ### SERVER MESSAGES #################################################### */
 
-
-
 /* === set pointer ======================================================== */
 
 static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
@@ -629,7 +646,8 @@ static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SetPointerShape *proto;
 	BOOL ret = FALSE;
 
-	proto = ogon__backend__set_pointer_shape__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__set_pointer_shape__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -643,9 +661,12 @@ static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
 	msg->xorBpp = proto->xorbpp;
 
 	if (proto->has_andmask) {
-		if (!(msg->andMaskData = malloc(proto->andmask.len))) {
-			WLog_ERR(TAG, "read set pointer: unable to allocate andMaskData (len=%"PRIuz")",
-				proto->andmask.len);
+		msg->andMaskData = static_cast<BYTE *>(malloc(proto->andmask.len));
+		if (!msg->andMaskData) {
+			WLog_ERR(TAG,
+					"read set pointer: unable to allocate andMaskData "
+					"(len=%" PRIuz ")",
+					proto->andmask.len);
 			goto out;
 		}
 		memcpy(msg->andMaskData, proto->andmask.data, proto->andmask.len);
@@ -653,9 +674,12 @@ static BOOL ogon_read_set_pointer(wStream *s, ogon_message *raw) {
 	}
 
 	if (proto->has_xormask) {
-		if (!(msg->xorMaskData = malloc(proto->xormask.len))) {
-			WLog_ERR(TAG, "read set pointer: unable to allocate xorMaskData (len=%"PRIuz")",
-				proto->xormask.len);
+		msg->xorMaskData = static_cast<BYTE *>(malloc(proto->xormask.len));
+		if (!msg->xorMaskData) {
+			WLog_ERR(TAG,
+					"read set pointer: unable to allocate xorMaskData "
+					"(len=%" PRIuz ")",
+					proto->xormask.len);
 			goto out;
 		}
 		memcpy(msg->xorMaskData, proto->xormask.data, proto->xormask.len);
@@ -720,7 +744,8 @@ static BOOL ogon_read_set_system_pointer(wStream *s, ogon_message *raw) {
 	ogon_msg_set_system_pointer *msg = (ogon_msg_set_system_pointer *)raw;
 	Ogon__Backend__SetSystemPointer *proto;
 
-	proto = ogon__backend__set_system_pointer__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__set_system_pointer__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -746,13 +771,15 @@ static message_descriptor set_system_pointer_descriptor = {"SetSystemPointer",
 		ogon_read_set_system_pointer, ogon_prepare_set_system_pointer, NULL,
 		NULL};
 
-/* === framebuffer info ============================================================ */
+/* === framebuffer info
+ * ============================================================ */
 
 static BOOL ogon_read_framebuffer_info(wStream *s, ogon_message *raw) {
 	ogon_msg_framebuffer_info *msg = (ogon_msg_framebuffer_info *)raw;
 	Ogon__Backend__FramebufferInfos *proto;
 
-	proto = ogon__backend__framebuffer_infos__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__framebuffer_infos__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -764,7 +791,8 @@ static BOOL ogon_read_framebuffer_info(wStream *s, ogon_message *raw) {
 	msg->bitsPerPixel = proto->bitsperpixel;
 	msg->bytesPerPixel = proto->bytesperpixel;
 	msg->userId = proto->userid;
-	msg->multiseatCapable = (proto->flags & OGON__BACKEND__BACKEND__FLAGS__MULTISEAT);
+	msg->multiseatCapable =
+			(proto->flags & OGON__BACKEND__BACKEND__FLAGS__MULTISEAT);
 	ogon__backend__framebuffer_infos__free_unpacked(proto, NULL);
 	return TRUE;
 }
@@ -797,7 +825,8 @@ static BOOL ogon_read_beep(wStream *s, ogon_message *raw) {
 	ogon_msg_beep *msg = (ogon_msg_beep *)raw;
 	Ogon__Backend__Beep *proto;
 
-	proto = ogon__backend__beep__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__beep__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -827,7 +856,8 @@ static BOOL ogon_read_sbp_request(wStream *s, ogon_message *raw) {
 	Ogon__Backend__SbpRequest *proto;
 	BOOL ret = FALSE;
 
-	proto = ogon__backend__sbp_request__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__sbp_request__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -838,9 +868,12 @@ static BOOL ogon_read_sbp_request(wStream *s, ogon_message *raw) {
 	msg->tag = proto->tag;
 
 	if (proto->data.len) {
-		if (!(msg->data = malloc(proto->data.len))) {
-			WLog_ERR(TAG, "read sbp request: unable to allocate data blob (len=%"PRIuz")",
-				proto->data.len);
+		msg->data = static_cast<char *>(malloc(proto->data.len));
+		if (!msg->data) {
+			WLog_ERR(TAG,
+					"read sbp request: unable to allocate data blob "
+					"(len=%" PRIuz ")",
+					proto->data.len);
 			goto out;
 		}
 		memcpy(msg->data, proto->data.data, proto->data.len);
@@ -861,7 +894,7 @@ static int ogon_prepare_sbp_request(
 	target->sbptype = msg->sbpType;
 	target->tag = msg->tag;
 	target->data.len = msg->dataLen;
-	target->data.data = (uint8_t*)msg->data;
+	target->data.data = (uint8_t *)msg->data;
 	return ogon__backend__sbp_request__get_packed_size(target);
 }
 
@@ -881,7 +914,8 @@ static BOOL ogon_read_framebuffer_sync_reply(wStream *s, ogon_message *raw) {
 			(ogon_msg_framebuffer_sync_reply *)raw;
 	Ogon__Backend__SyncReply *proto;
 
-	proto = ogon__backend__sync_reply__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__sync_reply__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto) {
 		return FALSE;
 	}
@@ -911,7 +945,8 @@ static BOOL ogon_read_message_reply(wStream *s, ogon_message *raw) {
 	ogon_msg_message_reply *msg = (ogon_msg_message_reply *)raw;
 	Ogon__Backend__MessageReply *proto;
 
-	proto = ogon__backend__message_reply__unpack(NULL, Stream_Length(s), (uint8_t*)Stream_Pointer(s));
+	proto = ogon__backend__message_reply__unpack(
+			NULL, Stream_Length(s), (uint8_t *)Stream_Pointer(s));
 	if (!proto || !msg) {
 		return FALSE;
 	}
@@ -937,37 +972,34 @@ static message_descriptor message_reply_descriptor = {"message reply",
 
 /* ######################################################################## */
 
-
-
 static message_descriptor *messages[] = {
-	&set_pointer_descriptor,              /* 0 */
-	&framebuffer_info_descriptor,         /* 1 */
-	&beep_descriptor,                     /* 2 */
-	&set_system_pointer_descriptor,       /* 3 */
-	&sbp_request_descriptor,              /* 4 */
-	&framebuffer_sync_reply_descriptor,   /* 5 */
-	&message_reply_descriptor,            /* 6 */
-	&version_descriptor,                  /* 7 */
+		&set_pointer_descriptor,			/* 0 */
+		&framebuffer_info_descriptor,		/* 1 */
+		&beep_descriptor,					/* 2 */
+		&set_system_pointer_descriptor,		/* 3 */
+		&sbp_request_descriptor,			/* 4 */
+		&framebuffer_sync_reply_descriptor, /* 5 */
+		&message_reply_descriptor,			/* 6 */
+		&version_descriptor,				/* 7 */
 
-	&capabilities_descriptor,             /* 8 */
-	&synchronize_keyboard_descriptor,     /* 9 */
-	&scancode_keyboard_descriptor,        /* 10 */
-	&unicode_keyboard_descriptor,         /* 11 */
-	&mouse_descriptor,                    /* 12 */
-	&extended_mouse_descriptor,           /* 13 */
-	&framebuffer_sync_request_descriptor, /* 14 */
-	&sbp_reply_descriptor,                /* 15 */
-	&immediate_sync_request_descriptor,   /* 16 */
-	&seat_new_descriptor,                 /* 17 */
-	&seat_removed_descriptor,             /* 18 */
-	&user_message_descriptor,             /* 19 */
-	&version_descriptor,                  /* 20 */
+		&capabilities_descriptor,			  /* 8 */
+		&synchronize_keyboard_descriptor,	  /* 9 */
+		&scancode_keyboard_descriptor,		  /* 10 */
+		&unicode_keyboard_descriptor,		  /* 11 */
+		&mouse_descriptor,					  /* 12 */
+		&extended_mouse_descriptor,			  /* 13 */
+		&framebuffer_sync_request_descriptor, /* 14 */
+		&sbp_reply_descriptor,				  /* 15 */
+		&immediate_sync_request_descriptor,	  /* 16 */
+		&seat_new_descriptor,				  /* 17 */
+		&seat_removed_descriptor,			  /* 18 */
+		&user_message_descriptor,			  /* 19 */
+		&version_descriptor,				  /* 20 */
 };
 
 #define DESCRIPTORS_NB (sizeof(messages) / sizeof(message_descriptor *))
 
-
-const char* ogon_message_name(UINT32 type) {
+const char *ogon_message_name(UINT32 type) {
 	message_descriptor *msgDef;
 
 	if (type >= DESCRIPTORS_NB) {
@@ -986,14 +1018,15 @@ BOOL ogon_message_read(wStream *s, UINT16 type, ogon_message *msg) {
 	message_descriptor *msgDef;
 
 	if (type >= DESCRIPTORS_NB) {
-		WLog_ERR(TAG, "not reading message with invalid type %"PRIu16"", type);
+		WLog_ERR(
+				TAG, "not reading message with invalid type %" PRIu16 "", type);
 		return FALSE;
 	}
 
 	msgDef = messages[type];
 
 	if (!msgDef->Read) {
-		WLog_ERR(TAG, "no read function for message type %"PRIu16"", type);
+		WLog_ERR(TAG, "no read function for message type %" PRIu16 "", type);
 		return FALSE;
 	}
 
@@ -1003,8 +1036,9 @@ BOOL ogon_message_read(wStream *s, UINT16 type, ogon_message *msg) {
 int ogon_message_prepare(UINT16 type, ogon_message *msg, void *encoded) {
 	message_descriptor *msgDef;
 
-	if (type >= DESCRIPTORS_NB)	{
-		WLog_ERR(TAG, "not preparing message with invalid type %"PRIu16"", type);
+	if (type >= DESCRIPTORS_NB) {
+		WLog_ERR(TAG, "not preparing message with invalid type %" PRIu16 "",
+				type);
 		return -1;
 	}
 
@@ -1024,7 +1058,8 @@ BOOL ogon_message_write(wStream *s, UINT16 type, int len, void *encoded) {
 	Stream_Write_UINT16(s, type);
 	Stream_Write_UINT32(s, len);
 
-	protobuf_c_message_pack ((const ProtobufCMessage*)encoded, (uint8_t *)Stream_Pointer(s));
+	protobuf_c_message_pack(
+			(const ProtobufCMessage *)encoded, (uint8_t *)Stream_Pointer(s));
 	Stream_Seek(s, len);
 	return TRUE;
 }
@@ -1032,8 +1067,9 @@ BOOL ogon_message_write(wStream *s, UINT16 type, int len, void *encoded) {
 void ogon_message_unprepare(UINT16 type, void *encoded) {
 	message_descriptor *msgDef;
 
-	if (type >= DESCRIPTORS_NB)	{
-		WLog_ERR(TAG, "not unpreparing message with invalid type %"PRIu16"", type);
+	if (type >= DESCRIPTORS_NB) {
+		WLog_ERR(TAG, "not unpreparing message with invalid type %" PRIu16 "",
+				type);
 		return;
 	}
 
@@ -1041,20 +1077,22 @@ void ogon_message_unprepare(UINT16 type, void *encoded) {
 	if (msgDef->Unprepare) {
 		msgDef->Unprepare((ogon_protobuf_message *)encoded);
 	}
-
 }
 
 void ogon_message_free(UINT16 type, ogon_message *msg, BOOL onlyInnerData) {
 	message_descriptor *msgDef;
 
 	if (type >= DESCRIPTORS_NB) {
-		WLog_ERR(TAG, "not freeing message with invalid type %"PRIu16"", type);
+		WLog_ERR(
+				TAG, "not freeing message with invalid type %" PRIu16 "", type);
 		return;
 	}
 
 	msgDef = messages[type];
 	if (!msgDef) {
-		WLog_ERR(TAG, "not freeing message type %"PRIu16" with missing definition", type);
+		WLog_ERR(TAG,
+				"not freeing message type %" PRIu16 " with missing definition",
+				type);
 		return;
 	}
 
@@ -1067,7 +1105,6 @@ void ogon_message_free(UINT16 type, ogon_message *msg, BOOL onlyInnerData) {
 	}
 }
 
-
 BOOL ogon_message_send(wStream *s, UINT16 type, ogon_message *msg) {
 	BOOL ret = TRUE;
 	int len;
@@ -1075,18 +1112,21 @@ BOOL ogon_message_send(wStream *s, UINT16 type, ogon_message *msg) {
 
 	len = ogon_message_prepare(type, msg, &proto);
 	if (len < 0) {
-		WLog_ERR(TAG, "error when preparing message with type %"PRIu16"", type);
+		WLog_ERR(TAG, "error when preparing message with type %" PRIu16 "",
+				type);
 		return FALSE;
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, RDS_ORDER_HEADER_LENGTH + len)) {
-		WLog_ERR(TAG, "error resizing stream for message type %"PRIu16"", type);
+		WLog_ERR(TAG, "error resizing stream for message type %" PRIu16 "",
+				type);
 		ret = FALSE;
 		goto out;
 	}
 
 	if (!ogon_message_write(s, type, len, &proto)) {
-		WLog_ERR(TAG, "error resizing stream for message type %"PRIu16"", type);
+		WLog_ERR(TAG, "error resizing stream for message type %" PRIu16 "",
+				type);
 		ret = FALSE;
 		goto out;
 	}

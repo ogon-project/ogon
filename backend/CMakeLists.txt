@@ -4,12 +4,12 @@ set(MODULE_PREFIX "OGON_MODULE")
 PROTOBUFC_GENERATE_C(MODULE_PROTOC_SRC MODULE_PROTOC_HDRS ${CMAKE_SOURCE_DIR}/protocols/protobuf/backend.proto)
 
 set(${MODULE_PREFIX}_SRCS
-	dmgbuf.c
-	protocol.c
+	dmgbuf.cpp
+	protocol.cpp
 	protocol.h
-	transport.c
-	service.c
-	keycodes.c
+	transport.cpp
+	service.cpp
+	keycodes.cpp
 	${MODULE_PROTOC_SRC}
 	${MODULE_PROTOC_HDRS}
 	../common/security.c
