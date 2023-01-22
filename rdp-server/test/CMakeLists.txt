@@ -5,8 +5,8 @@ set(MODULE_PREFIX "TEST_OGON_CORE")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestOgonEventLoop.c
-	TestOgonTimer.c
+	TestOgonEventLoop.cpp
+	TestOgonTimer.cpp
 )
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

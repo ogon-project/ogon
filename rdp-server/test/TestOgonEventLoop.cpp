@@ -25,17 +25,19 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <winpr/pipe.h>
+#include <string>
+
 #include <winpr/collections.h>
-#include <winpr/memory.h>
-#include <winpr/thread.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/memory.h>
+#include <winpr/path.h>
+#include <winpr/pipe.h>
 #include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include "../common/global.h"
 
-#include "../eventloop.c"
+#include "../eventloop.cpp"
 
 typedef struct _pipe_client_context pipe_client_context;
 typedef struct _pipe_server_context pipe_server_context;
@@ -59,7 +61,6 @@ struct _pipe_server_context {
 	pipe_client_factory clientFactory;
 };
 
-
 struct _pipe_client_context {
 	int readBytes;
 	int writtenBytes;
@@ -69,8 +70,7 @@ struct _pipe_client_context {
 	ogon_event_source *evSource;
 };
 
-static int handle_pipe_connection(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_pipe_connection(int mask, int fd, HANDLE handle, void *data) {
 	pipe_server_context *context = (pipe_server_context *)data;
 	DWORD dwPipeMode;
 	HANDLE newHandle;
@@ -80,10 +80,10 @@ static int handle_pipe_connection(int mask, int fd, HANDLE handle, void *data)
 	/* fprintf(stderr, "%s(fd=%d mask=0x%x)\n", __FUNCTION__, fd, mask); */
 	context->connections++;
 
-	if ((mask & OGON_EVENTLOOP_READ) == 0)
-		return -1;
+	if ((mask & OGON_EVENTLOOP_READ) == 0) return -1;
 
-	if (!ConnectNamedPipe(context->listenHandle, NULL) && (GetLastError() != ERROR_PIPE_CONNECTED))
+	if (!ConnectNamedPipe(context->listenHandle, NULL) &&
+			(GetLastError() != ERROR_PIPE_CONNECTED))
 		return -1;
 
 	dwPipeMode = PIPE_NOWAIT;
@@ -93,10 +93,7 @@ static int handle_pipe_connection(int mask, int fd, HANDLE handle, void *data)
 	return context->clientFactory(context, newHandle);
 }
 
-
-
-int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data)
-{
+int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data) {
 	char buffer[200];
 	DWORD readBytes = 0xdeadbeef;
 	pipe_client_context *context = (pipe_client_context *)data;
@@ -104,40 +101,42 @@ int handle_pipe_bytes(int mask, int fd, HANDLE handle, void *data)
 	OGON_UNUSED(fd);
 	OGON_UNUSED(mask);
 
-	if (!(mask & OGON_EVENTLOOP_READ))
-		return 0;
+	if (!(mask & OGON_EVENTLOOP_READ)) return 0;
 
-	if (!ReadFile(handle, buffer, sizeof(buffer), &readBytes, NULL) || !readBytes)
-	{
-		if (GetLastError() == ERROR_NO_DATA)
-			return 0;
+	if (!ReadFile(handle, buffer, sizeof(buffer), &readBytes, NULL) ||
+			!readBytes) {
+		if (GetLastError() == ERROR_NO_DATA) return 0;
 
-		// fprintf(stderr, "%s: removing, read this time=0x%x, total=%d\n", __FUNCTION__, readBytes, context->readBytes);
+		// fprintf(stderr, "%s: removing, read this time=0x%x, total=%d\n",
+		// __FUNCTION__, readBytes, context->readBytes);
 		eventloop_remove_source(&context->evSource);
 		context->server->client = 0;
-		free(context);
+		delete (context);
 		return -1;
 	}
 
-	//fprintf(stderr, "%s: read this time=%d total=%d\n", __FUNCTION__, readBytes, context->readBytes);
+	// fprintf(stderr, "%s: read this time=%d total=%d\n", __FUNCTION__,
+	// readBytes, context->readBytes);
 	context->readBytes += readBytes;
 	return 0;
 }
 
-
 int client1_factory(pipe_server_context *serverContext, HANDLE handle) {
-	pipe_client_context *clientContext = calloc(1, sizeof(pipe_client_context));
+	pipe_client_context *clientContext = new (pipe_client_context);
 	if (!clientContext) {
 		fprintf(stderr, "%s: Failed to allocate clientContext\n", __FUNCTION__);
 		return -1;
 	}
 	clientContext->handle = handle;
 	clientContext->server = serverContext;
-	clientContext->evSource = eventloop_add_handle(serverContext->evloop, OGON_EVENTLOOP_READ,
-								clientContext->handle, handle_pipe_bytes, clientContext);
-	if (!clientContext->evSource)
-	{
-		fprintf(stderr, "%s: unable to create to add the client handle in the eventloop\n", __FUNCTION__);
+	clientContext->evSource =
+			eventloop_add_handle(serverContext->evloop, OGON_EVENTLOOP_READ,
+					clientContext->handle, handle_pipe_bytes, clientContext);
+	if (!clientContext->evSource) {
+		fprintf(stderr,
+				"%s: unable to create to add the client handle in the "
+				"eventloop\n",
+				__FUNCTION__);
 		return -1;
 	}
 
@@ -145,79 +144,68 @@ int client1_factory(pipe_server_context *serverContext, HANDLE handle) {
 	return 0;
 }
 
-
 #define LISTEN_PIPE_NAME "\\\\.\\pipe\\listen"
 #define CLIENT1_BYTES (10 * 1000)
 #define CLIENT1_WRITE_LIMIT 300
 
-static void *client1_thread(void *arg)
-{
+static void *client1_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	HANDLE clientHandle;
 	DWORD written, toWrite;
 	int i;
 	char *sendPtr;
-	char *buffer = malloc(CLIENT1_BYTES);
-	if (!buffer)
-	{
-		fprintf(stderr, "%s: unable to allocate the send buffer\n", __FUNCTION__);
+
+	std::string buffer;
+	buffer.resize(CLIENT1_BYTES);
+
+	sendPtr = buffer.data();
+	for (i = 0; i < CLIENT1_BYTES; i++) sendPtr[i] = (char)i;
+
+	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
+	if (clientHandle == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "%s: unable to connect on the named pipe\n",
+				__FUNCTION__);
 		return 0;
 	}
 
-	sendPtr = buffer;
-	for (i = 0; i < CLIENT1_BYTES; i++)
-		sendPtr[i] = (char)i;
-
-	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0,
-								NULL, OPEN_EXISTING, 0, NULL);
-	if (clientHandle == INVALID_HANDLE_VALUE)
-	{
-		fprintf(stderr, "%s: unable to connect on the named pipe\n", __FUNCTION__);
-		return 0;
-	}
-
-	sendPtr = buffer;
+	sendPtr = buffer.data();
 	toWrite = CLIENT1_BYTES;
 
-	while (toWrite)
-	{
+	while (toWrite) {
 		if (!WriteFile(clientHandle, sendPtr,
-				(toWrite > CLIENT1_WRITE_LIMIT) ? CLIENT1_WRITE_LIMIT : toWrite,
-				&written, NULL))
-		{
+					(toWrite > CLIENT1_WRITE_LIMIT) ? CLIENT1_WRITE_LIMIT
+													: toWrite,
+					&written, NULL)) {
 			fprintf(stderr, "error writing");
 			break;
 		}
 
-		//fprintf(stderr, "%d written\n", written);
+		// fprintf(stderr, "%d written\n", written);
 		Sleep(1);
 
 		toWrite -= written;
 		sendPtr += written;
 	}
 
-	//fprintf(stderr, "%s waiting signal to finish\n", __FUNCTION__);
+	// fprintf(stderr, "%s waiting signal to finish\n", __FUNCTION__);
 
 	WaitForSingleObject(server->finishClient, INFINITE);
 
-	//fprintf(stderr, "%s finished\n", __FUNCTION__);
+	// fprintf(stderr, "%s finished\n", __FUNCTION__);
 	CloseHandle(clientHandle);
-	free(buffer);
 	return 0;
 }
 
 #define PINPONG_LOOPS 10
 
-static void *pingpong_thread(void *arg)
-{
+static void *pingpong_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	int i;
 
-	for (i = 0; i < PINPONG_LOOPS; i++)
-	{
+	for (i = 0; i < PINPONG_LOOPS; i++) {
 		SetEvent(server->pingPong1);
-		if (WaitForSingleObject(server->pingPong2, 500) != WAIT_OBJECT_0)
-		{
+		if (WaitForSingleObject(server->pingPong2, 500) != WAIT_OBJECT_0) {
 			fprintf(stderr, "%s: pingPong2, not notified\n", __FUNCTION__);
 			return 0;
 		}
@@ -227,22 +215,20 @@ static void *pingpong_thread(void *arg)
 	return 0;
 }
 
-static int handle_pingPong1(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_pingPong1(int mask, int fd, HANDLE handle, void *data) {
 	pipe_server_context *server = (pipe_server_context *)data;
 
 	OGON_UNUSED(fd);
 	OGON_UNUSED(handle);
 
-	if (!(mask & OGON_EVENTLOOP_READ))
-	{
+	if (!(mask & OGON_EVENTLOOP_READ)) {
 		fprintf(stderr, "%s: not expecting mask 0x%x\n", __FUNCTION__, mask);
 		return -1;
 	}
 
-	if (WaitForSingleObject(server->pingPong1, 1) != WAIT_OBJECT_0)
-	{
-		fprintf(stderr, "%s: looks like pingPong1 is not notified\n", __FUNCTION__);
+	if (WaitForSingleObject(server->pingPong1, 1) != WAIT_OBJECT_0) {
+		fprintf(stderr, "%s: looks like pingPong1 is not notified\n",
+				__FUNCTION__);
 	}
 
 	SetEvent(server->pingPong2);
@@ -252,8 +238,7 @@ static int handle_pingPong1(int mask, int fd, HANDLE handle, void *data)
 #define FAST_WRITER_STEPS 1000
 #define SLOW_READER_BYTES 100 * 1000
 
-static int handle_big_writer(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_big_writer(int mask, int fd, HANDLE handle, void *data) {
 	char inBuffer[FAST_WRITER_STEPS];
 	DWORD written, toWrite;
 	pipe_client_context *context = (pipe_client_context *)data;
@@ -261,25 +246,23 @@ static int handle_big_writer(int mask, int fd, HANDLE handle, void *data)
 	OGON_UNUSED(fd);
 
 	ZeroMemory(inBuffer, sizeof(inBuffer));
-	if (!(mask & OGON_EVENTLOOP_WRITE))
-	{
-		fprintf(stderr, "%s: not expecting missing write flag, mask=0x%x\n", __FUNCTION__, mask);
+	if (!(mask & OGON_EVENTLOOP_WRITE)) {
+		fprintf(stderr, "%s: not expecting missing write flag, mask=0x%x\n",
+				__FUNCTION__, mask);
 		return -1;
 	}
 
-	while (TRUE)
-	{
+	while (TRUE) {
 		toWrite = sizeof(inBuffer);
 		if (context->writtenBytes + toWrite > SLOW_READER_BYTES)
 			toWrite = SLOW_READER_BYTES - context->writtenBytes;
 
-		if (!WriteFile(handle, inBuffer, toWrite, &written, NULL))
-		{
+		if (!WriteFile(handle, inBuffer, toWrite, &written, NULL)) {
 			break;
 		}
 
-		//fprintf(stderr, "written %d\n", written);
-		if (!written) // output buffer is full
+		// fprintf(stderr, "written %d\n", written);
+		if (!written)  // output buffer is full
 		{
 			context->blockedWrites++;
 			break;
@@ -293,7 +276,7 @@ static int handle_big_writer(int mask, int fd, HANDLE handle, void *data)
 int big_writer_factory(pipe_server_context *context, HANDLE handle) {
 	OGON_UNUSED(handle);
 
-	pipe_client_context *clientContext = calloc(1, sizeof(pipe_client_context));
+	pipe_client_context *clientContext = new (pipe_client_context);
 	if (!clientContext) {
 		fprintf(stderr, "%s: Failed to allocate clientContext\n", __FUNCTION__);
 		return -1;
@@ -303,40 +286,41 @@ int big_writer_factory(pipe_server_context *context, HANDLE handle) {
 
 	context->client = clientContext;
 
-
-	clientContext->evSource = eventloop_add_handle(context->evloop, OGON_EVENTLOOP_WRITE,
-								clientContext->handle, handle_big_writer, clientContext);
-	if (!clientContext->evSource)
-	{
-		fprintf(stderr, "%s: unable to create to add the client handle in the eventloop\n", __FUNCTION__);
+	clientContext->evSource =
+			eventloop_add_handle(context->evloop, OGON_EVENTLOOP_WRITE,
+					clientContext->handle, handle_big_writer, clientContext);
+	if (!clientContext->evSource) {
+		fprintf(stderr,
+				"%s: unable to create to add the client handle in the "
+				"eventloop\n",
+				__FUNCTION__);
 		return -1;
 	}
 
 	return 0;
 }
 
-static void *slow_reader_thread(void *arg)
-{
+static void *slow_reader_thread(void *arg) {
 	pipe_server_context *server = (pipe_server_context *)arg;
 	HANDLE clientHandle;
 	DWORD readBytes, totalRead;
 	char buffer[200];
 
-	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0,
-								NULL, OPEN_EXISTING, 0, NULL);
-	if (clientHandle == INVALID_HANDLE_VALUE)
-	{
-		fprintf(stderr, "%s: unable to connect on the named pipe\n", __FUNCTION__);
+	clientHandle = CreateFileA(LISTEN_PIPE_NAME, GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
+	if (clientHandle == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "%s: unable to connect on the named pipe\n",
+				__FUNCTION__);
 		return 0;
 	}
 
 	totalRead = 0;
-	while (totalRead != SLOW_READER_BYTES)
-	{
-		if (!ReadFile(clientHandle, buffer, sizeof(buffer), &readBytes, NULL) && GetLastError() != ERROR_NO_DATA)
+	while (totalRead != SLOW_READER_BYTES) {
+		if (!ReadFile(clientHandle, buffer, sizeof(buffer), &readBytes, NULL) &&
+				GetLastError() != ERROR_NO_DATA)
 			break;
 
-		//fprintf(stderr, "read %d\n", readBytes);
+		// fprintf(stderr, "read %d\n", readBytes);
 		Sleep(1);
 
 		totalRead += readBytes;
@@ -348,12 +332,10 @@ static void *slow_reader_thread(void *arg)
 	return 0;
 }
 
-
-int TestOgonEventLoop(int argc, char* argv[])
-{
+extern "C" int TestOgonEventLoop(int argc, char *argv[]) {
 	ogon_event_source *source;
 	pipe_server_context context;
-	char* filename;
+	char *filename;
 	HANDLE clientThread;
 	int nb, loopTurns, testNo, bytesReceived;
 	ogon_source_state sourceState;
@@ -363,45 +345,38 @@ int TestOgonEventLoop(int argc, char* argv[])
 
 	ZeroMemory(&context, sizeof(context));
 	filename = GetNamedPipeUnixDomainSocketFilePathA(LISTEN_PIPE_NAME);
-	if (PathFileExistsA(filename))
-			DeleteFileA(filename);
+	if (PathFileExistsA(filename)) DeleteFileA(filename);
 	free(filename);
 
-	context.listenHandle = CreateNamedPipeA(LISTEN_PIPE_NAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE |
-			PIPE_READMODE_BYTE | PIPE_WAIT,
-            PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL
-    );
-	if (context.listenHandle == INVALID_HANDLE_VALUE)
-	{
+	context.listenHandle = CreateNamedPipeA(LISTEN_PIPE_NAME,
+			PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+			PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, NULL);
+	if (context.listenHandle == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "unable to create listening pipe\n");
 		return -1;
 	}
 
 	context.evloop = eventloop_create();
-	if (!context.evloop)
-		return -1;
+	if (!context.evloop) return -1;
 
 	context.finishClient = CreateEventA(NULL, TRUE, FALSE, NULL);
-	if (!context.finishClient)
-	{
+	if (!context.finishClient) {
 		fprintf(stderr, "unable to create finishClien1 event\n");
 		return -1;
 	}
 
-
 	context.clientFactory = client1_factory;
-	context.listenerSource = eventloop_add_handle(context.evloop, OGON_EVENTLOOP_READ,
-									context.listenHandle, handle_pipe_connection, &context);
-	if (!context.listenerSource)
-	{
+	context.listenerSource =
+			eventloop_add_handle(context.evloop, OGON_EVENTLOOP_READ,
+					context.listenHandle, handle_pipe_connection, &context);
+	if (!context.listenerSource) {
 		fprintf(stderr, "unable to add the listenHandle in the eventloop\n");
 		return -1;
 	}
 
-
-	clientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)client1_thread, &context, 0, NULL);
-	if (!clientThread)
-	{
+	clientThread = CreateThread(
+			NULL, 0, (LPTHREAD_START_ROUTINE)client1_thread, &context, 0, NULL);
+	if (!clientThread) {
 		fprintf(stderr, "unable to start client thread\n");
 		return -1;
 	}
@@ -414,16 +389,15 @@ int TestOgonEventLoop(int argc, char* argv[])
 	 *
 	 */
 	testNo = 0;
-	fprintf(stderr, "%d: testing read availability during accept()\n", ++testNo);
+	fprintf(stderr, "%d: testing read availability during accept()\n",
+			++testNo);
 	nb = eventloop_dispatch_loop(context.evloop, 1 * 1000);
-	if(!nb)
-	{
+	if (!nb) {
 		fprintf(stderr, "no treatment during dispatching\n");
 		return -1;
 	}
 
-	if (!context.connections || !context.client)
-	{
+	if (!context.connections || !context.client) {
 		fprintf(stderr, "no client connection\n");
 		return -1;
 	}
@@ -434,13 +408,12 @@ int TestOgonEventLoop(int argc, char* argv[])
 	fprintf(stderr, "%d: testing store/restore eventsource\n", ++testNo);
 
 	/* ensure that we have already received some bytes */
-	for (loopTurns = 0; !context.client->readBytes && loopTurns < 5; loopTurns++)
-	{
+	for (loopTurns = 0; !context.client->readBytes && loopTurns < 5;
+			loopTurns++) {
 		nb = eventloop_dispatch_loop(context.evloop, 100);
 	}
 
-	if (!context.client->readBytes)
-	{
+	if (!context.client->readBytes) {
 		fprintf(stderr, "no bytes received !\n");
 		return -1;
 	}
@@ -452,53 +425,54 @@ int TestOgonEventLoop(int argc, char* argv[])
 	// fprintf(stderr, "event source removed !\n");
 
 	eventloop_dispatch_loop(context.evloop, 100);
-	if (bytesReceived != context.client->readBytes)
-	{
-		fprintf(stderr, "I have received some more bytes with my event source removed !\n");
+	if (bytesReceived != context.client->readBytes) {
+		fprintf(stderr,
+				"I have received some more bytes with my event source removed "
+				"!\n");
 		return -1;
 	}
 
-	context.client->evSource = eventloop_restore_source(context.evloop, &sourceState);
-	if (!context.client->evSource)
-	{
+	context.client->evSource =
+			eventloop_restore_source(context.evloop, &sourceState);
+	if (!context.client->evSource) {
 		fprintf(stderr, "unable to restore the event source !\n");
 		return -1;
 	}
-	//fprintf(stderr, "event source restored !\n");
+	// fprintf(stderr, "event source restored !\n");
 
 	eventloop_dispatch_loop(context.evloop, 100);
-	if (!context.client || (bytesReceived == context.client->readBytes))
-	{
-		fprintf(stderr, "eventsource restore, but we didn't received more bytes !\n");
+	if (!context.client || (bytesReceived == context.client->readBytes)) {
+		fprintf(stderr,
+				"eventsource restore, but we didn't received more bytes !\n");
 		return -1;
 	}
-
 
 	/* =========================================================================
 	 *	In this test we check that we receive "read ready" notifications when
 	 *	some bytes are sent by the client thread. We also check that we retrieve
 	 *	the correct number of bytes.
 	 */
-	fprintf(stderr, "%d: testing read availability for bytes received\n", ++testNo);
-	for (loopTurns = 0; loopTurns < CLIENT1_BYTES; loopTurns++)
-	{
+	fprintf(stderr, "%d: testing read availability for bytes received\n",
+			++testNo);
+	for (loopTurns = 0; loopTurns < CLIENT1_BYTES; loopTurns++) {
 		nb = eventloop_dispatch_loop(context.evloop, 100);
-		if (context.client->readBytes >= CLIENT1_BYTES)
-			break;
+		if (context.client->readBytes >= CLIENT1_BYTES) break;
 	}
 
-	if (context.client->readBytes != CLIENT1_BYTES)
-	{
-		fprintf(stderr, "don't have the number of expected bytes, got %d instead of %d\n",
+	if (context.client->readBytes != CLIENT1_BYTES) {
+		fprintf(stderr,
+				"don't have the number of expected bytes, got %d instead of "
+				"%d\n",
 				context.client->readBytes, CLIENT1_BYTES);
 		return -1;
 	}
 
 	/* =========================================================================
-	 * In this test we check that the client finalisation triggers a "read ready"
-	 * notification
+	 * In this test we check that the client finalisation triggers a "read
+	 * ready" notification
 	 */
-	fprintf(stderr, "%d: testing read availability during shutdown\n", ++testNo);
+	fprintf(stderr, "%d: testing read availability during shutdown\n",
+			++testNo);
 	SetEvent(context.finishClient);
 
 	nb = eventloop_dispatch_loop(context.evloop, 100);
@@ -514,39 +488,34 @@ int TestOgonEventLoop(int argc, char* argv[])
 	 */
 	fprintf(stderr, "%d: testing an Event in the event loop\n", ++testNo);
 	context.pingPong1 = CreateEventA(NULL, TRUE, FALSE, NULL);
-	if (!context.pingPong1)
-	{
+	if (!context.pingPong1) {
 		fprintf(stderr, "unable to create pingPong1 event\n");
 		return -1;
 	}
 	context.pingPong2 = CreateEventA(NULL, TRUE, FALSE, NULL);
-	if (!context.pingPong2)
-	{
+	if (!context.pingPong2) {
 		CloseHandle(context.pingPong1);
 		fprintf(stderr, "unable to create pingPong2 event\n");
 		return -1;
 	}
 
-	source = eventloop_add_handle(context.evloop, OGON_EVENTLOOP_READ, context.pingPong1,
-			handle_pingPong1, &context);
-	if (!source)
-	{
+	source = eventloop_add_handle(context.evloop, OGON_EVENTLOOP_READ,
+			context.pingPong1, handle_pingPong1, &context);
+	if (!source) {
 		fprintf(stderr, "unable to add an Event handle in the eventloop\n");
 		return -1;
 	}
 
-	clientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)pingpong_thread, &context, 0, NULL);
-	if (!clientThread)
-	{
+	clientThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE)pingpong_thread, &context, 0, NULL);
+	if (!clientThread) {
 		fprintf(stderr, "unable to start pingpong thread\n");
 		return -1;
 	}
 
-	for (loopTurns = 0; loopTurns < PINPONG_LOOPS; loopTurns++)
-	{
+	for (loopTurns = 0; loopTurns < PINPONG_LOOPS; loopTurns++) {
 		nb = eventloop_dispatch_loop(context.evloop, 50);
-		if (!nb)
-		{
+		if (!nb) {
 			fprintf(stderr, "no activity during turn %d\n", loopTurns);
 			return -1;
 		}
@@ -554,7 +523,6 @@ int TestOgonEventLoop(int argc, char* argv[])
 
 	SetEvent(context.finishClient);
 	eventloop_remove_source(&source);
-
 
 	/* =========================================================================
 	 *	In this test we instantiate a thread that will read bytes very slowly.
@@ -564,29 +532,27 @@ int TestOgonEventLoop(int argc, char* argv[])
 
 	context.clientFactory = big_writer_factory;
 
-	clientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)slow_reader_thread, &context, 0, NULL);
-	if (!clientThread)
-	{
+	clientThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE)slow_reader_thread, &context, 0, NULL);
+	if (!clientThread) {
 		fprintf(stderr, "unable to start slow reader thread\n");
 		return -1;
 	}
 
-	for (loopTurns = 0; loopTurns < SLOW_READER_BYTES; loopTurns++)
-	{
+	for (loopTurns = 0; loopTurns < SLOW_READER_BYTES; loopTurns++) {
 		if (context.client && context.client->writtenBytes >= SLOW_READER_BYTES)
 			break;
 
 		nb = eventloop_dispatch_loop(context.evloop, 50);
 	}
 
-	if (context.client->writtenBytes != SLOW_READER_BYTES)
-	{
-		fprintf(stderr, "not all bytes written while slow reader was reading them\n");
+	if (context.client->writtenBytes != SLOW_READER_BYTES) {
+		fprintf(stderr,
+				"not all bytes written while slow reader was reading them\n");
 		return -1;
 	}
 
-	if (!context.client->blockedWrites)
-	{
+	if (!context.client->blockedWrites) {
 		fprintf(stderr, "strange that write() has never blocked\n");
 		return -1;
 	}
@@ -595,7 +561,3 @@ int TestOgonEventLoop(int argc, char* argv[])
 
 	return 0;
 }
-
-
-
-
