@@ -23,7 +23,7 @@ set(${MODULE_PREFIX}_SRCS
 	graphics.cpp
 	peer.cpp
 	peer.h
-	PMurHash.c
+	PMurHash.cpp
 	PMurHash.h
 	state.cpp
 	state.h
