@@ -93,5 +93,5 @@ void pbrpc_message_free_response(Ogon__Pbrpc__RPCBase *msg) {
 		return;
 	}
 
-	ogon__pbrpc__rpcbase__free_unpacked(msg, NULL);
+	ogon__pbrpc__rpcbase__free_unpacked(msg, nullptr);
 }

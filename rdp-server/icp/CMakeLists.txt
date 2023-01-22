@@ -11,7 +11,7 @@ set(PBRPC_SRC
 	${PBRPC_PREFIX}/pbrpc_utils.cpp
 	${PBRPC_PREFIX}/pbrpc_utils.h
 	${PBRPC_PREFIX}/pbrpc_transport.h
-	${PBRPC_PREFIX}/pipe_transport.c
+	${PBRPC_PREFIX}/pipe_transport.cpp
 	${PBRPC_PREFIX}/pipe_transport.h
 	${PBRPC_PROTOC_HDRS}
 	${PBRPC_PROTOC_SRC}

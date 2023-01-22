@@ -26,28 +26,24 @@
 
 #include "pipe_transport.h"
 
-struct np_transport_context
-{
+struct np_transport_context {
 	pbRPCTransportContext context;
 	HANDLE handle;
 };
 typedef struct np_transport_context NpTransportContext;
 
-static int tp_npipe_open(pbRPCTransportContext* context, int timeout)
-{
-	HANDLE hNamedPipe = 0;
+static int tp_npipe_open(pbRPCTransportContext *context, int timeout) {
+	HANDLE hNamedPipe = nullptr;
 	char pipeName[] = "\\\\.\\pipe\\ogon_SessionManager";
-	NpTransportContext *np = (NpTransportContext *) context;
+	NpTransportContext *np = (NpTransportContext *)context;
 
-	if (!WaitNamedPipeA(pipeName, timeout))
-	{
+	if (!WaitNamedPipeA(pipeName, timeout)) {
 		return -1;
 	}
-	hNamedPipe = CreateFileA(pipeName,
-			GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hNamedPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+			OPEN_EXISTING, 0, nullptr);
 
-	if ((!hNamedPipe) || (hNamedPipe == INVALID_HANDLE_VALUE))
-	{
+	if ((!hNamedPipe) || (hNamedPipe == INVALID_HANDLE_VALUE)) {
 		return -1;
 	}
 
@@ -56,45 +52,42 @@ static int tp_npipe_open(pbRPCTransportContext* context, int timeout)
 	return 0;
 }
 
-static int tp_npipe_close(pbRPCTransportContext* context)
-{
-	NpTransportContext* np = (NpTransportContext*) context;
+static int tp_npipe_close(pbRPCTransportContext *context) {
+	NpTransportContext *np = (NpTransportContext *)context;
 
-	if (np->handle)
-	{
+	if (np->handle) {
 		CloseHandle(np->handle);
-		np->handle = NULL;
+		np->handle = nullptr;
 	}
 
 	return 0;
 }
 
-static int tp_npipe_write(pbRPCTransportContext* context, char* data, unsigned int datalen)
-{
+static int tp_npipe_write(
+		pbRPCTransportContext *context, char *data, unsigned int datalen) {
 	DWORD bytesWritten;
 	BOOL fSuccess = FALSE;
-	NpTransportContext* np = (NpTransportContext*) context;
+	NpTransportContext *np = (NpTransportContext *)context;
 
-	fSuccess = WriteFile(np->handle, data, datalen, (LPDWORD) &bytesWritten, NULL);
+	fSuccess = WriteFile(
+			np->handle, data, datalen, (LPDWORD)&bytesWritten, nullptr);
 
-	if (!fSuccess || (bytesWritten < datalen))
-	{
+	if (!fSuccess || (bytesWritten < datalen)) {
 		return -1;
 	}
 
 	return bytesWritten;
 }
 
-static int tp_npipe_read(pbRPCTransportContext* context, char* data, unsigned int datalen)
-{
-	NpTransportContext* np = (NpTransportContext*) context;
+static int tp_npipe_read(
+		pbRPCTransportContext *context, char *data, unsigned int datalen) {
+	NpTransportContext *np = (NpTransportContext *)context;
 	DWORD bytesRead;
 	BOOL fSuccess = FALSE;
 
-	fSuccess = ReadFile(np->handle, data, datalen, &bytesRead, NULL);
+	fSuccess = ReadFile(np->handle, data, datalen, &bytesRead, nullptr);
 
-	if (!fSuccess || (bytesRead < datalen))
-	{
+	if (!fSuccess || (bytesRead < datalen)) {
 		return -1;
 	}
 
@@ -102,25 +95,21 @@ static int tp_npipe_read(pbRPCTransportContext* context, char* data, unsigned in
 }
 
 static HANDLE tp_npipe_get_fds(pbRPCTransportContext *context) {
-	NpTransportContext *np = (NpTransportContext*)context;
+	NpTransportContext *np = (NpTransportContext *)context;
 	return np->handle;
 }
 
 pbRPCTransportContext *tp_npipe_new() {
-	NpTransportContext* np = calloc(1, sizeof(NpTransportContext));
-	if (!np)
-		return NULL;
+	auto np = new NpTransportContext;
+	if (!np) return nullptr;
 
-	pbRPCTransportContext *ctx = (pbRPCTransportContext*) np;
+	pbRPCTransportContext *ctx = &np->context;
 	ctx->open = tp_npipe_open;
 	ctx->close = tp_npipe_close;
 	ctx->read = tp_npipe_read;
-	ctx->write  = tp_npipe_write;
+	ctx->write = tp_npipe_write;
 	ctx->get_fds = tp_npipe_get_fds;
 	return ctx;
 }
 
-void tp_npipe_free(pbRPCTransportContext* context)
-{
-	free(context);
-}
+void tp_npipe_free(pbRPCTransportContext *context) { delete (context); }
