@@ -28,6 +28,9 @@
 #include "config.h"
 #endif
 
+#include <string>
+#include <vector>
+
 #include <assert.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/codec/rfx.h>
@@ -67,10 +70,10 @@ static BOOL ogon_rfx_write_message_progressive_simple(
 	if (!Stream_EnsureRemainingCapacity(s, blockLen)) {
 		return FALSE;
 	}
-	Stream_Write_UINT16(s, 0xCCC0); /* blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
+	Stream_Write_UINT16(s, 0xCCC0);		/* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);	/* blockLen (4 bytes) */
 	Stream_Write_UINT32(s, 0xCACCACCA); /* magic (4 bytes) */
-	Stream_Write_UINT16(s, 0x0100); /* version (2 bytes) */
+	Stream_Write_UINT16(s, 0x0100);		/* version (2 bytes) */
 
 	/* RFX_PROGRESSIVE_CONTEXT */
 	blockLen = 10;
@@ -78,23 +81,23 @@ static BOOL ogon_rfx_write_message_progressive_simple(
 		return FALSE;
 	}
 	Stream_Write_UINT16(s, 0xCCC3); /* blockType (2 bytes) */
-	Stream_Write_UINT32(s, 10); /* blockLen (4 bytes) */
-	Stream_Write_UINT8(s, 0); /* ctxId (1 byte) */
-	Stream_Write_UINT16(s, 64); /* tileSize (2 bytes) */
-	Stream_Write_UINT8(s, 0); /* flags (1 byte) */
+	Stream_Write_UINT32(s, 10);		/* blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 0);		/* ctxId (1 byte) */
+	Stream_Write_UINT16(s, 64);		/* tileSize (2 bytes) */
+	Stream_Write_UINT8(s, 0);		/* flags (1 byte) */
 
 	/* RFX_PROGRESSIVE_FRAME_BEGIN */
 	blockLen = 12;
 	if (!Stream_EnsureRemainingCapacity(s, blockLen)) {
 		return FALSE;
 	}
-	Stream_Write_UINT16(s, 0xCCC1); /* blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
+	Stream_Write_UINT16(s, 0xCCC1);		   /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);	   /* blockLen (4 bytes) */
 	Stream_Write_UINT32(s, msg->frameIdx); /* frameIndex (4 bytes) */
-	Stream_Write_UINT16(s, 1); /* regionCount (2 bytes) */
+	Stream_Write_UINT16(s, 1);			   /* regionCount (2 bytes) */
 
 	/* RFX_PROGRESSIVE_REGION */
-	blockLen  = 18;
+	blockLen = 18;
 	blockLen += msg->numRects * 8;
 	blockLen += msg->numQuant * 5;
 	tilesDataSize = msg->numTiles * 22;
@@ -107,21 +110,21 @@ static BOOL ogon_rfx_write_message_progressive_simple(
 	if (!Stream_EnsureRemainingCapacity(s, blockLen)) {
 		return FALSE;
 	}
-	Stream_Write_UINT16(s, 0xCCC4); /* blockType (2 bytes) */
-	Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
-	Stream_Write_UINT8(s, 64); /* tileSize (1 byte) */
+	Stream_Write_UINT16(s, 0xCCC4);		   /* blockType (2 bytes) */
+	Stream_Write_UINT32(s, blockLen);	   /* blockLen (4 bytes) */
+	Stream_Write_UINT8(s, 64);			   /* tileSize (1 byte) */
 	Stream_Write_UINT16(s, msg->numRects); /* numRects (2 bytes) */
-	Stream_Write_UINT8(s, msg->numQuant); /* numQuant (1 byte) */
-	Stream_Write_UINT8(s, 0); /* numProgQuant (1 byte) */
-	Stream_Write_UINT8(s, 0); /* flags (1 byte) */
+	Stream_Write_UINT8(s, msg->numQuant);  /* numQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);			   /* numProgQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);			   /* flags (1 byte) */
 	Stream_Write_UINT16(s, msg->numTiles); /* numTiles (2 bytes) */
 	Stream_Write_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
-	for (i = 0; i < msg->numRects; i++)	{
+	for (i = 0; i < msg->numRects; i++) {
 		/* TS_RFX_RECT */
-		Stream_Write_UINT16(s, msg->rects[i].x); /* x (2 bytes) */
-		Stream_Write_UINT16(s, msg->rects[i].y); /* y (2 bytes) */
-		Stream_Write_UINT16(s, msg->rects[i].width); /* width (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].x);	  /* x (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].y);	  /* y (2 bytes) */
+		Stream_Write_UINT16(s, msg->rects[i].width);  /* width (2 bytes) */
 		Stream_Write_UINT16(s, msg->rects[i].height); /* height (2 bytes) */
 	}
 
@@ -135,30 +138,35 @@ static BOOL ogon_rfx_write_message_progressive_simple(
 	 */
 	for (i = 0, qv = msg->quantVals; i < msg->numQuant; i++, qv += 10) {
 		/* RFX_COMPONENT_CODEC_QUANT */
-		Stream_Write_UINT8(s, qv[0] + (qv[2] << 4)); /* LL3 (4-bit), HL3 (4-bit) */
-		Stream_Write_UINT8(s, qv[1] + (qv[3] << 4)); /* LH3 (4-bit), HH3 (4-bit) */
-		Stream_Write_UINT8(s, qv[5] + (qv[4] << 4)); /* HL2 (4-bit), LH2 (4-bit) */
-		Stream_Write_UINT8(s, qv[6] + (qv[8] << 4)); /* HH2 (4-bit), HL1 (4-bit) */
-		Stream_Write_UINT8(s, qv[7] + (qv[9] << 4)); /* LH1 (4-bit), HH1 (4-bit) */
+		Stream_Write_UINT8(
+				s, qv[0] + (qv[2] << 4)); /* LL3 (4-bit), HL3 (4-bit) */
+		Stream_Write_UINT8(
+				s, qv[1] + (qv[3] << 4)); /* LH3 (4-bit), HH3 (4-bit) */
+		Stream_Write_UINT8(
+				s, qv[5] + (qv[4] << 4)); /* HL2 (4-bit), LH2 (4-bit) */
+		Stream_Write_UINT8(
+				s, qv[6] + (qv[8] << 4)); /* HH2 (4-bit), HL1 (4-bit) */
+		Stream_Write_UINT8(
+				s, qv[7] + (qv[9] << 4)); /* LH1 (4-bit), HH1 (4-bit) */
 	}
 
 	for (i = 0; i < msg->numTiles; i++) {
 		/* RFX_PROGRESSIVE_TILE_SIMPLE */
 		tile = msg->tiles[i];
 		blockLen = 22 + tile->YLen + tile->CbLen + tile->CrLen;
-		Stream_Write_UINT16(s, 0xCCC5); /* blockType (2 bytes) */
-		Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
-		Stream_Write_UINT8(s, tile->quantIdxY); /* quantIdxY (1 byte) */
-		Stream_Write_UINT8(s, tile->quantIdxCb); /* quantIdxCb (1 byte) */
-		Stream_Write_UINT8(s, tile->quantIdxCr); /* quantIdxCr (1 byte) */
-		Stream_Write_UINT16(s, tile->xIdx); /* xIdx (2 bytes) */
-		Stream_Write_UINT16(s, tile->yIdx); /* yIdx (2 bytes) */
-		Stream_Write_UINT8(s, 0); /* flags (1 byte) */
-		Stream_Write_UINT16(s, tile->YLen); /* YLen (2 bytes) */
-		Stream_Write_UINT16(s, tile->CbLen); /* CbLen (2 bytes) */
-		Stream_Write_UINT16(s, tile->CrLen); /* CrLen (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* tailLen (2 bytes) */
-		Stream_Write(s, tile->YData, tile->YLen); /* YData */
+		Stream_Write_UINT16(s, 0xCCC5);				/* blockType (2 bytes) */
+		Stream_Write_UINT32(s, blockLen);			/* blockLen (4 bytes) */
+		Stream_Write_UINT8(s, tile->quantIdxY);		/* quantIdxY (1 byte) */
+		Stream_Write_UINT8(s, tile->quantIdxCb);	/* quantIdxCb (1 byte) */
+		Stream_Write_UINT8(s, tile->quantIdxCr);	/* quantIdxCr (1 byte) */
+		Stream_Write_UINT16(s, tile->xIdx);			/* xIdx (2 bytes) */
+		Stream_Write_UINT16(s, tile->yIdx);			/* yIdx (2 bytes) */
+		Stream_Write_UINT8(s, 0);					/* flags (1 byte) */
+		Stream_Write_UINT16(s, tile->YLen);			/* YLen (2 bytes) */
+		Stream_Write_UINT16(s, tile->CbLen);		/* CbLen (2 bytes) */
+		Stream_Write_UINT16(s, tile->CrLen);		/* CrLen (2 bytes) */
+		Stream_Write_UINT16(s, 0);					/* tailLen (2 bytes) */
+		Stream_Write(s, tile->YData, tile->YLen);	/* YData */
 		Stream_Write(s, tile->CbData, tile->CbLen); /* CbData */
 		Stream_Write(s, tile->CrData, tile->CrLen); /* CrData */
 	}
@@ -168,7 +176,7 @@ static BOOL ogon_rfx_write_message_progressive_simple(
 	if (!Stream_EnsureRemainingCapacity(s, blockLen)) {
 		return FALSE;
 	}
-	Stream_Write_UINT16(s, 0xCCC2); /* blockType (2 bytes) */
+	Stream_Write_UINT16(s, 0xCCC2);	  /* blockType (2 bytes) */
 	Stream_Write_UINT32(s, blockLen); /* blockLen (4 bytes) */
 
 	return TRUE;
@@ -197,7 +205,7 @@ static int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn,
 	wStream *s;
 	UINT32 i;
 	RFX_MESSAGE *message;
-	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu = {0};
 	RFX_RECT r;
 	ogon_backend_connection *backend = conn->backend;
 	ogon_front_connection *frontend = &conn->front;
@@ -224,12 +232,13 @@ static int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn,
 		r.height = rects[i].height;
 
 		if (rects[i].x % 64 || rects[i].y % 64) {
-			WLog_ERR(TAG, "%s: invalid rectangle: x=%"PRId16" y=%"PRId16"", __FUNCTION__, rects[i].x, rects[i].y);
+			WLog_ERR(TAG, "%s: invalid rectangle: x=%" PRId16 " y=%" PRId16 "",
+					__FUNCTION__, rects[i].x, rects[i].y);
 			return 0;
 		}
-		if (!(message = rfx_encode_message(encoder->rfx_context, &r, 1,
-			data, encoder->desktopWidth, encoder->desktopHeight, encoder->scanLine)))
-		{
+		if (!(message = rfx_encode_message(encoder->rfx_context, &r, 1, data,
+					  encoder->desktopWidth, encoder->desktopHeight,
+					  encoder->scanLine))) {
 			WLog_ERR(TAG, "failed to encode rfx message");
 			return 0;
 		}
@@ -237,7 +246,10 @@ static int ogon_send_gfx_rfx_progressive_bits(ogon_connection *conn,
 		message->freeRects = TRUE;
 
 		Stream_SetPosition(s, 0);
-		ret = ogon_rfx_write_message_progressive_simple(encoder->rfx_context, s, message) ? 0 : -1;
+		ret = ogon_rfx_write_message_progressive_simple(
+					  encoder->rfx_context, s, message)
+					  ? 0
+					  : -1;
 		rfx_message_free(encoder->rfx_context, message);
 
 		pdu.bitmapDataLength = Stream_GetPosition(s);
@@ -263,7 +275,7 @@ static int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 	UINT32 i;
 	RFX_MESSAGE *message;
 	const BYTE *buf;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = {0};
 	RFX_RECT r;
 	ogon_backend_connection *backend = conn->backend;
 	ogon_front_connection *frontend = &conn->front;
@@ -289,13 +301,14 @@ static int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 		r.height = rects[i].height;
 
 		if (rects[i].x % 64 || rects[i].y % 64) {
-			WLog_ERR(TAG, "%s: invalid rectangle: x=%"PRId16" y=%"PRId16"", __FUNCTION__, rects[i].x, rects[i].y);
+			WLog_ERR(TAG, "%s: invalid rectangle: x=%" PRId16 " y=%" PRId16 "",
+					__FUNCTION__, rects[i].x, rects[i].y);
 			return 0;
 		}
-		buf = data + rects[i].y * encoder->scanLine + rects[i].x * encoder->bytesPerPixel;
-		if (!(message = rfx_encode_message(encoder->rfx_context, &r, 1,
-			buf, r.width, r.height, encoder->scanLine)))
-		{
+		buf = data + rects[i].y * encoder->scanLine +
+			  rects[i].x * encoder->bytesPerPixel;
+		if (!(message = rfx_encode_message(encoder->rfx_context, &r, 1, buf,
+					  r.width, r.height, encoder->scanLine))) {
 			WLog_ERR(TAG, "failed to encode rfx message");
 			return 0;
 		}
@@ -336,20 +349,20 @@ static int ogon_send_gfx_rfx_bits(ogon_connection *conn, const BYTE *data,
 static int ogon_send_gfx_debug_bitmap(ogon_connection *conn) {
 	ogon_front_connection *frontend = &conn->front;
 	ogon_bitmap_encoder *encoder = frontend->encoder;
-	BYTE *encodedData = NULL;
+	BYTE *encodedData = nullptr;
 	UINT32 encodedSize;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = {0};
 	UINT32 scanLine = encoder->desktopWidth * 4;
 
 	if (!(encodedData = freerdp_bitmap_compress_planar(encoder->debug_context,
-		encoder->debug_buffer, PIXEL_FORMAT_BGRX32, encoder->desktopWidth, 8,
-		scanLine, NULL, &encodedSize)))
-	{
+				  encoder->debug_buffer, PIXEL_FORMAT_BGRX32,
+				  encoder->desktopWidth, 8, scanLine, nullptr, &encodedSize))) {
 		WLog_ERR(TAG, "%s: planar compression failed", __FUNCTION__);
 		return 0;
 	}
 
-	/* WLog_DBG(TAG, "%s: encodedSize: %"PRIu32"", __FUNCTION__, encodedSize); */
+	/* WLog_DBG(TAG, "%s: encodedSize: %"PRIu32"", __FUNCTION__, encodedSize);
+	 */
 
 	pdu.surfaceId = frontend->rdpgfxOutputSurface;
 	pdu.pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
@@ -394,7 +407,7 @@ static inline BOOL ogon_write_avc420_bitmap_stream(wStream *s,
 	}
 
 	for (i = 0; i < numRects; i++) {
-		Stream_Write_UINT8(s, 18); /* qpVal (1 byte) */
+		Stream_Write_UINT8(s, 18);	/* qpVal (1 byte) */
 		Stream_Write_UINT8(s, 100); /* qualityVal (1 byte) */
 	}
 
@@ -412,7 +425,7 @@ static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	BYTE *chromaData;
 	UINT32 chromaSize;
 	RDP_RECT desktopRect;
-	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = { 0 };
+	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu = {0};
 	wStream *s;
 	BOOL optimizable = FALSE;
 	UINT32 maxFrameRate = (UINT32)conn->fps;
@@ -470,8 +483,8 @@ static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 		openh264CompressMode = COMPRESS_MODE_AVC420; /* avc420 frame only */
 
 	rv = ogon_openh264_compress(encoder->h264_context, maxFrameRate,
-		                    targetFrameSizeInBits, data, &encodedData, &encodedSize,
-		                    openh264CompressMode, &optimizable);
+			targetFrameSizeInBits, data, &encodedData, &encodedSize,
+			openh264CompressMode, &optimizable);
 	if (!rv || encodedSize < 1) {
 		STOPWATCH_STOP(encoder->swH264Compress);
 		WLog_ERR(TAG,
@@ -490,16 +503,21 @@ static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 		UINT32 avc420EncodedBitstreamInfo = encodedSize + 4 + numRects * 10;
 
 		if (!enableFullAVC444 || (op != 0)) {
-			avc420EncodedBitstreamInfo |= (1 << 30); /* LC = 0x1: YUV420 frame only */
+			avc420EncodedBitstreamInfo |=
+					(1 << 30); /* LC = 0x1: YUV420 frame only */
 		}
-		if (!Stream_EnsureRemainingCapacity(s, sizeof(avc420EncodedBitstreamInfo))) {
+		if (!Stream_EnsureRemainingCapacity(
+					s, sizeof(avc420EncodedBitstreamInfo))) {
 			WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
 			goto out;
 		}
-		Stream_Write_UINT32(s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo (4 bytes) */
+		Stream_Write_UINT32(
+				s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
+												   (4 bytes) */
 	}
 
-	if (!ogon_write_avc420_bitmap_stream(s, rects, numRects, encodedData, encodedSize)) {
+	if (!ogon_write_avc420_bitmap_stream(
+				s, rects, numRects, encodedData, encodedSize)) {
 		goto out;
 	}
 
@@ -511,11 +529,13 @@ static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 		rv = ogon_openh264_compress(encoder->h264_context, maxFrameRate,
 				targetFrameSizeInBits, data, &chromaData, &chromaSize,
 				openh264CompressMode, &optimizable);
-		if (!rv || encodedSize < 1)
-		{
+		if (!rv || encodedSize < 1) {
 			STOPWATCH_STOP(encoder->swH264Compress);
-			WLog_ERR(TAG, "h264 compression failed. mode=%"PRIu32" encodedSize=%"PRIu32" targetFrameSizeInBits=%"PRIu32"",
-			         openh264CompressMode, encodedSize, targetFrameSizeInBits);
+			WLog_ERR(TAG,
+					"h264 compression failed. mode=%" PRIu32
+					" encodedSize=%" PRIu32 " targetFrameSizeInBits=%" PRIu32
+					"",
+					openh264CompressMode, encodedSize, targetFrameSizeInBits);
 			goto out;
 		}
 		STOPWATCH_STOP(encoder->swH264Compress);
@@ -537,8 +557,9 @@ static int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	pdu.surfaceId = frontend->rdpgfxOutputSurface;
 	pdu.pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
 	if (useAVC444) {
-		pdu.codecId = useAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
-	} else  {
+		pdu.codecId =
+				useAVC444v2 ? RDPGFX_CODECID_AVC444v2 : RDPGFX_CODECID_AVC444;
+	} else {
 		pdu.codecId = RDPGFX_CODECID_AVC420;
 	}
 	pdu.destRect.left = 0;
@@ -712,8 +733,9 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 			WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
 			goto out;
 		}
-		Stream_Write_UINT32(s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
-															   (4 bytes) */
+		Stream_Write_UINT32(
+				s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
+												   (4 bytes) */
 	}
 
 	if (!ogon_write_avc420_bitmap_stream(
@@ -916,8 +938,9 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 			WLog_ERR(TAG, "%s: stream capacity failure", __FUNCTION__);
 			goto out;
 		}
-		Stream_Write_UINT32(s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
-															   (4 bytes) */
+		Stream_Write_UINT32(
+				s, avc420EncodedBitstreamInfo); /* avc420EncodedBitstreamInfo
+												   (4 bytes) */
 	}
 
 	if (!ogon_write_avc420_bitmap_stream(s, &meta, encodedData, encodedSize)) {
@@ -989,8 +1012,8 @@ static int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 	 */
 
 	wStream *s;
-	SURFACE_BITS_COMMAND cmd = { 0 };
-	RFX_MESSAGE* message;
+	SURFACE_BITS_COMMAND cmd = {0};
+	RFX_MESSAGE *message;
 	UINT32 messageSize;
 
 	freerdp_peer *peer = conn->context.peer;
@@ -1025,10 +1048,19 @@ static int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 
 	s = encoder->stream;
 
-	if (!(message = rfx_encode_message(encoder->rfx_context, rects, numRects,
-				  data, settings->DesktopWidth, settings->DesktopHeight,
-				  encoder->scanLine))) {
-		WLog_ERR(TAG, "failed to encode rfx message (numRects = %"PRIu32")", numRects);
+	std::vector<RFX_RECT> rfx_rects;
+	for (auto x = 0; x < numRects; x++) {
+		const auto &sr = rects[x];
+		rfx_rects.push_back({.x = static_cast<UINT16>(sr.x),
+				.y = static_cast<UINT16>(sr.y),
+				.width = static_cast<UINT16>(sr.width),
+				.height = static_cast<UINT16>(sr.height)});
+	}
+	if (!(message = rfx_encode_message(encoder->rfx_context, rfx_rects.data(),
+				  rfx_rects.size(), data, settings->DesktopWidth,
+				  settings->DesktopHeight, encoder->scanLine))) {
+		WLog_ERR(TAG, "failed to encode rfx message (numRects = %" PRIu32 ")",
+				numRects);
 		return 0;
 	}
 
@@ -1051,8 +1083,10 @@ static int ogon_send_rdp_rfx_bits(ogon_connection *conn, const BYTE *data,
 	messageSize += 22; /* the size of the surface bits command header */
 
 	if (messageSize > settings->MultifragMaxRequestSize) {
-		WLog_ERR(TAG, "internal error: rfx message size (%"PRIu32") exceeds max request size (%"PRIu32")",
-			messageSize, settings->MultifragMaxRequestSize);
+		WLog_ERR(TAG,
+				"internal error: rfx message size (%" PRIu32
+				") exceeds max request size (%" PRIu32 ")",
+				messageSize, settings->MultifragMaxRequestSize);
 		return 0;
 	}
 
@@ -1078,29 +1112,32 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 	ogon_bmp_context *bmp = encoder->bmpContext;
 	UINT32 updatePduSize, maxPduSize, maxRectSize, maxDataSize;
 	UINT32 i, x, y, nx, ny, numBitmaps, newMaxSize, nextSize;
-	BITMAP_UPDATE bitmapUpdate = { 0 };
+	BITMAP_UPDATE bitmapUpdate = {0};
 	const RDP_RECT *pr;
 	RDP_RECT r;
 	const BYTE *src;
 	int w, h, mod, e, sp;
 	BITMAP_DATA *bitmapData;
 	void *tmp;
-	UINT32 bitmapUpdateHeaderSize = 2; /* see FreeRDP update_write_bitmap_update() */
-	UINT32 bitmapUpdateDataHeaderSize = 26; /* see FreeRDP update_write_bitmap_data() */
+	UINT32 bitmapUpdateHeaderSize =
+			2; /* see FreeRDP update_write_bitmap_update() */
+	UINT32 bitmapUpdateDataHeaderSize =
+			26; /* see FreeRDP update_write_bitmap_data() */
 
 	if (!numRects || !data || !rects) {
 		return -1;
 	}
 
 	maxPduSize = encoder->multifragMaxRequestSize;
-	maxRectSize = maxPduSize - bitmapUpdateHeaderSize - bitmapUpdateDataHeaderSize;
-	maxRectSize -= 3; /* leave room for the rle header for uncompressable bitmaps */
+	maxRectSize =
+			maxPduSize - bitmapUpdateHeaderSize - bitmapUpdateDataHeaderSize;
+	maxRectSize -=
+			3; /* leave room for the rle header for uncompressable bitmaps */
 	numBitmaps = 0;
 
 	Stream_SetPosition(bmp->bs, 0);
 
-	for (i = 0, pr = rects; i < numRects; i++, pr++)
-	{
+	for (i = 0, pr = rects; i < numRects; i++, pr++) {
 		INT16 pwidth = pr->width;
 		INT16 px = pr->x;
 		/* WLog_DBG(TAG, "input rectangle #%"PRIu32": %"PRId16" %"PRId16"
@@ -1123,14 +1160,15 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 		w = pwidth > 64 ? 64 : pwidth;
 		h = pr->height > 64 ? 64 : pr->height;
 
-		/* if this exceeds the client's MaxRequestSize limit we reduce the fragment size
+		/* if this exceeds the client's MaxRequestSize limit we reduce the
+		   fragment size
 		   but try to keep the average fragments' width as high as possible */
 
 		while (w * bytePerPixel > maxRectSize) {
 			w /= 2;
 		}
 		while (w * h * bytePerPixel > maxRectSize) {
-			h = (h == 3) ? 2 : h/2;
+			h = (h == 3) ? 2 : h / 2;
 		}
 
 		assert(h && w >= 4);
@@ -1148,21 +1186,29 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 				if (r.x + w > px + pwidth) {
 					r.width = px + pwidth - r.x;
 				}
-				/* WLog_DBG(TAG, "  encoding rectangle: %"PRId16" %"PRId16" %"PRId16" %"PRId16"", r.x, r.y, r.width, r.height); */
+				/* WLog_DBG(TAG, "  encoding rectangle: %"PRId16" %"PRId16"
+				 * %"PRId16" %"PRId16"", r.x, r.y, r.width, r.height); */
 				if (bmp->rectsAllocated < numBitmaps + 1) {
-					if (!(tmp = realloc((void*)bmp->rects, sizeof(BITMAP_DATA) * (numBitmaps + 1)))) {
-						WLog_ERR(TAG, "failed to (re)allocate %"PRIu32" BITMAP_DATA structs", numBitmaps + 1);
+					if (!(tmp = realloc((void *)bmp->rects,
+								  sizeof(BITMAP_DATA) * (numBitmaps + 1)))) {
+						WLog_ERR(TAG,
+								"failed to (re)allocate %" PRIu32
+								" BITMAP_DATA structs",
+								numBitmaps + 1);
 						goto fail;
 					}
-					bmp->rects = (BITMAP_DATA*)tmp;
+					bmp->rects = (BITMAP_DATA *)tmp;
 					bmp->rectsAllocated = numBitmaps + 1;
 				}
 
-				newMaxSize = r.height * r.width * bytePerPixel + 3; /* 3 == RLE header */
+				newMaxSize = r.height * r.width * bytePerPixel +
+							 3; /* 3 == RLE header */
 
 				if (Stream_GetRemainingLength(bmp->bs) < newMaxSize) {
-					WLog_ERR(TAG, "internal error: unsufficient bmp encoder buffer size: remaining: %"PRIuz" required: %"PRIu32"",
-						Stream_GetRemainingLength(bmp->bs), newMaxSize);
+					WLog_ERR(TAG,
+							"internal error: unsufficient bmp encoder buffer "
+							"size: remaining: %" PRIuz " required: %" PRIu32 "",
+							Stream_GetRemainingLength(bmp->bs), newMaxSize);
 					goto fail;
 				}
 
@@ -1177,19 +1223,21 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 				bitmapData->destBottom = r.y + r.height - 1;
 				bitmapData->width = r.width;
 				bitmapData->height = r.height;
-				bitmapData->cbUncompressedSize = r.width * r.height * bytePerPixel;
+				bitmapData->cbUncompressedSize =
+						r.width * r.height * bytePerPixel;
 				bitmapData->cbScanWidth = r.width * bytePerPixel;
 				bitmapData->cbCompFirstRowSize = 0;
 				bitmapData->flags = 0;
 
-				src = data + r.y * encoder->scanLine + r.x * encoder->bytesPerPixel;
+				src = data + r.y * encoder->scanLine +
+					  r.x * encoder->bytesPerPixel;
 
 				if (bitsPerPixel > 24) {
 					STOPWATCH_START(encoder->swBitmapCompress);
 					if (!freerdp_bitmap_compress_planar(bmp->planar, src,
-						encoder->srcFormat, r.width, r.height, encoder->scanLine,
-						bitmapData->bitmapDataStream, &bitmapData->bitmapLength))
-					{
+								encoder->srcFormat, r.width, r.height,
+								encoder->scanLine, bitmapData->bitmapDataStream,
+								&bitmapData->bitmapLength)) {
 						STOPWATCH_STOP(encoder->swBitmapCompress);
 						WLog_ERR(TAG, "planar bitmap compression failed");
 						goto fail;
@@ -1198,10 +1246,10 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 					Stream_Seek(bmp->bs, bitmapData->bitmapLength);
 				} else {
 					STOPWATCH_START(encoder->swImageCopy);
-					if (!freerdp_image_copy(bmp->imageCopyBuffer, encoder->dstFormat,
-						0, 0, 0, r.width, r.height, src, encoder->srcFormat,
-						encoder->scanLine, 0, 0, NULL,FREERDP_FLIP_NONE ))
-					{
+					if (!freerdp_image_copy(bmp->imageCopyBuffer,
+								encoder->dstFormat, 0, 0, 0, r.width, r.height,
+								src, encoder->srcFormat, encoder->scanLine, 0,
+								0, nullptr, FREERDP_FLIP_NONE)) {
 						STOPWATCH_STOP(encoder->swImageCopy);
 						WLog_ERR(TAG, "image copy failed");
 						goto fail;
@@ -1215,9 +1263,10 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 					sp = Stream_GetPosition(bmp->bs);
 
 					STOPWATCH_START(encoder->swBitmapCompress);
-					if (freerdp_bitmap_compress((char*)bmp->imageCopyBuffer, r.width, r.height,
-						bmp->bs, bitsPerPixel, sp + newMaxSize, r.height - 1, bmp->bts, e) < 0)
-					{
+					if (freerdp_bitmap_compress((char *)bmp->imageCopyBuffer,
+								r.width, r.height, bmp->bs, bitsPerPixel,
+								sp + newMaxSize, r.height - 1, bmp->bts,
+								e) < 0) {
 						STOPWATCH_STOP(encoder->swBitmapCompress);
 						WLog_ERR(TAG, "interleaved bitmap compression failed");
 						goto fail;
@@ -1227,8 +1276,10 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 					bitmapData->bitmapLength = Stream_GetPosition(bmp->bs) - sp;
 
 					if (bitmapData->bitmapLength > newMaxSize) {
-						WLog_ERR(TAG, "interleaved bitmap compression exceeded byte limit: %"PRIu32" > %"PRIu32"",
-							 bitmapData->bitmapLength, newMaxSize);
+						WLog_ERR(TAG,
+								"interleaved bitmap compression exceeded byte "
+								"limit: %" PRIu32 " > %" PRIu32 "",
+								bitmapData->bitmapLength, newMaxSize);
 						goto fail;
 					}
 				}
@@ -1248,18 +1299,22 @@ static int ogon_send_bitmap_bits(ogon_connection *conn, const BYTE *data,
 	maxDataSize = maxPduSize - bitmapUpdateHeaderSize;
 
 	for (i = 0; i < numBitmaps; i++) {
-		updatePduSize += bmp->rects[i].bitmapLength + bitmapUpdateDataHeaderSize;
+		updatePduSize +=
+				bmp->rects[i].bitmapLength + bitmapUpdateDataHeaderSize;
 
 		if (updatePduSize > maxDataSize) {
-			WLog_ERR(TAG, "Internal error: %"PRIu32" is exceeding maxDataSize (%"PRIu32") in bmp encoder",
-				updatePduSize, maxDataSize);
+			WLog_ERR(TAG,
+					"Internal error: %" PRIu32
+					" is exceeding maxDataSize (%" PRIu32 ") in bmp encoder",
+					updatePduSize, maxDataSize);
 			goto fail;
 		}
 
 		bitmapUpdate.number++;
 
 		if (i + 1 < numBitmaps) {
-			nextSize = bmp->rects[i + 1].bitmapLength + bitmapUpdateDataHeaderSize;
+			nextSize =
+					bmp->rects[i + 1].bitmapLength + bitmapUpdateDataHeaderSize;
 		} else {
 			nextSize = 0;
 		}
@@ -1285,9 +1340,9 @@ fail:
 	return -1;
 }
 
-static BOOL ogon_compare_and_update_framebuffer_copy(ogon_bitmap_encoder *dstEncoder,
-	BYTE *dst, const BYTE *src, int x, int y, int w, int h, int pixelSize, int lineSize)
-{
+static BOOL ogon_compare_and_update_framebuffer_copy(
+		ogon_bitmap_encoder *dstEncoder, BYTE *dst, const BYTE *src, int x,
+		int y, int w, int h, int pixelSize, int lineSize) {
 #ifndef WITH_ENCODER_STATS
 	OGON_UNUSED(dstEncoder);
 #endif
@@ -1323,17 +1378,17 @@ static BOOL ogon_compare_and_update_framebuffer_copy(ogon_bitmap_encoder *dstEnc
 	return ret;
 }
 
-static BOOL simplify_damagedRegion(REGION16 *damage, ogon_backend_connection *backend,
-	ogon_bitmap_encoder *dstEncoder, REGION16 *input,
-	int tileWidth, int tileHeight, BOOL damageFullTiles, int *damageSize)
-{
+static BOOL simplify_damagedRegion(REGION16 *damage,
+		ogon_backend_connection *backend, ogon_bitmap_encoder *dstEncoder,
+		REGION16 *input, int tileWidth, int tileHeight, BOOL damageFullTiles,
+		int *damageSize) {
 	int x, y, w, h;
 	int minTileX, maxTileX, minTileY, maxTileY;
 	const RECTANGLE_16 *extents, *rects;
 	RECTANGLE_16 tile;
 	REGION16 tileIntersection;
 	BYTE *fbCopy = dstEncoder->clientView;
-	const BYTE* fbData = ogon_dmgbuf_get_data(backend->damage);
+	const BYTE *fbData = ogon_dmgbuf_get_data(backend->damage);
 	BOOL ret = TRUE;
 	UINT32 dmgcount, nrects, i;
 
@@ -1348,18 +1403,14 @@ static BOOL simplify_damagedRegion(REGION16 *damage, ogon_backend_connection *ba
 	maxTileY = (extents->bottom - 1) / tileHeight;
 
 	*damageSize = 0;
-	for (y = minTileY, h = tileHeight; y <= maxTileY; y++)
-	{
-		if (y == maxTileY)
-			h = extents->bottom - (y * tileHeight);
+	for (y = minTileY, h = tileHeight; y <= maxTileY; y++) {
+		if (y == maxTileY) h = extents->bottom - (y * tileHeight);
 
 		tile.top = y * tileHeight;
 		tile.bottom = tile.top + h;
 
-		for (x = minTileX, w = tileWidth; x <= maxTileX; x++)
-		{
-			if (x == maxTileX)
-				w = extents->right - (x * tileWidth);
+		for (x = minTileX, w = tileWidth; x <= maxTileX; x++) {
+			if (x == maxTileX) w = extents->right - (x * tileWidth);
 
 			tile.left = x * tileWidth;
 			tile.right = tile.left + w;
@@ -1371,24 +1422,27 @@ static BOOL simplify_damagedRegion(REGION16 *damage, ogon_backend_connection *ba
 			}
 
 			rects = region16_rects(&tileIntersection, &nrects);
-			for (i = 0, dmgcount=0; i < nrects; i++, rects++) {
-				if (ogon_compare_and_update_framebuffer_copy(dstEncoder,
-					fbCopy, fbData, rects->left, rects->top,
-					(rects->right - rects->left), (rects->bottom - rects->top),
-					4, dstEncoder->scanLine))
-				{
+			for (i = 0, dmgcount = 0; i < nrects; i++, rects++) {
+				if (ogon_compare_and_update_framebuffer_copy(dstEncoder, fbCopy,
+							fbData, rects->left, rects->top,
+							(rects->right - rects->left),
+							(rects->bottom - rects->top), 4,
+							dstEncoder->scanLine)) {
 					continue;
 				}
 				dmgcount++;
-				if (!damageFullTiles && !region16_union_rect(damage, damage, rects)) {
+				if (!damageFullTiles &&
+						!region16_union_rect(damage, damage, rects)) {
 					WLog_ERR(TAG, "error adding rect to damage region");
 					goto out_cleanup;
 				}
 
-				*damageSize += (rects->right - rects->left) * (rects->bottom - rects->top);
+				*damageSize += (rects->right - rects->left) *
+							   (rects->bottom - rects->top);
 			}
 
-			if (damageFullTiles && dmgcount && !region16_union_rect(damage, damage, &tile)) {
+			if (damageFullTiles && dmgcount &&
+					!region16_union_rect(damage, damage, &tile)) {
 				WLog_ERR(TAG, "error adding tile to damage region");
 				goto out_cleanup;
 			}
@@ -1401,12 +1455,10 @@ out_cleanup:
 	region16_uninit(&tileIntersection);
 	STOPWATCH_STOP(dstEncoder->swSimplifyDamage);
 	return ret;
-
 }
 
-static inline UINT32 ogon_update_encoder_rects(ogon_bitmap_encoder *encoder,
-	REGION16 *region)
-{
+static inline UINT32 ogon_update_encoder_rects(
+		ogon_bitmap_encoder *encoder, REGION16 *region) {
 	UINT32 nrects, i;
 	const RECTANGLE_16 *src;
 	RDP_RECT *dst;
@@ -1414,8 +1466,9 @@ static inline UINT32 ogon_update_encoder_rects(ogon_bitmap_encoder *encoder,
 	src = region16_rects(region, &nrects);
 
 	if (encoder->rdpRectsAllocated < nrects) {
-		if (!(dst = realloc(encoder->rdpRects, nrects * sizeof(RDP_RECT)))) {
-			WLog_ERR(TAG, "error (re)allocating %"PRIu32" rdpRects", nrects);
+		if (!(dst = static_cast<RDP_RECT *>(
+					  realloc(encoder->rdpRects, nrects * sizeof(RDP_RECT))))) {
+			WLog_ERR(TAG, "error (re)allocating %" PRIu32 " rdpRects", nrects);
 			return 0;
 		}
 		encoder->rdpRects = dst;
@@ -1437,7 +1490,7 @@ static inline UINT32 ogon_update_encoder_rects(ogon_bitmap_encoder *encoder,
 int ogon_backend_consume_damage(ogon_connection *conn) {
 	ogon_front_connection *front = &conn->front;
 	const RDP_RECT *rects, *r;
-	BYTE *data = NULL;
+	BYTE *data = nullptr;
 	UINT32 i, numRects = 0;
 	RECTANGLE_16 rect16;
 	ogon_bitmap_encoder *dstEncoder = front->encoder;
@@ -1452,9 +1505,8 @@ int ogon_backend_consume_damage(ogon_connection *conn) {
 
 	for (i = 0, r = rects; i < numRects; i++, r++) {
 		if (r->x < 0 || r->y < 0 || r->width < 1 || r->height < 1 ||
-		    (UINT32)(r->x + r->width) > dstEncoder->desktopWidth ||
-		    (UINT32)(r->y + r->height) > dstEncoder->desktopHeight)
-		{
+				(UINT32)(r->x + r->width) > dstEncoder->desktopWidth ||
+				(UINT32)(r->y + r->height) > dstEncoder->desktopHeight) {
 			WLog_WARN(TAG, "invalid rectangle in damage list");
 			continue;
 		}
@@ -1464,7 +1516,8 @@ int ogon_backend_consume_damage(ogon_connection *conn) {
 		rect16.top = r->y;
 		rect16.bottom = r->y + r->height;
 
-		if (!region16_union_rect(&dstEncoder->accumulatedDamage, &dstEncoder->accumulatedDamage, &rect16)) {
+		if (!region16_union_rect(&dstEncoder->accumulatedDamage,
+					&dstEncoder->accumulatedDamage, &rect16)) {
 			WLog_ERR(TAG, "error during region16_union_rect()");
 			return -1;
 		}
@@ -1478,23 +1531,25 @@ static inline void ogon_send_frame_marker(ogon_connection *conn, BOOL begin) {
 	rdpUpdate *update = conn->context.peer->context->update;
 	ogon_front_connection *front = &conn->front;
 
-	/* WLog_DBG(TAG, "%s: send frame %s frameId=%"PRIu32" lastAckFrame=%"PRIu32"", __FUNCTION__,
-		 begin ? "BEGIN" : "END", front->nextFrameId, front->lastAckFrame); */
+	/* WLog_DBG(TAG, "%s: send frame %s frameId=%"PRIu32"
+	   lastAckFrame=%"PRIu32"", __FUNCTION__, begin ? "BEGIN" : "END",
+	   front->nextFrameId, front->lastAckFrame); */
 
 	if (front->rdpgfxConnected) {
 		/* under gfx frame markers must be supported */
 		if (begin) {
-			RDPGFX_START_FRAME_PDU pdu = { 0 };
+			RDPGFX_START_FRAME_PDU pdu = {0};
 			pdu.frameId = front->nextFrameId;
 			pdu.timestamp = 0;
 			front->rdpgfx->StartFrame(front->rdpgfx, &pdu);
 		} else {
-			RDPGFX_END_FRAME_PDU pdu = { 0 };
+			RDPGFX_END_FRAME_PDU pdu = {0};
 			pdu.frameId = front->nextFrameId;
 			front->rdpgfx->EndFrame(front->rdpgfx, &pdu);
 		}
-	} else if (settings->SurfaceFrameMarkerEnabled && front->codecMode != CODEC_MODE_BMP) {
-		SURFACE_FRAME_MARKER sfm = { 0 };
+	} else if (settings->SurfaceFrameMarkerEnabled &&
+			   front->codecMode != CODEC_MODE_BMP) {
+		SURFACE_FRAME_MARKER sfm = {0};
 		sfm.frameId = front->nextFrameId;
 		if (begin) {
 			sfm.frameAction = SURFACECMD_FRAMEACTION_BEGIN;
@@ -1517,7 +1572,7 @@ static void dumpExtents(REGION16 *r) {
 }
 #endif
 
-static void ogon_render_string(char *str, UINT32 fg, UINT32 bg, BYTE *buf,
+static void ogon_render_string(const char *str, UINT32 fg, UINT32 bg, BYTE *buf,
 		UINT32 scanLine, BOOL vFlip) {
 	UINT32 *p;
 	UINT32 x, y, z;
@@ -1531,22 +1586,22 @@ static void ogon_render_string(char *str, UINT32 fg, UINT32 bg, BYTE *buf,
 
 	/* clear line */
 	for (y = 0; y < 8; y++) {
-		p = (UINT32*)(buf + scanLine * y);
-		for (x = 0; x < scanLine/4; x++, p++) {
+		p = (UINT32 *)(buf + scanLine * y);
+		for (x = 0; x < scanLine / 4; x++, p++) {
 			*p = bg;
 		}
 	}
 
 	/* draw characters with 1 pixel distance */
 	for (i = 0; i < len; i++) {
-		o = (unsigned char) str[i];
+		o = (unsigned char)str[i];
 		if (o < 32 || o > 126) {
 			o = '.';
 		}
 		glyph = font8x8[o];
 		for (y = 0; y < 8; y++) {
 			z = vFlip ? 7 - y : y;
-			p = ((UINT32*)(buf + scanLine * z)) + i * 9;
+			p = ((UINT32 *)(buf + scanLine * z)) + i * 9;
 			for (x = 0; x < 8; x++, p++) {
 				if (glyph[y] & 1 << x) {
 					*p = fg;
@@ -1563,10 +1618,8 @@ static BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
 	BYTE *data = encoder->debug_buffer;
 	UINT32 scanLine = encoder->desktopWidth * 4;
 
-	char *codec = "???";
-	char *security = "???";
-	char *msg;
-	int len;
+	const char *codec = "???";
+	const char *security = "???";
 
 	if (embed) {
 		if (!(data = ogon_dmgbuf_get_data(conn->backend->damage))) {
@@ -1598,9 +1651,11 @@ static BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
 		case CODEC_MODE_H264:
 			if (front->rdpgfx->avc444Supported) {
 				if (front->rdpgfxH264EnableFullAVC444) {
-					codec = front->rdpgfx->avc444v2Supported ? "AVC444f2" : "AVC444f1";
+					codec = front->rdpgfx->avc444v2Supported ? "AVC444f2"
+															 : "AVC444f1";
 				} else {
-					codec = front->rdpgfx->avc444v2Supported ? "AVC444p2" : "AVC444p1";
+					codec = front->rdpgfx->avc444v2Supported ? "AVC444p2"
+															 : "AVC444p1";
 				}
 			} else {
 				codec = "AVC420";
@@ -1620,19 +1675,21 @@ static BOOL ogon_render_debug_info(ogon_connection *conn, BOOL embed) {
 			break;
 	}
 
-	len = front->encoder->desktopWidth / 9 + 1;
-	if (!(msg = malloc(len))) {
-		return FALSE;
-	}
+	auto len = front->encoder->desktopWidth / 9 + 1;
+	std::string msg;
+	msg.resize(len);
 
-	snprintf(msg, len, "#%ld | act #%"PRIu32" | %s | frame #%06"PRIu32" (ack=%"PRIu32" last=%"PRIu32") | %"PRIu32"x%"PRIu32" | sec=%s | %"PRIu32" kbps | %"PRIu16" fps | bps %"PRIu32"",
-		conn->id, front->activationCount, codec, front->nextFrameId, front->frameAcknowledge,
-		front->lastAckFrame, encoder->desktopWidth, encoder->desktopHeight,
-		security, front->bandwidthMgmt.autodetect_bitRateKBit, front->statistics.fps_measured, front->statistics.bytes_sent * 8);
+	snprintf(msg.data(), len,
+			"#%ld | act #%" PRIu32 " | %s | frame #%06" PRIu32 " (ack=%" PRIu32
+			" last=%" PRIu32 ") | %" PRIu32 "x%" PRIu32 " | sec=%s | %" PRIu32
+			" kbps | %" PRIu16 " fps | bps %" PRIu32 "",
+			conn->id, front->activationCount, codec, front->nextFrameId,
+			front->frameAcknowledge, front->lastAckFrame, encoder->desktopWidth,
+			encoder->desktopHeight, security,
+			front->bandwidthMgmt.autodetect_bitRateKBit,
+			front->statistics.fps_measured, front->statistics.bytes_sent * 8);
 
-	ogon_render_string(msg, 0x00FF00, 0x000000, data, scanLine, !embed);
-
-	free(msg);
+	ogon_render_string(msg.c_str(), 0x00FF00, 0x000000, data, scanLine, !embed);
 
 	return TRUE;
 }
@@ -1649,7 +1706,7 @@ int ogon_send_surface_bits(ogon_connection *conn) {
 	ogon_front_connection *front = &conn->front;
 	ogon_bitmap_encoder *dstEncoder = front->encoder;
 
-	pfn_send_graphics_bits sendGraphicsBits = NULL;
+	pfn_send_graphics_bits sendGraphicsBits = nullptr;
 
 	STOPWATCH_START(dstEncoder->swSendSurfaceBits);
 
@@ -1722,9 +1779,8 @@ int ogon_send_surface_bits(ogon_connection *conn) {
 	}
 
 	if (!simplify_damagedRegion(&damagedRegion, backend, dstEncoder,
-		&dstEncoder->accumulatedDamage, tileSize, tileSize,
-		damageFullTiles, &damagedSize))
-	{
+				&dstEncoder->accumulatedDamage, tileSize, tileSize,
+				damageFullTiles, &damagedSize)) {
 		WLog_ERR(TAG, "error during input simplification");
 		ret = -1;
 		goto out_release_damaged;
@@ -1736,13 +1792,13 @@ int ogon_send_surface_bits(ogon_connection *conn) {
 			dumpExtents(&dstEncoder->accumulatedDamage);*/
 			goto out_release_damaged;
 		}
-	}
-	else {
+	} else {
 		front->rdpgfxProgressiveTicks = 0;
 	}
 
 	if (front->showDebugInfo) {
-		if (ogon_render_debug_info(conn, debugInfoEmbedded) && debugInfoEmbedded) {
+		if (ogon_render_debug_info(conn, debugInfoEmbedded) &&
+				debugInfoEmbedded) {
 			RECTANGLE_16 rect16;
 			rect16.left = 0;
 			rect16.top = 0;

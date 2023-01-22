@@ -20,7 +20,7 @@ set(${MODULE_PREFIX}_SRCS
 	ogon.cpp
 	ogon.h
 	frontend.cpp
-	graphics.c
+	graphics.cpp
 	peer.cpp
 	peer.h
 	PMurHash.c
