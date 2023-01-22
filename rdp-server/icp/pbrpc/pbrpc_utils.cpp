@@ -28,24 +28,18 @@
 #include "pbRPC.pb-c.h"
 #include "pbrpc_utils.h"
 
-DWORD pbrpc_getTag(pbRPCContext *context)
-{
+DWORD pbrpc_getTag(pbRPCContext *context) {
 	return InterlockedIncrement(&(context->tag));
 }
 
-Ogon__Pbrpc__RPCBase *pbrpc_message_new() {
-	Ogon__Pbrpc__RPCBase* msg;
-
-	if (!(msg = calloc(1, sizeof(Ogon__Pbrpc__RPCBase)))) {
-		return NULL;
-	}
+Ogon__Pbrpc__RPCBase *pbrpc_message_new(void) {
+	auto msg = new Ogon__Pbrpc__RPCBase;
 
 	ogon__pbrpc__rpcbase__init(msg);
 	return msg;
 }
 
-void pbrpc_message_free(Ogon__Pbrpc__RPCBase* msg, BOOL freePayload)
-{
+void pbrpc_message_free(Ogon__Pbrpc__RPCBase *msg, BOOL freePayload) {
 	if (!msg) {
 		return;
 	}
@@ -58,36 +52,29 @@ void pbrpc_message_free(Ogon__Pbrpc__RPCBase* msg, BOOL freePayload)
 		free(msg->errordescription);
 	}
 
-	free(msg);
+	delete (msg);
 }
 
-void pbrpc_prepare_request(pbRPCContext* context, Ogon__Pbrpc__RPCBase* msg)
-{
+void pbrpc_prepare_request(pbRPCContext *context, Ogon__Pbrpc__RPCBase *msg) {
 	msg->tag = pbrpc_getTag(context);
 	msg->isresponse = FALSE;
 	msg->status = OGON__PBRPC__RPCBASE__RPCSTATUS__SUCCESS;
 }
 
-void pbrpc_prepare_response(Ogon__Pbrpc__RPCBase* msg, UINT32 tag)
-{
+void pbrpc_prepare_response(Ogon__Pbrpc__RPCBase *msg, UINT32 tag) {
 	msg->isresponse = TRUE;
 	msg->tag = tag;
 }
 
-void pbrpc_prepare_error(Ogon__Pbrpc__RPCBase* msg, UINT32 tag, char *error)
-{
+void pbrpc_prepare_error(Ogon__Pbrpc__RPCBase *msg, UINT32 tag, char *error) {
 	pbrpc_prepare_response(msg, tag);
 	msg->status = OGON__PBRPC__RPCBASE__RPCSTATUS__FAILED;
 	msg->errordescription = error;
 }
 
-pbRPCPayload *pbrpc_payload_new() {
-	pbRPCPayload* pl = calloc(1, sizeof(pbRPCPayload));
-	return pl;
-}
+pbRPCPayload *pbrpc_payload_new() { return new pbRPCPayload; }
 
-void pbrpc_free_payload(pbRPCPayload* response)
-{
+void pbrpc_free_payload(pbRPCPayload *response) {
 	if (!response) {
 		return;
 	}
@@ -98,11 +85,10 @@ void pbrpc_free_payload(pbRPCPayload* response)
 		free(response->errorDescription);
 	}
 
-	free(response);
+	delete (response);
 }
 
-
-void pbrpc_message_free_response(Ogon__Pbrpc__RPCBase* msg) {
+void pbrpc_message_free_response(Ogon__Pbrpc__RPCBase *msg) {
 	if (!msg) {
 		return;
 	}

@@ -8,7 +8,7 @@ PROTOBUFC_GENERATE_C(PBRPC_PROTOC_SRC PBRPC_PROTOC_HDRS ${CMAKE_CURRENT_SOURCE_D
 set(PBRPC_SRC
   ${PBRPC_PREFIX}/pbrpc.c
   ${PBRPC_PREFIX}/pbrpc.h
-	${PBRPC_PREFIX}/pbrpc_utils.c
+	${PBRPC_PREFIX}/pbrpc_utils.cpp
 	${PBRPC_PREFIX}/pbrpc_utils.h
 	${PBRPC_PREFIX}/pbrpc_transport.h
 	${PBRPC_PREFIX}/pipe_transport.c
