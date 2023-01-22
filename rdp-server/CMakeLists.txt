@@ -27,7 +27,7 @@ set(${MODULE_PREFIX}_SRCS
 	PMurHash.h
 	state.cpp
 	state.h
-	rdpgfx.c
+	rdpgfx.cpp
 	rdpgfx.h
 	font8x8.h
 	openh264.c
