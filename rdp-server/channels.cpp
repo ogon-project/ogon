@@ -37,9 +37,8 @@
 #include "icp/icp_client_stubs.h"
 #include "icp/pbrpc/pbrpc.h"
 
-#include "peer.h"
 #include "channels.h"
-
+#include "peer.h"
 
 #define TAG OGON_TAG("core.channels")
 
@@ -65,13 +64,13 @@ static registered_virtual_channel *VirtualChannelManagerGetChannelByNameAndType(
 
 	count = ArrayList_Count(registeredChannels);
 	for (index = 0; index < (unsigned int)count; index++) {
-		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
-		if (strncasecmp(currentChannel->vc_name, name, strlen(currentChannel->vc_name)) == 0 &&
-			currentChannel->channel_type == type)
-		{
+		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(
+				registeredChannels, index);
+		if (strncasecmp(currentChannel->vc_name, name,
+					strlen(currentChannel->vc_name)) == 0 &&
+				currentChannel->channel_type == type) {
 			return currentChannel;
 		}
-
 	}
 	return NULL;
 }
@@ -88,11 +87,12 @@ static registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(
 	}
 	registeredChannels = vcm->registered_virtual_channels;
 
-
 	count = ArrayList_Count(registeredChannels);
 	for (index = 0; index < (unsigned int)count; index++) {
-		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(registeredChannels, index);
-		if ((currentChannel->channel_id == id) && (currentChannel->channel_type == type)) {
+		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(
+				registeredChannels, index);
+		if ((currentChannel->channel_id == id) &&
+				(currentChannel->channel_type == type)) {
 			return currentChannel;
 		}
 	}
@@ -100,14 +100,33 @@ static registered_virtual_channel *VirtualChannelManagerGetChannelByIdAndType(
 	return NULL;
 }
 
-static registered_virtual_channel *vc_new(const char *vcname, const char *pipeName, HANDLE serverHandle,
-	ogon_vcm *vcm, ogon_connection *conn)
-{
+static void vc_free(registered_virtual_channel *channel) {
+	if (!channel) return;
+	ringbuffer_destroy(&channel->pipe_xmit_buffer);
+
+	if (channel->receive_data) {
+		Stream_Free(channel->receive_data, TRUE);
+	}
+	if (channel->pipe_input_buffer) {
+		Stream_Free(channel->pipe_input_buffer, TRUE);
+	}
+	if (channel->pipe_name) {
+		ogon_named_pipe_clean(channel->pipe_name);
+		free(channel->pipe_name);
+	}
+	free(channel->vc_name);
+	delete (channel->internalChannel);
+	delete (channel);
+}
+
+static registered_virtual_channel *vc_new(const char *vcname,
+		const char *pipeName, HANDLE serverHandle, ogon_vcm *vcm,
+		ogon_connection *conn) {
 	rdpSettings *settings;
-	registered_virtual_channel *ret = (registered_virtual_channel *)calloc(1, sizeof(registered_virtual_channel));
+	auto ret = new (registered_virtual_channel);
 	if (!ret) {
 		WLog_ERR(TAG, "error allocating registered virtual channel");
-		return NULL;
+		return nullptr;
 	}
 
 	ret->channel_instance = 0;
@@ -115,7 +134,7 @@ static registered_virtual_channel *vc_new(const char *vcname, const char *pipeNa
 		ret->vc_name = _strdup(vcname);
 		if (!ret->vc_name) {
 			WLog_ERR(TAG, "error allocating registered virtual channel name");
-			goto out_free;
+			goto fail;
 		}
 	}
 
@@ -123,7 +142,7 @@ static registered_virtual_channel *vc_new(const char *vcname, const char *pipeNa
 		ret->pipe_name = _strdup(pipeName);
 		if (!ret->pipe_name) {
 			WLog_ERR(TAG, "error allocating registered virtual pipe name");
-			goto out_free_name;
+			goto fail;
 		}
 	}
 	ret->pipe_server = serverHandle;
@@ -139,55 +158,32 @@ static registered_virtual_channel *vc_new(const char *vcname, const char *pipeNa
 	ret->pipe_expected_bytes = 4;
 	ret->pipe_waiting_length = TRUE;
 	ret->pipe_target_buffer = ret->header_buffer;
-	ret->pipe_input_buffer = Stream_New(NULL, settings->VirtualChannelChunkSize);
+	ret->pipe_input_buffer =
+			Stream_New(NULL, settings->VirtualChannelChunkSize);
 	if (!ret->pipe_input_buffer) {
-		goto out_free_pipe_name;
+		goto fail;
 	}
 
 	ret->receive_data = Stream_New(NULL, settings->VirtualChannelChunkSize);
 	if (!ret->receive_data) {
-		goto out_free_input_buffer;
+		goto fail;
 	}
 
-	if (!ringbuffer_init(&ret->pipe_xmit_buffer, settings->VirtualChannelChunkSize)) {
-		goto out_free_receive_data;
+	if (!ringbuffer_init(
+				&ret->pipe_xmit_buffer, settings->VirtualChannelChunkSize)) {
+		goto fail;
 	}
 
 	return ret;
 
-out_free_receive_data:
-	Stream_Free(ret->receive_data, TRUE);
-out_free_input_buffer:
-	Stream_Free(ret->pipe_input_buffer, TRUE);
-out_free_pipe_name:
-	free(ret->pipe_name);
-out_free_name:
-	free(ret->vc_name);
-out_free:
-	free(ret);
+fail:
+	vc_free(ret);
 	WLog_ERR(TAG, "vc_new() failed");
 	return NULL;
 }
 
-static void vc_free(registered_virtual_channel *channel) {
-	ringbuffer_destroy(&channel->pipe_xmit_buffer);
-
-	if (channel->receive_data) {
-		Stream_Free(channel->receive_data, TRUE);
-	}
-	if (channel->pipe_input_buffer) {
-		Stream_Free(channel->pipe_input_buffer, TRUE);
-	}
-	if (channel->pipe_name) {
-		ogon_named_pipe_clean(channel->pipe_name);
-		free(channel->pipe_name);
-	}
-	free(channel->vc_name);
-	free(channel->internalChannel);
-	free(channel);
-}
-
-static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLimit) {
+static BOOL vc_flush_xmit_buffer(
+		registered_virtual_channel *channel, int sendLimit) {
 	DWORD written;
 	DataChunk chunks[2];
 	int i, nbChunks;
@@ -197,15 +193,19 @@ static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLi
 		if (!channel->internalChannel->receive_callback) {
 			return FALSE;
 		}
-		while ((nbChunks = ringbuffer_peek(&channel->pipe_xmit_buffer, chunks, 16384))) {
+		while ((nbChunks = ringbuffer_peek(
+						&channel->pipe_xmit_buffer, chunks, 16384))) {
 			commitedBytes = 0;
 			for (i = 0; i < nbChunks; i++) {
-				if (!channel->internalChannel->receive_callback(channel->internalChannel->context, chunks[i].data, chunks[i].size)) {
+				if (!channel->internalChannel->receive_callback(
+							channel->internalChannel->context, chunks[i].data,
+							chunks[i].size)) {
 					return FALSE;
 				}
 				commitedBytes += chunks[i].size;
 			}
-			ringbuffer_commit_read_bytes(&channel->pipe_xmit_buffer, commitedBytes);
+			ringbuffer_commit_read_bytes(
+					&channel->pipe_xmit_buffer, commitedBytes);
 		}
 		return TRUE;
 	}
@@ -214,15 +214,18 @@ static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLi
 		return TRUE;
 	}
 
-	while ((nbChunks = ringbuffer_peek(&channel->pipe_xmit_buffer, chunks, 16384))) {
+	while ((nbChunks = ringbuffer_peek(
+					&channel->pipe_xmit_buffer, chunks, 16384))) {
 		commitedBytes = 0;
 
-		/*WLog_DBG(TAG, "used=%"PRIuz" chunk0=%"PRIuz" chunk1=%"PRIuz"", ringbuffer_used(&channel->pipe_xmit_buffer),
-				chunks[0].size, chunks[1].size);*/
+		/*WLog_DBG(TAG, "used=%"PRIuz" chunk0=%"PRIuz" chunk1=%"PRIuz"",
+		   ringbuffer_used(&channel->pipe_xmit_buffer), chunks[0].size,
+		   chunks[1].size);*/
 
 		for (i = 0; i < nbChunks; i++) {
 			while (chunks[i].size) {
-				if (!WriteFile(channel->pipe_client, chunks[i].data, chunks[i].size, &written, NULL)) {
+				if (!WriteFile(channel->pipe_client, chunks[i].data,
+							chunks[i].size, &written, NULL)) {
 					WLog_ERR(TAG, "error writing to channel client pipe");
 					return FALSE;
 				}
@@ -231,11 +234,14 @@ static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLi
 				if (!written) {
 					/*WLog_DBG(TAG, "activating write availability");*/
 					channel->writeBlocked = TRUE;
-					if (!eventsource_change_source(channel->event_source_client, OGON_EVENTLOOP_READ | OGON_EVENTLOOP_WRITE)) {
-						WLog_ERR(TAG, "error activating write availability scan");
+					if (!eventsource_change_source(channel->event_source_client,
+								OGON_EVENTLOOP_READ | OGON_EVENTLOOP_WRITE)) {
+						WLog_ERR(TAG,
+								"error activating write availability scan");
 					}
 
-					ringbuffer_commit_read_bytes(&channel->pipe_xmit_buffer, commitedBytes);
+					ringbuffer_commit_read_bytes(
+							&channel->pipe_xmit_buffer, commitedBytes);
 					return TRUE;
 				}
 
@@ -246,7 +252,8 @@ static BOOL vc_flush_xmit_buffer(registered_virtual_channel *channel, int sendLi
 				if (commitedBytes > sendLimit) {
 					/* fake a writeBlocked */
 					channel->writeBlocked = TRUE;
-					return eventsource_reschedule_for_write(channel->event_source_client);
+					return eventsource_reschedule_for_write(
+							channel->event_source_client);
 				}
 			}
 		}
@@ -264,7 +271,8 @@ static void ogon_channels_drdynvc_failed(ogon_vcm *vcm) {
 	/* let internal dynamic virtual channels know that there is no transport */
 
 	if (front->rdpgfxRequired) {
-		front->rdpgfx->OpenResult(front->rdpgfx, RDPGFX_SERVER_OPEN_RESULT_NOTSUPPORTED);
+		front->rdpgfx->OpenResult(
+				front->rdpgfx, RDPGFX_SERVER_OPEN_RESULT_NOTSUPPORTED);
 	}
 }
 
@@ -281,28 +289,28 @@ static void ogon_channels_drdynvc_ready(ogon_vcm *vcm) {
 }
 
 static void ogon_channels_drdynvc_state_change(ogon_vcm *vcm) {
-	switch (vcm->drdynvc_state)
-	{
-	case DRDYNVC_STATE_INITIALIZED:
-		WLog_DBG(TAG, "new drdynvc state: INITIALIZED");
-		return;
+	switch (vcm->drdynvc_state) {
+		case DRDYNVC_STATE_INITIALIZED:
+			WLog_DBG(TAG, "new drdynvc state: INITIALIZED");
+			return;
 
-	case DRDYNVC_STATE_READY:
-		WLog_DBG(TAG, "new drdynvc state: READY");
-		ogon_channels_drdynvc_ready(vcm);
-		return;
+		case DRDYNVC_STATE_READY:
+			WLog_DBG(TAG, "new drdynvc state: READY");
+			ogon_channels_drdynvc_ready(vcm);
+			return;
 
-	case DRDYNVC_STATE_NONE:
-		WLog_DBG(TAG, "new drdynvc state: NONE");
-		break;
+		case DRDYNVC_STATE_NONE:
+			WLog_DBG(TAG, "new drdynvc state: NONE");
+			break;
 
-	case DRDYNVC_STATE_FAILED:
-		WLog_DBG(TAG, "new drdynvc state: FAILED");
-		break;
+		case DRDYNVC_STATE_FAILED:
+			WLog_DBG(TAG, "new drdynvc state: FAILED");
+			break;
 
-	default:
-		WLog_ERR(TAG, "Invalid or unknown drdynvc state: %"PRIu8"", vcm->drdynvc_state);
-		return;
+		default:
+			WLog_ERR(TAG, "Invalid or unknown drdynvc state: %" PRIu8 "",
+					vcm->drdynvc_state);
+			return;
 	}
 
 	ogon_channels_drdynvc_failed(vcm);
@@ -324,7 +332,9 @@ BOOL ogon_channels_post_connect(ogon_connection *connection) {
 	BOOL result = FALSE;
 
 	if (vcm->drdynvc_state != DRDYNVC_STATE_NONE) {
-		WLog_ERR(TAG, "unexpected drdynvc state in channels post connect: %"PRIu8"", vcm->drdynvc_state);
+		WLog_ERR(TAG,
+				"unexpected drdynvc state in channels post connect: %" PRIu8 "",
+				vcm->drdynvc_state);
 		goto out;
 	}
 
@@ -359,7 +369,9 @@ BOOL ogon_channels_post_connect(ogon_connection *connection) {
 
 	vcm->drdynvc_channel_id = dynChannel->channel_id;
 	dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-	if (!dynChannel->client->SendChannelData(dynChannel->client, dynChannel->channel_id, (BYTE *)&dynvc_caps, sizeof(dynvc_caps))) {
+	if (!dynChannel->client->SendChannelData(dynChannel->client,
+				dynChannel->channel_id, (BYTE *)&dynvc_caps,
+				sizeof(dynvc_caps))) {
 		WLog_ERR(TAG, "SendChannelData failed failed in post connect");
 		goto out;
 	}
@@ -399,35 +411,31 @@ static void vc_disconnect_client_part(registered_virtual_channel *channel) {
 	return;
 }
 
-static int wts_read_variable_uint(wStream *s, int cbLen, UINT32* val) {
+static int wts_read_variable_uint(wStream *s, int cbLen, UINT32 *val) {
 	if ((cbLen < 0) || (cbLen > 3)) {
 		return 0;
 	}
 
-	switch (cbLen)
-	{
+	switch (cbLen) {
 		case 0:
-			if (Stream_GetRemainingLength(s) < 1)
-				return 0;
+			if (Stream_GetRemainingLength(s) < 1) return 0;
 			Stream_Read_UINT8(s, *val);
 			return 1;
 
 		case 1:
-			if (Stream_GetRemainingLength(s) < 2)
-				return 0;
+			if (Stream_GetRemainingLength(s) < 2) return 0;
 			Stream_Read_UINT16(s, *val);
 			return 2;
 
 		default:
-			if (Stream_GetRemainingLength(s) < 4)
-				return 0;
+			if (Stream_GetRemainingLength(s) < 4) return 0;
 			Stream_Read_UINT32(s, *val);
 			return 4;
 	}
 }
 
-static BOOL wts_read_drdynvc_capabilities_response(registered_virtual_channel *channel, UINT32 length)
-{
+static BOOL wts_read_drdynvc_capabilities_response(
+		registered_virtual_channel *channel, UINT32 length) {
 	UINT16 Version;
 
 	if (length < 3) {
@@ -437,14 +445,15 @@ static BOOL wts_read_drdynvc_capabilities_response(registered_virtual_channel *c
 	Stream_Seek_UINT8(channel->receive_data); /* Pad (1 byte) */
 	Stream_Read_UINT16(channel->receive_data, Version);
 
-	WLog_DBG(TAG, "received drdynvc capabilities response version %"PRIu16"", Version);
+	WLog_DBG(TAG, "received drdynvc capabilities response version %" PRIu16 "",
+			Version);
 
 	channel->vcm->drdynvc_state = DRDYNVC_STATE_READY;
 	return TRUE;
 }
 
-static BOOL wts_read_drdynvc_create_response(registered_virtual_channel *channel, wStream *s, UINT32 length)
-{
+static BOOL wts_read_drdynvc_create_response(
+		registered_virtual_channel *channel, wStream *s, UINT32 length) {
 	wArrayList *registeredChannels;
 	HRESULT CreationStatus;
 	int error;
@@ -455,26 +464,30 @@ static BOOL wts_read_drdynvc_create_response(registered_virtual_channel *channel
 
 	/**
 	 * MS-RDPEDYC 2.2.2.2:
-	 * CreationStatus (4 bytes): A 32-bit, signed integer that specifies the HRESULT code that indicates
-	 * success or failure of the client DVC creation.
-	 * A zero or positive value indicates success; a negative value indicates failure.
+	 * CreationStatus (4 bytes): A 32-bit, signed integer that specifies the
+	 * HRESULT code that indicates success or failure of the client DVC
+	 * creation. A zero or positive value indicates success; a negative value
+	 * indicates failure.
 	 */
 
 	Stream_Read_INT32(s, CreationStatus);
 
-	if (FAILED(CreationStatus))
-	{
-		WLog_ERR(TAG, "creation failed for channel %s(id=%"PRIu32"): 0x%08"PRIX32"",
-						channel->vc_name, channel->channel_id, (UINT32)CreationStatus);
+	if (FAILED(CreationStatus)) {
+		WLog_ERR(TAG,
+				"creation failed for channel %s(id=%" PRIu32 "): 0x%08" PRIX32
+				"",
+				channel->vc_name, channel->channel_id, (UINT32)CreationStatus);
 		channel->dvc_open_state = DVC_OPEN_STATE_FAILED;
 		if (!channel->internalChannel) {
-			error = ogon_icp_sendResponse(channel->dvc_open_tag, channel->dvc_open_id, 0, TRUE, NULL);
+			error = ogon_icp_sendResponse(
+					channel->dvc_open_tag, channel->dvc_open_id, 0, TRUE, NULL);
 			if (error != 0) {
 				WLog_ERR(TAG, "ogon_icp_sendResponse failed");
 				return FALSE;
 			}
 		} else {
-			IFCALL(channel->internalChannel->deleted_callback, channel->internalChannel->context, CreationStatus);
+			IFCALL(channel->internalChannel->deleted_callback,
+					channel->internalChannel->context, CreationStatus);
 		}
 
 		registeredChannels = channel->vcm->registered_virtual_channels;
@@ -485,19 +498,23 @@ static BOOL wts_read_drdynvc_create_response(registered_virtual_channel *channel
 		return TRUE;
 	}
 
-
-	WLog_DBG(TAG, "created dynamic channel id %"PRIu32" (%s)", channel->channel_id, channel->vc_name);
+	WLog_DBG(TAG, "created dynamic channel id %" PRIu32 " (%s)",
+			channel->channel_id, channel->vc_name);
 	channel->dvc_open_state = DVC_OPEN_STATE_SUCCEEDED;
 	if (!channel->internalChannel) {
-		error = ogon_icp_sendResponse(channel->dvc_open_tag, channel->dvc_open_id, 0, TRUE,channel);
+		error = ogon_icp_sendResponse(
+				channel->dvc_open_tag, channel->dvc_open_id, 0, TRUE, channel);
 		if (error != 0) {
 			WLog_ERR(TAG, "ogon_icp_sendResponse failed");
 			return FALSE;
 		}
 	} else {
 		internal_virtual_channel *intVchannel = channel->internalChannel;
-		if (intVchannel->created_callback && !intVchannel->created_callback(intVchannel->context)) {
-			WLog_ERR(TAG, "error when calling the created_callback of the internal channel");
+		if (intVchannel->created_callback &&
+				!intVchannel->created_callback(intVchannel->context)) {
+			WLog_ERR(TAG,
+					"error when calling the created_callback of the internal "
+					"channel");
 			return FALSE;
 		}
 	}
@@ -505,13 +522,13 @@ static BOOL wts_read_drdynvc_create_response(registered_virtual_channel *channel
 	return TRUE;
 }
 
-static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel, wStream *s, int cbLen, UINT32 length)
-{
+static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel,
+		wStream *s, int cbLen, UINT32 length) {
 	int value;
 
 	if (channel->dvc_total_length) {
-		/* If we haven't seen all the bytes of the previous packet there's good chances
-		 * that the traffic is corrupted
+		/* If we haven't seen all the bytes of the previous packet there's good
+		 * chances that the traffic is corrupted
 		 */
 		WLog_ERR(TAG, "attempt to send incomplete fragmented packets");
 		return FALSE;
@@ -525,27 +542,31 @@ static BOOL wts_read_drdynvc_data_first(registered_virtual_channel *channel, wSt
 	length -= value;
 
 	if (length >= channel->dvc_total_length) {
-		/* Note: here we force the fact that a data packet mustn't be sent with the
-		 * 		FIRST_PACKET flag when fragmentation wouldn't be needed (>= instead of >).
+		/* Note: here we force the fact that a data packet mustn't be sent with
+		 * the FIRST_PACKET flag when fragmentation wouldn't be needed (>=
+		 * instead of >).
 		 */
-		WLog_ERR(TAG, "invalid packet stream length(%"PRIu32") >= announced length (%"PRIu32")",
+		WLog_ERR(TAG,
+				"invalid packet stream length(%" PRIu32
+				") >= announced length (%" PRIu32 ")",
 				length, channel->dvc_total_length);
 		return FALSE;
 	}
 
 	channel->dvc_total_length -= length;
 
-	return ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&
-			vc_flush_xmit_buffer(channel, VC_BYTES_LIMIT_PER_LOOP_TURN);
+	return ringbuffer_write(
+				   &channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&
+		   vc_flush_xmit_buffer(channel, VC_BYTES_LIMIT_PER_LOOP_TURN);
 }
 
-static BOOL wts_read_drdynvc_data(registered_virtual_channel *channel, wStream *s, UINT32 length)
-{
-	if (channel->dvc_total_length > 0)
-	{
-		if (length > channel->dvc_total_length)
-		{
-			WLog_ERR(TAG, "incorrect fragment data, length=%"PRIu32", while it only remains %"PRIu32" of fragmented data",
+static BOOL wts_read_drdynvc_data(
+		registered_virtual_channel *channel, wStream *s, UINT32 length) {
+	if (channel->dvc_total_length > 0) {
+		if (length > channel->dvc_total_length) {
+			WLog_ERR(TAG,
+					"incorrect fragment data, length=%" PRIu32
+					", while it only remains %" PRIu32 " of fragmented data",
 					length, channel->dvc_total_length);
 			channel->dvc_total_length = 0;
 			return FALSE;
@@ -554,24 +575,31 @@ static BOOL wts_read_drdynvc_data(registered_virtual_channel *channel, wStream *
 		channel->dvc_total_length -= length;
 	}
 
-	return ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&
-		vc_flush_xmit_buffer(channel, VC_BYTES_LIMIT_PER_LOOP_TURN);
+	return ringbuffer_write(
+				   &channel->pipe_xmit_buffer, Stream_Pointer(s), length) &&
+		   vc_flush_xmit_buffer(channel, VC_BYTES_LIMIT_PER_LOOP_TURN);
 }
 
-static BOOL wts_read_drdynvc_close_response(registered_virtual_channel *channel)
-{
+static BOOL wts_read_drdynvc_close_response(
+		registered_virtual_channel *channel) {
 	BOOL ret = TRUE;
-	WLog_DBG(TAG, "channel id %"PRIu32" close response", channel->channel_id);
+	WLog_DBG(TAG, "channel id %" PRIu32 " close response", channel->channel_id);
 	channel->dvc_open_state = DVC_OPEN_STATE_CLOSED;
 
 	if (channel->internalChannel) {
 		internal_virtual_channel *internalChannel = channel->internalChannel;
-		if (internalChannel->deleted_callback && !internalChannel->deleted_callback(channel->internalChannel->context, STATUS_FILE_CLOSED)) {
-			WLog_ERR(TAG, "error when calling the deleted_callback of the internal channel");
+		if (internalChannel->deleted_callback &&
+				!internalChannel->deleted_callback(
+						channel->internalChannel->context,
+						STATUS_FILE_CLOSED)) {
+			WLog_ERR(TAG,
+					"error when calling the deleted_callback of the internal "
+					"channel");
 			ret = FALSE;
 		}
 
-		virtual_manager_close_internal_virtual_channel(channel->internalChannel);
+		virtual_manager_close_internal_virtual_channel(
+				channel->internalChannel);
 	} else {
 		virtual_manager_close_dynamic_virtual_channel_common(channel);
 		vc_free(channel);
@@ -580,8 +608,8 @@ static BOOL wts_read_drdynvc_close_response(registered_virtual_channel *channel)
 	return ret;
 }
 
-static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s)
-{
+static BOOL wts_read_drdynvc_pdu(
+		registered_virtual_channel *channel, wStream *s) {
 	UINT32 length;
 	int value;
 	int cmd;
@@ -616,7 +644,7 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 		return TRUE;
 	}
 
-	if (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY)	{
+	if (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY) {
 		WLog_ERR(TAG, "received cmd %d but channel is not ready", cmd);
 		return FALSE;
 	}
@@ -628,10 +656,14 @@ static BOOL wts_read_drdynvc_pdu(registered_virtual_channel *channel, wStream *s
 
 	length -= value;
 
-	targetChannel = VirtualChannelManagerGetChannelByIdAndType(channel->vcm, channelId, RDP_PEER_CHANNEL_TYPE_DVC);
+	targetChannel = VirtualChannelManagerGetChannelByIdAndType(
+			channel->vcm, channelId, RDP_PEER_CHANNEL_TYPE_DVC);
 	if (!targetChannel) {
 		if (cmd != CLOSE_REQUEST_PDU) {
-			WLog_ERR(TAG, "channel with id=%"PRIu32" does not exist, not executing request with type %d", channelId, cmd);
+			WLog_ERR(TAG,
+					"channel with id=%" PRIu32
+					" does not exist, not executing request with type %d",
+					channelId, cmd);
 			return FALSE;
 		}
 
@@ -677,17 +709,20 @@ static BOOL ogon_processFrontendChannelData(registered_virtual_channel *channel,
 		flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
 	}
 
-	if ((flags & CHANNEL_FLAG_SHOW_PROTOCOL) && (channel->channel_id != channel->vcm->drdynvc_channel_id)) {
+	if ((flags & CHANNEL_FLAG_SHOW_PROTOCOL) &&
+			(channel->channel_id != channel->vcm->drdynvc_channel_id)) {
 		/**
-		 * if CHANNEL_FLAG_SHOW_PROTOCOL is specified write each PDU with headers directly to the pipe
+		 * if CHANNEL_FLAG_SHOW_PROTOCOL is specified write each PDU with
+		 * headers directly to the pipe
 		 */
 		if (!(buffer_stream = Stream_New((BYTE *)buffer, sizeof(buffer)))) {
 			return FALSE;
 		}
-		Stream_Write_UINT32(buffer_stream, (UINT32) totalSize);
-		Stream_Write_UINT32(buffer_stream, (UINT32) flags);
+		Stream_Write_UINT32(buffer_stream, (UINT32)totalSize);
+		Stream_Write_UINT32(buffer_stream, (UINT32)flags);
 
-		if (!ringbuffer_write(&channel->pipe_xmit_buffer, Stream_Buffer(buffer_stream), 8)) {
+		if (!ringbuffer_write(&channel->pipe_xmit_buffer,
+					Stream_Buffer(buffer_stream), 8)) {
 			WLog_ERR(TAG, "unable to write packet informations in xmit buffer");
 			Stream_Free(buffer_stream, FALSE);
 			return FALSE;
@@ -745,28 +780,30 @@ static int ogon_receiveFrontendChannelData(freerdp_peer *client,
 		size_t totalSize) {
 	registered_virtual_channel *channel;
 
-	channel = (registered_virtual_channel *)WTSChannelGetHandleById(client, channelId);
+	channel = (registered_virtual_channel *)WTSChannelGetHandleById(
+			client, channelId);
 	if (!channel) {
-		WLog_WARN(TAG, "failed to get handle for channel with id (%"PRIu16")", channelId);
+		WLog_WARN(TAG, "failed to get handle for channel with id (%" PRIu16 ")",
+				channelId);
 		return TRUE;
 	}
-	return ogon_processFrontendChannelData(channel, data, size, flags, totalSize);
+	return ogon_processFrontendChannelData(
+			channel, data, size, flags, totalSize);
 }
 
-ogon_vcm *openVirtualChannelManager(ogon_connection *conn)
-{
+ogon_vcm *openVirtualChannelManager(ogon_connection *conn) {
 	freerdp_peer *client;
 	ogon_vcm *vcm;
 
 	if (!conn->context.peer) {
-		return NULL;
+		return nullptr;
 	}
 
 	client = conn->context.peer;
 
-	vcm = (ogon_vcm *)calloc(1, sizeof(ogon_vcm));
+	vcm = new (ogon_vcm);
 	if (!vcm) {
-		return NULL;
+		return nullptr;
 	}
 
 	vcm->client = client;
@@ -778,8 +815,8 @@ ogon_vcm *openVirtualChannelManager(ogon_connection *conn)
 
 	vcm->registered_virtual_channels = ArrayList_New(TRUE);
 	if (!vcm->registered_virtual_channels) {
-		free(vcm);
-		return NULL;
+		delete (vcm);
+		return nullptr;
 	}
 
 	client->ReceiveChannelData = ogon_receiveFrontendChannelData;
@@ -787,30 +824,29 @@ ogon_vcm *openVirtualChannelManager(ogon_connection *conn)
 	return vcm;
 }
 
-void virtual_manager_close_all_channels(ogon_vcm *vcm)
-{
+void virtual_manager_close_all_channels(ogon_vcm *vcm) {
 	int count, index;
 	registered_virtual_channel *currentChannel;
 	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
 	count = ArrayList_Count(registeredChannels);
 
-	for (index = 0; index < count; index++)
-	{
-		currentChannel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
+	for (index = 0; index < count; index++) {
+		currentChannel = (registered_virtual_channel *)ArrayList_GetItem(
+				registeredChannels, index);
 		vc_disconnect_server_part(currentChannel);
 		vc_disconnect_client_part(currentChannel);
 		if (currentChannel->internalChannel)
 			IFCALL(currentChannel->internalChannel->deleted_callback,
-				currentChannel->internalChannel->context, STATUS_REMOTE_DISCONNECT);
+					currentChannel->internalChannel->context,
+					STATUS_REMOTE_DISCONNECT);
 		vc_free(currentChannel);
 	}
 
 	ArrayList_Clear(registeredChannels);
 }
 
-void closeVirtualChannelManager(ogon_vcm *vcm)
-{
+void closeVirtualChannelManager(ogon_vcm *vcm) {
 	wArrayList *registeredChannels;
 
 	if (!vcm) {
@@ -823,26 +859,19 @@ void closeVirtualChannelManager(ogon_vcm *vcm)
 
 	ArrayList_Free(registeredChannels);
 
-	free(vcm);
+	delete (vcm);
 }
 
-
-static int wts_write_variable_uint(wStream *stream, UINT32 val)
-{
+static int wts_write_variable_uint(wStream *stream, UINT32 val) {
 	int cb;
 
-	if (val <= 0xFF)
-	{
+	if (val <= 0xFF) {
 		cb = 0;
 		Stream_Write_UINT8(stream, val);
-	}
-	else if (val <= 0xFFFF)
-	{
+	} else if (val <= 0xFFFF) {
 		cb = 1;
 		Stream_Write_UINT16(stream, val);
-	}
-	else
-	{
+	} else {
 		cb = 2;
 		Stream_Write_UINT32(stream, val);
 	}
@@ -862,16 +891,15 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 
 	totalRead = 0;
 	while (totalRead < readLimit) {
-		if (!ReadFile(handle, regVC->pipe_target_buffer, regVC->pipe_expected_bytes, &bytesRead, NULL))
-		{
+		if (!ReadFile(handle, regVC->pipe_target_buffer,
+					regVC->pipe_expected_bytes, &bytesRead, NULL)) {
 			return (GetLastError() == ERROR_NO_DATA);
 		}
 
 		totalRead += bytesRead;
 		regVC->pipe_expected_bytes -= bytesRead;
 		regVC->pipe_target_buffer += bytesRead;
-		if (regVC->pipe_expected_bytes)
-			continue;
+		if (regVC->pipe_expected_bytes) continue;
 
 		/* when here we have read expected bytes and we're doing a state change
 		 * (header --> payload, or payload --> headers)
@@ -879,12 +907,13 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 
 		if (regVC->pipe_waiting_length) {
 			/* got headers read switch to payload reading */
-			regVC->pipe_expected_bytes = regVC->pipe_current_packet_length = regVC->header_buffer[0] |
-					(regVC->header_buffer[1] << 8) |
+			regVC->pipe_expected_bytes = regVC->pipe_current_packet_length =
+					regVC->header_buffer[0] | (regVC->header_buffer[1] << 8) |
 					(regVC->header_buffer[2] << 16) |
 					(regVC->header_buffer[3] << 24);
 
-			if (!Stream_EnsureCapacity(regVC->pipe_input_buffer, regVC->pipe_expected_bytes)) {
+			if (!Stream_EnsureCapacity(
+						regVC->pipe_input_buffer, regVC->pipe_expected_bytes)) {
 				WLog_ERR(TAG, "Stream re-allocation failed");
 				return FALSE;
 			}
@@ -896,20 +925,19 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 		/* got the payload, forward the packet to the RDP peer and go back to
 		 * header reading.
 		 */
-		/* WLog_DBG(TAG, "packet with size %"PRIu32"", regVC->pipe_current_packet_length); */
+		/* WLog_DBG(TAG, "packet with size %"PRIu32"",
+		 * regVC->pipe_current_packet_length); */
 		payloadLen = regVC->pipe_current_packet_length;
 		writeBuffer = Stream_Buffer(regVC->pipe_input_buffer);
 
 		if (regVC->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) {
-			if (regVC->vcm->drdynvc_state != DRDYNVC_STATE_READY)
-			{
+			if (regVC->vcm->drdynvc_state != DRDYNVC_STATE_READY) {
 				WLog_ERR(TAG, "error: dynamic virtual channel is not ready");
 				return FALSE;
 			}
 
 			first = TRUE;
-			while (payloadLen > 0)
-			{
+			while (payloadLen > 0) {
 				s = Stream_New(NULL, regVC->client->context->settings
 											 ->VirtualChannelChunkSize);
 				if (!s) {
@@ -923,13 +951,11 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 				Stream_Seek_UINT8(s);
 				cbChId = wts_write_variable_uint(s, regVC->channel_id);
 
-				if (first && (payloadLen > (UINT32) Stream_GetRemainingLength(s)))
-				{
+				if (first &&
+						(payloadLen > (UINT32)Stream_GetRemainingLength(s))) {
 					cbLen = wts_write_variable_uint(s, payloadLen);
 					buffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;
-				}
-				else
-				{
+				} else {
 					buffer[0] = (DATA_PDU << 4) | cbChId;
 				}
 
@@ -943,9 +969,13 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 				Stream_Write(s, writeBuffer, toWrite);
 				sendlength = Stream_GetPosition(s);
 
-				if (!regVC->client->SendChannelData(regVC->client, regVC->vcm->drdynvc_channel_id, Stream_Buffer(s), sendlength))
-				{
-					WLog_ERR(TAG, "SendChannelData failed for dynamic virtual channel id %"PRIu32"", regVC->vcm->drdynvc_channel_id);
+				if (!regVC->client->SendChannelData(regVC->client,
+							regVC->vcm->drdynvc_channel_id, Stream_Buffer(s),
+							sendlength)) {
+					WLog_ERR(TAG,
+							"SendChannelData failed for dynamic virtual "
+							"channel id %" PRIu32 "",
+							regVC->vcm->drdynvc_channel_id);
 					return FALSE;
 				}
 
@@ -956,10 +986,14 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 			}
 
 		} else {
-			if (!regVC->client->SendChannelData(regVC->client, regVC->channel_id, Stream_Buffer(regVC->pipe_input_buffer),
-					regVC->pipe_current_packet_length))
-			{
-				WLog_ERR(TAG, "SendChannelData failed for static virtual channel id %"PRIu32"", regVC->channel_id);
+			if (!regVC->client->SendChannelData(regVC->client,
+						regVC->channel_id,
+						Stream_Buffer(regVC->pipe_input_buffer),
+						regVC->pipe_current_packet_length)) {
+				WLog_ERR(TAG,
+						"SendChannelData failed for static virtual channel id "
+						"%" PRIu32 "",
+						regVC->channel_id);
 				return FALSE;
 			}
 		}
@@ -978,8 +1012,8 @@ static BOOL vc_handle_read(registered_virtual_channel *regVC, int readLimit) {
 }
 
 /* event loop callback for a channel pipe event */
-static int handle_vc_named_pipe_event(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_vc_named_pipe_event(
+		int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(fd);
 	OGON_UNUSED(handle);
 
@@ -993,9 +1027,11 @@ static int handle_vc_named_pipe_event(int mask, int fd, HANDLE handle, void *dat
 		}
 
 		if (!channel->writeBlocked) {
-			/* everything has been flushed remove the write availability scanning */
+			/* everything has been flushed remove the write availability
+			 * scanning */
 			WLog_DBG(TAG, "removing write availability scanning");
-			if (!eventsource_change_source(channel->event_source_client, OGON_EVENTLOOP_READ)) {
+			if (!eventsource_change_source(
+						channel->event_source_client, OGON_EVENTLOOP_READ)) {
 				WLog_ERR(TAG, "error removing write scanning");
 				goto out_shutdown;
 			}
@@ -1009,7 +1045,6 @@ static int handle_vc_named_pipe_event(int mask, int fd, HANDLE handle, void *dat
 
 	return 1;
 
-
 out_shutdown:
 	virtual_manager_close_dynamic_virtual_channel_common(channel);
 	if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) {
@@ -1021,25 +1056,21 @@ out_shutdown:
 	return -1;
 }
 
-
-static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, void *data)
-{
+static int handle_vc_named_pipe_connect_event(
+		int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(fd);
 	registered_virtual_channel *channel = (registered_virtual_channel *)data;
 	BOOL fConnected;
 	DWORD dwPipeMode;
 	HANDLE createdPipe;
 
-	if (!(mask & OGON_EVENTLOOP_READ))
-		return TRUE;
+	if (!(mask & OGON_EVENTLOOP_READ)) return TRUE;
 
 	fConnected = ConnectNamedPipe(handle, NULL);
 
-	if (!fConnected)
-		fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
+	if (!fConnected) fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
 
-	if (!fConnected)
-	{
+	if (!fConnected) {
 		WLog_ERR(TAG, "error connecting named pipe");
 		return FALSE;
 	}
@@ -1058,8 +1089,8 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 	channel->pipe_alive = TRUE;
 	channel->channel_instance++;
 
-	channel->event_source_client = eventloop_add_handle(channel->event_loop, OGON_EVENTLOOP_READ,
-			handle, handle_vc_named_pipe_event, channel);
+	channel->event_source_client = eventloop_add_handle(channel->event_loop,
+			OGON_EVENTLOOP_READ, handle, handle_vc_named_pipe_event, channel);
 	if (!channel->event_source_client) {
 		WLog_ERR(TAG, "error adding vc client pipe handle to event loop");
 		vc_disconnect_client_part(channel);
@@ -1077,13 +1108,15 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 
 	createdPipe = ogon_named_pipe_create(channel->pipe_name);
 	if (createdPipe == INVALID_HANDLE_VALUE) {
-		WLog_ERR(TAG, "error creating channel named pipe (%s)", channel->pipe_name);
+		WLog_ERR(TAG, "error creating channel named pipe (%s)",
+				channel->pipe_name);
 		return FALSE;
 	}
 
 	channel->pipe_server = createdPipe;
-	channel->event_source_server = eventloop_add_handle(channel->event_loop, OGON_EVENTLOOP_READ,
-			createdPipe, handle_vc_named_pipe_connect_event, channel);
+	channel->event_source_server =
+			eventloop_add_handle(channel->event_loop, OGON_EVENTLOOP_READ,
+					createdPipe, handle_vc_named_pipe_connect_event, channel);
 	if (!channel->event_source_server) {
 		WLog_ERR(TAG, "error adding vc server pipe handle to event loop");
 		return FALSE;
@@ -1094,42 +1127,50 @@ static int handle_vc_named_pipe_connect_event(int mask, int fd, HANDLE handle, v
 
 static BOOL virtual_manager_open_virtual_channel_send_error(
 		struct ogon_notification_vc_connect *notification, wMessage *msg) {
-	int error = ogon_icp_sendResponse(notification->tag, msg->id, 0, FALSE, NULL);
+	int error =
+			ogon_icp_sendResponse(notification->tag, msg->id, 0, FALSE, NULL);
 	if (error != 0) {
-		WLog_ERR(TAG, "ogon_icp_sendResponse failed while sending virtual channel open error");
+		WLog_ERR(TAG,
+				"ogon_icp_sendResponse failed while sending virtual channel "
+				"open error");
 		return FALSE;
 	}
 	return TRUE;
 }
 
-BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm *vcm, wMessage *msg)
-{
+BOOL virtual_manager_open_static_virtual_channel(
+		ogon_connection *conn, ogon_vcm *vcm, wMessage *msg) {
 	char buffer[1024] = {0};
 	wArrayList *registeredChannels;
 	registered_virtual_channel *currentChannel;
-	struct ogon_notification_vc_connect *notification = (struct ogon_notification_vc_connect *) msg->wParam;
+	struct ogon_notification_vc_connect *notification =
+			(struct ogon_notification_vc_connect *)msg->wParam;
 	int error = 0;
 	HANDLE createdPipe = INVALID_HANDLE_VALUE;
 	int length = 0;
 
 	registeredChannels = vcm->registered_virtual_channels;
 	length = strlen(notification->vcname);
-	if (length > 8)	{
-		WLog_ERR(TAG, "open static channel: name too long (%s)", notification->vcname);
+	if (length > 8) {
+		WLog_ERR(TAG, "open static channel: name too long (%s)",
+				notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return TRUE;
 	}
 
 	if (!WTSIsChannelJoinedByName(vcm->client, notification->vcname)) {
-		WLog_ERR(TAG, "open static channel: channel (%s) is not registered", notification->vcname);
+		WLog_ERR(TAG, "open static channel: channel (%s) is not registered",
+				notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return TRUE;
 	}
 
 	// first check if this pipe is already opened
-	currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_SVC);
+	currentChannel = VirtualChannelManagerGetChannelByNameAndType(
+			vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_SVC);
 	if (currentChannel) {
-		error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+		error = ogon_icp_sendResponse(
+				notification->tag, msg->id, 0, TRUE, currentChannel);
 		if (error != 0) {
 			WLog_ERR(TAG, "open static channel: ogon_icp_sendResponse failed");
 			return FALSE;
@@ -1137,29 +1178,35 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 		return TRUE;
 	}
 
-	snprintf(buffer, sizeof(buffer), "\\\\.\\pipe\\%s_%ld", notification->vcname, conn->id);
+	snprintf(buffer, sizeof(buffer), "\\\\.\\pipe\\%s_%ld",
+			notification->vcname, conn->id);
 
 	createdPipe = ogon_named_pipe_create(buffer);
 	if (createdPipe == INVALID_HANDLE_VALUE) {
-		WLog_ERR(TAG, "open static channel: error creating named pipe (%s)", buffer);
+		WLog_ERR(TAG, "open static channel: error creating named pipe (%s)",
+				buffer);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return FALSE;
 	}
 
 	// register named pipe and handle
-	currentChannel = vc_new(notification->vcname, buffer, createdPipe, vcm, conn);
-	if (!currentChannel)
-		return FALSE;
+	currentChannel =
+			vc_new(notification->vcname, buffer, createdPipe, vcm, conn);
+	if (!currentChannel) return FALSE;
 
 	currentChannel->channel_type = RDP_PEER_CHANNEL_TYPE_SVC;
-	currentChannel->event_source_server = eventloop_add_handle(conn->runloop->evloop, OGON_EVENTLOOP_READ,
-			createdPipe, handle_vc_named_pipe_connect_event, currentChannel);
+	currentChannel->event_source_server = eventloop_add_handle(
+			conn->runloop->evloop, OGON_EVENTLOOP_READ, createdPipe,
+			handle_vc_named_pipe_connect_event, currentChannel);
 	if (!currentChannel->event_source_server) {
-		WLog_ERR(TAG, "open static channel: error adding pipe handle to rds connection event loop");
+		WLog_ERR(TAG,
+				"open static channel: error adding pipe handle to rds "
+				"connection event loop");
 		goto out_error;
 	}
 
-	if (!WTSChannelSetHandleByName(vcm->client, notification->vcname, currentChannel)) {
+	if (!WTSChannelSetHandleByName(
+				vcm->client, notification->vcname, currentChannel)) {
 		WLog_ERR(TAG, "open static channel: WTSChannelSetHandleByName failed");
 		goto out_error;
 	}
@@ -1169,9 +1216,11 @@ BOOL virtual_manager_open_static_virtual_channel(ogon_connection *conn, ogon_vcm
 		goto out_error;
 	}
 
-	WLog_DBG(TAG, "static channel id %"PRIu32" created successfully", currentChannel->channel_id);
+	WLog_DBG(TAG, "static channel id %" PRIu32 " created successfully",
+			currentChannel->channel_id);
 
-	error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+	error = ogon_icp_sendResponse(
+			notification->tag, msg->id, 0, TRUE, currentChannel);
 	if (error != 0) {
 		WLog_ERR(TAG, "open static channel: ogon_icp_sendResponse failed");
 		return FALSE;
@@ -1186,9 +1235,8 @@ out_error:
 	return FALSE;
 }
 
-static void wts_write_drdynvc_header(wStream *s, BYTE Cmd, UINT32 ChannelId)
-{
-	BYTE* bm;
+static void wts_write_drdynvc_header(wStream *s, BYTE Cmd, UINT32 ChannelId) {
+	BYTE *bm;
 	int cbChId;
 
 	Stream_GetPointer(s, bm);
@@ -1197,9 +1245,8 @@ static void wts_write_drdynvc_header(wStream *s, BYTE Cmd, UINT32 ChannelId)
 	*bm = ((Cmd & 0x0F) << 4) | cbChId;
 }
 
-
-static BOOL wts_write_drdynvc_create_request(wStream *s, UINT32 ChannelId, const char *ChannelName)
-{
+static BOOL wts_write_drdynvc_create_request(
+		wStream *s, UINT32 ChannelId, const char *ChannelName) {
 	size_t len;
 
 	wts_write_drdynvc_header(s, CREATE_REQUEST_PDU, ChannelId);
@@ -1211,15 +1258,16 @@ static BOOL wts_write_drdynvc_create_request(wStream *s, UINT32 ChannelId, const
 	return TRUE;
 }
 
-BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vcm *vcm, wMessage *msg)
-{
-	char buffer[MAX_PATH +1]  = {0};
+BOOL virtual_manager_open_dynamic_virtual_channel(
+		ogon_connection *conn, ogon_vcm *vcm, wMessage *msg) {
+	char buffer[MAX_PATH + 1] = {0};
 	wArrayList *registeredChannels;
 	registered_virtual_channel *currentChannel = NULL;
-	struct ogon_notification_vc_connect *notification = (struct ogon_notification_vc_connect *) msg->wParam;
+	struct ogon_notification_vc_connect *notification =
+			(struct ogon_notification_vc_connect *)msg->wParam;
 	int error = 0;
 	HANDLE createdPipe = INVALID_HANDLE_VALUE;
-	int length= 0;
+	int length = 0;
 	char str[26] = {0};
 	int templength = 0;
 	wStream *s = NULL;
@@ -1228,23 +1276,27 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 	sprintf(str, "_DYN_%ld", conn->id);
 	templength = strlen(str);
 
-	if (length > (MAX_PATH - 9 - templength) ) {
-		WLog_ERR(TAG, "open dynamic channel: name too long (%s)", notification->vcname);
+	if (length > (MAX_PATH - 9 - templength)) {
+		WLog_ERR(TAG, "open dynamic channel: name too long (%s)",
+				notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return TRUE;
 	}
 
 	registeredChannels = vcm->registered_virtual_channels;
 	if (!WTSIsChannelJoinedByName(vcm->client, "drdynvc")) {
-		WLog_ERR(TAG, "open dynamic channel: channel (%s) is not registered", notification->vcname);
+		WLog_ERR(TAG, "open dynamic channel: channel (%s) is not registered",
+				notification->vcname);
 		virtual_manager_open_virtual_channel_send_error(notification, msg);
 		return TRUE;
 	}
 
 	// first check if this pipe is opened
-	currentChannel = VirtualChannelManagerGetChannelByNameAndType(vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_DVC);
+	currentChannel = VirtualChannelManagerGetChannelByNameAndType(
+			vcm, notification->vcname, RDP_PEER_CHANNEL_TYPE_DVC);
 	if (currentChannel) {
-		error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, currentChannel);
+		error = ogon_icp_sendResponse(
+				notification->tag, msg->id, 0, TRUE, currentChannel);
 		if (error != 0) {
 			WLog_ERR(TAG, "open dynamic channel: ogon_icp_sendResponse failed");
 			return FALSE;
@@ -1263,7 +1315,8 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 	}
 
 	// register named pipe and handle
-	currentChannel = vc_new(notification->vcname, buffer, createdPipe, vcm, conn);
+	currentChannel =
+			vc_new(notification->vcname, buffer, createdPipe, vcm, conn);
 	if (!currentChannel) {
 		WLog_ERR(TAG, "open dynamic channel: vc_new failed");
 		goto closePipeError;
@@ -1272,10 +1325,13 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 	currentChannel->channel_id = vcm->dvc_channel_id_seq++;
 	currentChannel->channel_type = RDP_PEER_CHANNEL_TYPE_DVC;
 
-	currentChannel->event_source_server = eventloop_add_handle(conn->runloop->evloop , OGON_EVENTLOOP_READ,
-			createdPipe, handle_vc_named_pipe_connect_event, currentChannel);
+	currentChannel->event_source_server = eventloop_add_handle(
+			conn->runloop->evloop, OGON_EVENTLOOP_READ, createdPipe,
+			handle_vc_named_pipe_connect_event, currentChannel);
 	if (!currentChannel->event_source_server) {
-		WLog_ERR(TAG, "open dynamic channel: error adding pipe handle to rds connection event loop");
+		WLog_ERR(TAG,
+				"open dynamic channel: error adding pipe handle to rds "
+				"connection event loop");
 		goto pipeError;
 	}
 
@@ -1285,19 +1341,26 @@ BOOL virtual_manager_open_dynamic_virtual_channel(ogon_connection *conn, ogon_vc
 		goto eventLoopRemoveError;
 	}
 
-	if (!wts_write_drdynvc_create_request(s, currentChannel->channel_id, currentChannel->vc_name)) {
+	if (!wts_write_drdynvc_create_request(
+				s, currentChannel->channel_id, currentChannel->vc_name)) {
 		WLog_ERR(TAG, "Unable to create drdynvc request");
 		goto StreamFreeError;
 	}
-	if (!vcm->client->SendChannelData(vcm->client, currentChannel->vcm->drdynvc_channel_id, Stream_Buffer(s), Stream_GetPosition(s))) {
+	if (!vcm->client->SendChannelData(vcm->client,
+				currentChannel->vcm->drdynvc_channel_id, Stream_Buffer(s),
+				Stream_GetPosition(s))) {
 		WLog_ERR(TAG, "open dynamic channel: SendChannelData failed");
 		goto StreamFreeError;
 	}
 
-	WLog_DBG(TAG, "Sent dynamic channel creation request for channel id %"PRIu32" (%s)", currentChannel->channel_id, currentChannel->vc_name);
+	WLog_DBG(TAG,
+			"Sent dynamic channel creation request for channel id %" PRIu32
+			" (%s)",
+			currentChannel->channel_id, currentChannel->vc_name);
 
 	if (!append(registeredChannels, currentChannel)) {
-		WLog_ERR(TAG, "open dynamic channel: unable to add channel in the list");
+		WLog_ERR(
+				TAG, "open dynamic channel: unable to add channel in the list");
 		goto StreamFreeError;
 	}
 
@@ -1316,7 +1379,6 @@ closePipeError:
 	CloseHandle(createdPipe);
 	virtual_manager_open_virtual_channel_send_error(notification, msg);
 	return FALSE;
-
 }
 
 static BOOL dvc_send_close(registered_virtual_channel *dvc) {
@@ -1324,8 +1386,7 @@ static BOOL dvc_send_close(registered_virtual_channel *dvc) {
 	wStream *s;
 	BOOL ret = TRUE;
 
-	if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
-		return TRUE;
+	if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED) return TRUE;
 
 	vcm = dvc->vcm;
 	s = Stream_New(NULL, 8);
@@ -1335,7 +1396,8 @@ static BOOL dvc_send_close(registered_virtual_channel *dvc) {
 	}
 
 	wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, dvc->channel_id);
-	if (!vcm->client->SendChannelData(vcm->client, vcm->drdynvc_channel_id, Stream_Buffer(s), Stream_GetPosition(s))) {
+	if (!vcm->client->SendChannelData(vcm->client, vcm->drdynvc_channel_id,
+				Stream_Buffer(s), Stream_GetPosition(s))) {
 		WLog_ERR(TAG, "dvc send close: SendChannelData failed");
 		ret = FALSE;
 	}
@@ -1344,7 +1406,8 @@ static BOOL dvc_send_close(registered_virtual_channel *dvc) {
 	return ret;
 }
 
-BOOL virtual_manager_close_dynamic_virtual_channel_common(registered_virtual_channel *channel) {
+BOOL virtual_manager_close_dynamic_virtual_channel_common(
+		registered_virtual_channel *channel) {
 	ogon_vcm *vcm = channel->vcm;
 	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 
@@ -1358,19 +1421,21 @@ BOOL virtual_manager_close_dynamic_virtual_channel_common(registered_virtual_cha
 
 	ArrayList_Remove(registeredChannels, channel);
 
-	WLog_ERR(TAG, "%s channel id %"PRIu32" closed",
-			 (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) ? "Dynamic" : "Static",
-			 channel->channel_id);
+	WLog_ERR(TAG, "%s channel id %" PRIu32 " closed",
+			(channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) ? "Dynamic"
+																 : "Static",
+			channel->channel_id);
 	WTSChannelSetHandleById(vcm->client, channel->channel_id, NULL);
 	return TRUE;
 }
 
-
-BOOL virtual_manager_close_dynamic_virtual_channel(ogon_vcm *vcm, wMessage *msg) {
+BOOL virtual_manager_close_dynamic_virtual_channel(
+		ogon_vcm *vcm, wMessage *msg) {
 	int count;
 	int error;
 	int index;
-	struct ogon_notification_vc_disconnect *notification = (struct ogon_notification_vc_disconnect *) msg->wParam;
+	struct ogon_notification_vc_disconnect *notification =
+			(struct ogon_notification_vc_disconnect *)msg->wParam;
 	wArrayList *registeredChannels = vcm->registered_virtual_channels;
 	registered_virtual_channel *channel = NULL;
 
@@ -1379,10 +1444,11 @@ BOOL virtual_manager_close_dynamic_virtual_channel(ogon_vcm *vcm, wMessage *msg)
 	}
 
 	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < count; index++)
-	{
-		channel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
-		if (strncasecmp(channel->vc_name,notification->vcname,strlen(channel->vc_name)) != 0)
+	for (index = 0; index < count; index++) {
+		channel = (registered_virtual_channel *)ArrayList_GetItem(
+				registeredChannels, index);
+		if (strncasecmp(channel->vc_name, notification->vcname,
+					strlen(channel->vc_name)) != 0)
 			continue;
 
 		if (notification->instance == channel->channel_instance) {
@@ -1398,18 +1464,24 @@ BOOL virtual_manager_close_dynamic_virtual_channel(ogon_vcm *vcm, wMessage *msg)
 
 			vc_free(channel);
 
-			error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, NULL);
+			error = ogon_icp_sendResponse(
+					notification->tag, msg->id, 0, TRUE, NULL);
 			if (error != 0) {
-				WLog_ERR(TAG, "close dynamic channel: ogon_icp_sendResponse failed");
+				WLog_ERR(TAG,
+						"close dynamic channel: ogon_icp_sendResponse failed");
 				return FALSE;
 			}
 			return TRUE;
 		}
 
-		/* it was an old instance, which was replaced by a newer and the client socket is already closed */
-		error = ogon_icp_sendResponse(notification->tag, msg->id, 0, TRUE, NULL);
+		/* it was an old instance, which was replaced by a newer and the client
+		 * socket is already closed */
+		error = ogon_icp_sendResponse(
+				notification->tag, msg->id, 0, TRUE, NULL);
 		if (error != 0) {
-			WLog_ERR(TAG, "close dynamic channel: ogon_icp_sendResponse failed (old instance)");
+			WLog_ERR(TAG,
+					"close dynamic channel: ogon_icp_sendResponse failed (old "
+					"instance)");
 			return FALSE;
 		}
 		return TRUE;
@@ -1417,14 +1489,17 @@ BOOL virtual_manager_close_dynamic_virtual_channel(ogon_vcm *vcm, wMessage *msg)
 
 	error = ogon_icp_sendResponse(notification->tag, msg->id, 0, FALSE, NULL);
 	if (error != 0) {
-		WLog_ERR(TAG, "close dynamic channel: ogon_icp_sendResponse failed (not found)");
+		WLog_ERR(TAG,
+				"close dynamic channel: ogon_icp_sendResponse failed (not "
+				"found)");
 		return FALSE;
 	}
 	return TRUE;
 }
 
-BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *intVC, BYTE *data, UINT32 length, UINT32 *pWritten)
-{
+BOOL virtual_manager_write_internal_virtual_channel(
+		internal_virtual_channel *intVC, BYTE *data, UINT32 length,
+		UINT32 *pWritten) {
 	int cbLen;
 	int cbChId;
 	BOOL first = TRUE;
@@ -1443,12 +1518,14 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 
 	/* static channel data */
 	if (regVC->channel_type == RDP_PEER_CHANNEL_TYPE_SVC) {
-		if (!length)
-			goto out_success;
-		if (!data)
-			goto out_error;
-		if (!regVC->client->SendChannelData(regVC->client, regVC->channel_id, data, length)) {
-			WLog_ERR(TAG, "SendChannelData failed for internal static virtual channel id %"PRIu32"", regVC->channel_id);
+		if (!length) goto out_success;
+		if (!data) goto out_error;
+		if (!regVC->client->SendChannelData(
+					regVC->client, regVC->channel_id, data, length)) {
+			WLog_ERR(TAG,
+					"SendChannelData failed for internal static virtual "
+					"channel id %" PRIu32 "",
+					regVC->channel_id);
 			goto out_error;
 		}
 
@@ -1457,7 +1534,8 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 
 	/* dynamic channel data */
 	if (regVC->channel_type != RDP_PEER_CHANNEL_TYPE_DVC) {
-		WLog_ERR(TAG, "unknown virtual channel type %"PRIu16"", regVC->channel_type);
+		WLog_ERR(TAG, "unknown virtual channel type %" PRIu16 "",
+				regVC->channel_type);
 		goto out_error;
 	}
 
@@ -1466,10 +1544,8 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 		goto out_error;
 	}
 
-	if (!length)
-		goto out_success;
-	if (!data)
-		goto out_error;
+	if (!length) goto out_success;
+	if (!data) goto out_error;
 
 	if (!(s = Stream_New(NULL,
 				  regVC->client->context->settings->VirtualChannelChunkSize))) {
@@ -1483,7 +1559,7 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 
 		cbChId = wts_write_variable_uint(s, regVC->channel_id);
 
-		if (first && (length > (UINT32) Stream_GetRemainingLength(s))) {
+		if (first && (length > (UINT32)Stream_GetRemainingLength(s))) {
 			cbLen = wts_write_variable_uint(s, length);
 			streamBuffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;
 		} else {
@@ -1499,8 +1575,13 @@ BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *in
 
 		Stream_Write(s, data, toWrite);
 
-		if (!regVC->client->SendChannelData(regVC->client, regVC->vcm->drdynvc_channel_id, Stream_Buffer(s), Stream_GetPosition(s))) {
-			WLog_ERR(TAG, "SendChannelData failed for internal dynamic virtual channel id %"PRIu32"", regVC->vcm->drdynvc_channel_id);
+		if (!regVC->client->SendChannelData(regVC->client,
+					regVC->vcm->drdynvc_channel_id, Stream_Buffer(s),
+					Stream_GetPosition(s))) {
+			WLog_ERR(TAG,
+					"SendChannelData failed for internal dynamic virtual "
+					"channel id %" PRIu32 "",
+					regVC->vcm->drdynvc_channel_id);
 			goto out_error;
 		}
 		written += toWrite;
@@ -1512,20 +1593,18 @@ out_success:
 	result = TRUE;
 
 out_error:
-	if (s)
-		Stream_Free(s, TRUE);
-	if (pWritten)
-		*pWritten = written;
+	if (s) Stream_Free(s, TRUE);
+	if (pWritten) *pWritten = written;
 	return result;
 }
 
 internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
-		ogon_vcm *vcm, const char *name, BOOL isDynamic)
-{
+		ogon_vcm *vcm, const char *name, BOOL isDynamic) {
 	registered_virtual_channel *regVC = NULL;
 	internal_virtual_channel *intVC = NULL;
 	wStream *s = NULL;
-	UINT16 channelType = isDynamic ? RDP_PEER_CHANNEL_TYPE_DVC : RDP_PEER_CHANNEL_TYPE_SVC;
+	UINT16 channelType =
+			isDynamic ? RDP_PEER_CHANNEL_TYPE_DVC : RDP_PEER_CHANNEL_TYPE_SVC;
 
 	if (isDynamic) {
 		if (!WTSIsChannelJoinedByName(vcm->client, "drdynvc")) {
@@ -1538,18 +1617,25 @@ internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
 			return NULL;
 		}
 		if (!WTSIsChannelJoinedByName(vcm->client, name)) {
-			WLog_ERR(TAG, "open internal channel: channel (%s) is not registered", name);
+			WLog_ERR(TAG,
+					"open internal channel: channel (%s) is not registered",
+					name);
 			return NULL;
 		}
 	}
 
 	if (VirtualChannelManagerGetChannelByNameAndType(vcm, name, channelType)) {
-		WLog_ERR(TAG, "open internal channel: channel (%s) already exists", name);
+		WLog_ERR(TAG, "open internal channel: channel (%s) already exists",
+				name);
 		return NULL;
 	}
 
-	if (!(intVC = calloc(1, sizeof(internal_virtual_channel)))) {
-		WLog_ERR(TAG, "open internal channel: failed to allocate internal channel (%s)", name);
+	intVC = new (internal_virtual_channel);
+	if (!intVC) {
+		WLog_ERR(TAG,
+				"open internal channel: failed to allocate internal channel "
+				"(%s)",
+				name);
 		goto err;
 	}
 
@@ -1570,27 +1656,35 @@ internal_virtual_channel *virtual_manager_open_internal_virtual_channel(
 	if (isDynamic) {
 		regVC->channel_id = vcm->dvc_channel_id_seq++;
 		wts_write_drdynvc_create_request(s, regVC->channel_id, regVC->vc_name);
-		if (!vcm->client->SendChannelData(vcm->client, vcm->drdynvc_channel_id, Stream_Buffer(s), Stream_GetPosition(s))) {
+		if (!vcm->client->SendChannelData(vcm->client, vcm->drdynvc_channel_id,
+					Stream_Buffer(s), Stream_GetPosition(s))) {
 			WLog_ERR(TAG, "open internal channel: SendChannelData failed");
 			goto err;
 		}
 	} else {
 		if (!WTSChannelSetHandleByName(vcm->client, name, regVC)) {
-			WLog_ERR(TAG, "open internal channel: WTSChannelSetHandleByName failed");
+			WLog_ERR(TAG,
+					"open internal channel: WTSChannelSetHandleByName failed");
 			goto err;
 		}
 	}
 
 	if (!append(vcm->registered_virtual_channels, regVC)) {
-		WLog_ERR(TAG, "open internal channel: error adding channel in the list");
+		WLog_ERR(
+				TAG, "open internal channel: error adding channel in the list");
 		goto err;
 	}
 
 	if (isDynamic) {
-		WLog_DBG(TAG, "internal dynamic channel with id %"PRIu32" created successfully (%s), waiting for creation response",
-				 regVC->channel_id, regVC->vc_name);
+		WLog_DBG(TAG,
+				"internal dynamic channel with id %" PRIu32
+				" created successfully (%s), waiting for creation response",
+				regVC->channel_id, regVC->vc_name);
 	} else {
-		WLog_DBG(TAG, "internal static channel with id %"PRIu32" created successfully (%s)", regVC->channel_id, regVC->vc_name);
+		WLog_DBG(TAG,
+				"internal static channel with id %" PRIu32
+				" created successfully (%s)",
+				regVC->channel_id, regVC->vc_name);
 	}
 
 	Stream_Free(s, TRUE);
@@ -1610,7 +1704,8 @@ err:
 	return NULL;
 }
 
-BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *intVC) {
+BOOL virtual_manager_close_internal_virtual_channel(
+		internal_virtual_channel *intVC) {
 	int count;
 	int index;
 	wArrayList *registeredChannels;
@@ -1625,11 +1720,10 @@ BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *in
 	registeredChannels = vcm->registered_virtual_channels;
 
 	count = ArrayList_Count(registeredChannels);
-	for (index = 0; index < count; index++)
-	{
-		channel = (registered_virtual_channel *) ArrayList_GetItem(registeredChannels, index);
-		if (channel != intVC->channel)
-			continue;
+	for (index = 0; index < count; index++) {
+		channel = (registered_virtual_channel *)ArrayList_GetItem(
+				registeredChannels, index);
+		if (channel != intVC->channel) continue;
 
 		if (channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) {
 			if (!dvc_send_close(channel)) {
@@ -1638,8 +1732,9 @@ BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *in
 		}
 
 		ArrayList_Remove(registeredChannels, channel);
-		WLog_DBG(TAG, "internal %s channel id %"PRIu32" closed",
-				(channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) ? "Dynamic" : "Static",
+		WLog_DBG(TAG, "internal %s channel id %" PRIu32 " closed",
+				(channel->channel_type == RDP_PEER_CHANNEL_TYPE_DVC) ? "Dynamic"
+																	 : "Static",
 				channel->channel_id);
 
 		WTSChannelSetHandleByName(vcm->client, channel->vc_name, NULL);

@@ -11,7 +11,7 @@ set(${MODULE_PREFIX}_SRCS
 	app_context.cpp
 	app_context.h
 	backend.cpp
-	channels.c
+	channels.cpp
 	channels.h
 	encoder.c
 	encoder.h
