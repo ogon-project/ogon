@@ -120,8 +120,8 @@ out_fail:
 	return PAM_CONV_ERR;
 }
 
-long ogon_authenticate_pam(const char* username, const char* password, int* errorcode)
-{
+static long ogon_authenticate_pam(
+		const char *username, const char *password, int *errorcode) {
 	int error;
 	char service_name[256];
 
@@ -183,8 +183,7 @@ struct rds_auth_module_pam
 };
 typedef struct rds_auth_module_pam rdsAuthModulePam;
 
-rdsAuthModulePam* rds_auth_module_new(void)
-{
+static rdsAuthModulePam *rds_auth_module_new(void) {
 	rdsAuthModulePam* pam;
 
 	pam = (rdsAuthModulePam*) malloc(sizeof(rdsAuthModulePam));
@@ -192,16 +191,15 @@ rdsAuthModulePam* rds_auth_module_new(void)
 	return pam;
 }
 
-void rds_auth_module_free(rdsAuthModulePam* pam)
-{
+static void rds_auth_module_free(rdsAuthModulePam *pam) {
 	if (!pam)
 		return;
 
 	free(pam);
 }
 
-int rds_auth_logon_user(rdsAuthModulePam* pam, const char* username, char** domain, const char* password)
-{
+static int rds_auth_logon_user(rdsAuthModulePam *pam, const char *username,
+		char **domain, const char *password) {
 	OGON_UNUSED(domain);
 	int error_code = 0;
 	long auth_status = 0;
