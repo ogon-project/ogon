@@ -46,13 +46,14 @@
 #include "icp/pbrpc/pbrpc.h"
 #include "../common/global.h"
 
-#include "peer.h"
+#include "app_context.h"
+#include "back_front_internal.h"
+#include "backend.h"
+#include "bandwidth_mgmt.h"
 #include "channels.h"
 #include "encoder.h"
 #include "eventloop.h"
-#include "backend.h"
-#include "app_context.h"
-#include "bandwidth_mgmt.h"
+#include "peer.h"
 
 #define TAG OGON_TAG("core.frontend")
 #if OPENSSL_VERSION_NUMBER < 0x10100000L

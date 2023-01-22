@@ -44,23 +44,16 @@
 #include <ogon/dmgbuf.h>
 
 #include "../common/global.h"
+#include "app_context.h"
+#include "back_front_internal.h"
+#include "backend.h"
+#include "channels.h"
+#include "eventloop.h"
 #include "icp/icp_client_stubs.h"
 #include "icp/pbrpc/pbrpc.h"
 #include "peer.h"
-#include "eventloop.h"
-#include "app_context.h"
-#include "channels.h"
-#include "backend.h"
-
 
 #define TAG OGON_TAG("core.peer")
-
-BOOL ogon_connection_init_front(ogon_connection *conn);
-int frontend_handle_frame_sent(ogon_connection *conn);
-void handle_wait_timer_state(ogon_connection *conn);
-BOOL ogon_frontend_install_frame_timer(ogon_connection *conn);
-int ogon_resize_frontend(ogon_connection *conn, ogon_backend_connection *backend);
-
 
 /* event loop callback for the stop event */
 static int handle_stop_event(int mask, int fd, HANDLE handle, void *data) {

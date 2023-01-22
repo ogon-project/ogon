@@ -44,12 +44,12 @@
 #include "icp/icp_client_stubs.h"
 #include "icp/pbrpc/pbrpc_utils.h"
 
-#include "peer.h"
-#include "encoder.h"
 #include "PMurHash.h"
 #include "app_context.h"
+#include "back_front_internal.h"
 #include "backend.h"
-#include "frontend.h"
+#include "encoder.h"
+#include "peer.h"
 
 #define TAG OGON_TAG("core.backend")
 
@@ -62,7 +62,8 @@ typedef struct _message_answer {
 	UINT32 icp_type;
 } message_answer;
 
-BOOL drain_ringbuffer_to_pipe(RingBuffer *rb, HANDLE pipe, BOOL *writeReady) {
+static BOOL drain_ringbuffer_to_pipe(
+		RingBuffer *rb, HANDLE pipe, BOOL *writeReady) {
 	DataChunk chunks[2];
 	int nbChunks, i;
 	DWORD written, toWrite;
@@ -298,7 +299,8 @@ static BOOL ogon_backend_send_version(ogon_backend_connection *backend) {
 	return backend_write_rds_message(backend, OGON_CLIENT_VERSION, (ogon_message *)&version);
 }
 
-int ogon_resize_frontend(ogon_connection *conn, ogon_backend_connection *backend) {
+int ogon_resize_frontend(
+		ogon_connection *conn, ogon_backend_connection *backend) {
 	freerdp_peer *client = conn->context.peer;
 	rdpSettings *settings = conn->context.settings;
 	ogon_screen_infos *screenInfos = &backend->screenInfos;
@@ -516,8 +518,8 @@ static BOOL ogon_server_set_pointer_cache_index(ogon_connection *connection,
 	return FALSE;
 }
 
-
-BOOL ogon_new_pointer_to_mono_color_pointer(POINTER_NEW_UPDATE *pointerNew, BOOL isRdesktop) {
+static BOOL ogon_new_pointer_to_mono_color_pointer(
+		POINTER_NEW_UPDATE *pointerNew, BOOL isRdesktop) {
 	POINTER_COLOR_UPDATE *pointerColor = &(pointerNew->colorPtrAttr);
 
 	BYTE *andMsk = pointerColor->andMaskData;
@@ -591,7 +593,6 @@ BOOL ogon_new_pointer_to_mono_color_pointer(POINTER_NEW_UPDATE *pointerNew, BOOL
 
 	return TRUE;
 }
-
 
 void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_pointer *msg) {
 	POINTER_CACHED_UPDATE pointerCached = { 0 };
@@ -826,7 +827,8 @@ static sbp_context *SbpContext_new(ogon_connection *connection, UINT32 tag, UINT
 	return ret;
 }
 
-void sbpCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
+static void sbpCallback(
+		UINT32 reason, Ogon__Pbrpc__RPCBase *response, void *args) {
 	rds_notification_sbp *event;
 
 	sbp_context *context = (sbp_context *)args;
@@ -879,7 +881,6 @@ void sbpCallback(UINT32 reason, Ogon__Pbrpc__RPCBase* response, void *args) {
 cleanup_exit:
 	free(context);
 }
-
 
 static int ogon_server_sbp_request(ogon_connection *connection,
 	ogon_msg_sbp_request *msg)
