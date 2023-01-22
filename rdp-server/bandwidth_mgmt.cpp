@@ -26,7 +26,6 @@
 #include "config.h"
 #endif
 
-
 #include <winpr/sysinfo.h>
 
 #include "../common/global.h"
@@ -35,7 +34,6 @@
 #include "bandwidth_mgmt.h"
 #include "peer.h"
 
-
 #define TAG OGON_TAG("core.bandwidthmgmt")
 
 #define MIN_DATA_SIZE 7 * 1024
@@ -43,7 +41,6 @@
 
 #define DEBUG_BUCKET 0
 #define DEBUG_BANDWIDTH 0
-
 
 void ogon_bwmgmt_init_buckets(ogon_connection *conn, UINT32 bitrate) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
@@ -70,8 +67,9 @@ UINT32 ogon_bwmgmt_update_bucket(ogon_connection *conn) {
 	}
 
 	if (!bwmgmt->configured_bitrate && bwmgmt->autodetect_bitRateKBit > 20) {
-		targetFrameSizeInBits = bwmgmt->autodetect_bitRateKBit * 1024 / conn->fps;
-	} else if (bwmgmt->configured_bitrate){
+		targetFrameSizeInBits =
+				bwmgmt->autodetect_bitRateKBit * 1024 / conn->fps;
+	} else if (bwmgmt->configured_bitrate) {
 		/* use static value if fixed bitrate is enabled */
 		targetFrameSizeInBits = bwmgmt->configured_bitrate / conn->fps;
 		goto out;
@@ -88,7 +86,10 @@ UINT32 ogon_bwmgmt_update_bucket(ogon_connection *conn) {
 		} else {
 			targetFrameSizeInBits = 0;
 #if DEBUG_BANDWIDTH
-			WLog_DBG(TAG, "suppressing next frame, supressed frames so far  %"PRIu32"!", bwmgmt->suppressed_frames);
+			WLog_DBG(TAG,
+					"suppressing next frame, supressed frames so far  %" PRIu32
+					"!",
+					bwmgmt->suppressed_frames);
 #endif
 			bwmgmt->suppressed_frames++;
 		}
@@ -100,7 +101,8 @@ UINT32 ogon_bwmgmt_update_bucket(ogon_connection *conn) {
 out:
 	bwmgmt->bucket[bwmgmt->current_bucket].size = targetFrameSizeInBits;
 #if DEBUG_BUCKET
-	 WLog_DBG(TAG, "Updating bucket %"PRIu32" with size %"PRIu32"", bwmgmt->current_bucket, targetFrameSizeInBits);
+	WLog_DBG(TAG, "Updating bucket %" PRIu32 " with size %" PRIu32 "",
+			bwmgmt->current_bucket, targetFrameSizeInBits);
 #endif
 	return targetFrameSizeInBits;
 }
@@ -109,7 +111,9 @@ static UINT16 ogon_bwmgmt_calc_using_buckets(ogon_connection *conn) {
 	UINT16 using_buckets = (UINT16)conn->front.frameAcknowledge;
 
 	if (!using_buckets) {
-		using_buckets = (UINT16)((conn->fps / 2 > OGON_MAX_BUCKET) ? OGON_MAX_BUCKET : conn->fps / 2);
+		using_buckets =
+				(UINT16)((conn->fps / 2 > OGON_MAX_BUCKET) ? OGON_MAX_BUCKET
+														   : conn->fps / 2);
 	}
 
 	if (using_buckets > OGON_MAX_BUCKET) {
@@ -133,17 +137,26 @@ static UINT32 ogon_bwmgmt_update_bucket_usage_rec(ogon_connection *conn,
 	if (size_used > currentBucketSize) {
 		size_used -= currentBucketSize;
 #if DEBUG_BUCKET
-		WLog_DBG(TAG, "%s: Updateing bucket %"PRIu32" with size %"PRIu32" to 0 (size_used: %"PRIu32")" ,__FUNCTION__, current_index , bwmgmt->bucket[current_index].size, size_used);
+		WLog_DBG(TAG,
+				"%s: Updateing bucket %" PRIu32 " with size %" PRIu32
+				" to 0 (size_used: %" PRIu32 ")",
+				__FUNCTION__, current_index, bwmgmt->bucket[current_index].size,
+				size_used);
 #endif
 		bwmgmt->bucket[current_index].size = 0;
-		if (--depth == 0 ) {
+		if (--depth == 0) {
 			return size_used;
 		}
-		return ogon_bwmgmt_update_bucket_usage_rec(conn, size_used, depth, ++current_index);
+		return ogon_bwmgmt_update_bucket_usage_rec(
+				conn, size_used, depth, ++current_index);
 	} else {
 		bwmgmt->bucket[current_index].size -= size_used;
 #if DEBUG_BUCKET
-		WLog_DBG(TAG, "%s: Updateing bucket %"PRIu32" to %"PRIu32" (size_used: %"PRIu32")", __FUNCTION__, current_index , bwmgmt->bucket[current_index].size, size_used);
+		WLog_DBG(TAG,
+				"%s: Updateing bucket %" PRIu32 " to %" PRIu32
+				" (size_used: %" PRIu32 ")",
+				__FUNCTION__, current_index, bwmgmt->bucket[current_index].size,
+				size_used);
 #endif
 		return 0;
 	}
@@ -159,13 +172,24 @@ static UINT32 ogon_bwmgmt_update_bucket_usage(
 	if (size_used > currentBucketSize) {
 		size_used -= currentBucketSize;
 #if DEBUG_BUCKET
-		WLog_DBG(TAG, "%s: Updateing bucket %"PRIu32" with size %"PRIu32" to 0 (size_used: %"PRIu32")", __FUNCTION__,  currentBucketIndex, bwmgmt->bucket[currentBucketIndex].size,  size_used + currentBucketSize);
+		WLog_DBG(TAG,
+				"%s: Updateing bucket %" PRIu32 " with size %" PRIu32
+				" to 0 (size_used: %" PRIu32 ")",
+				__FUNCTION__, currentBucketIndex,
+				bwmgmt->bucket[currentBucketIndex].size,
+				size_used + currentBucketSize);
 #endif
 		bwmgmt->bucket[currentBucketIndex].size = 0;
-		return ogon_bwmgmt_update_bucket_usage_rec(conn, size_used, usingBuckets, currentBucketIndex - usingBuckets);
+		return ogon_bwmgmt_update_bucket_usage_rec(conn, size_used,
+				usingBuckets, currentBucketIndex - usingBuckets);
 	} else {
 #if DEBUG_BUCKET
-		WLog_DBG(TAG, "%s: Updateing bucket  %"PRIu32" with size %"PRIu32" to %"PRIu32" (size_used: %"PRIu32")", __FUNCTION__, currentBucketIndex, bwmgmt->bucket[currentBucketIndex].size, bwmgmt->bucket[currentBucketIndex].size - size_used, size_used);
+		WLog_DBG(TAG,
+				"%s: Updateing bucket  %" PRIu32 " with size %" PRIu32
+				" to %" PRIu32 " (size_used: %" PRIu32 ")",
+				__FUNCTION__, currentBucketIndex,
+				bwmgmt->bucket[currentBucketIndex].size,
+				bwmgmt->bucket[currentBucketIndex].size - size_used, size_used);
 #endif
 		bwmgmt->bucket[currentBucketIndex].size -= size_used;
 		return 0;
@@ -192,7 +216,6 @@ BOOL ogon_bwmgmt_update_data_usage(ogon_connection *conn) {
 	return TRUE;
 }
 
-
 UINT32 ogon_bwmgtm_calc_max_target_frame_size(ogon_connection *conn) {
 	ogon_bandwidth_mgmt *bwmgmt = &conn->front.bandwidthMgmt;
 
@@ -217,7 +240,6 @@ UINT32 ogon_bwmgtm_calc_max_target_frame_size(ogon_connection *conn) {
 	return max_target_frame_size;
 }
 
-
 BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn) {
 	freerdp_peer *peer = conn->context.peer;
 	ogon_front_connection *frontend = &conn->front;
@@ -230,7 +252,8 @@ BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn) {
 	}
 
 	/* ensure there are no inflight frames */
-	if (frontend->lastAckFrame + frontend->frameAcknowledge + 1 < frontend->nextFrameId) {
+	if (frontend->lastAckFrame + frontend->frameAcknowledge + 1 <
+			frontend->nextFrameId) {
 		return TRUE;
 	}
 
@@ -352,7 +375,8 @@ BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpAutoDetect *autodetect,
 		}
 		bwmgmt->autodetect_bitRateKBit = average_bit_rate;
 #if DEBUG_BANDWIDTH
-		WLog_DBG(TAG, "faking average bit rate: %.2f", average_bit_rate / 1024.0);
+		WLog_DBG(TAG, "faking average bit rate: %.2f",
+				average_bit_rate / 1024.0);
 #endif
 		return TRUE;
 #endif
@@ -368,8 +392,12 @@ BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpAutoDetect *autodetect,
 
 	average_bit_rate = ogon_bwmgmt_client_bandwidth_meassure_average(bwmgmt);
 #if DEBUG_BANDWIDTH
-	WLog_DBG(TAG, "using bandwidth measure results: byte_count=%"PRIu32" time_delta=%"PRIu32" (bucket mbps: %.2f avrate=%.2f mbps)",
-			byte_count, time_delta,	byte_count * 8.0 / time_delta * 1000 / 1024 / 1024, average_bit_rate / 1024.0);
+	WLog_DBG(TAG,
+			"using bandwidth measure results: byte_count=%" PRIu32
+			" time_delta=%" PRIu32 " (bucket mbps: %.2f avrate=%.2f mbps)",
+			byte_count, time_delta,
+			byte_count * 8.0 / time_delta * 1000 / 1024 / 1024,
+			average_bit_rate / 1024.0);
 #endif
 
 	if (average_bit_rate) {
@@ -398,7 +426,6 @@ BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn) {
 
 	return TRUE;
 }
-
 
 BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn) {
 	freerdp_peer *peer = conn->context.peer;

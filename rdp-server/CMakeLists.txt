@@ -32,7 +32,7 @@ set(${MODULE_PREFIX}_SRCS
 	font8x8.h
 	openh264.c
 	openh264.h
-	bandwidth_mgmt.c
+	bandwidth_mgmt.cpp
 	bandwidth_mgmt.h
 	../common/procutils.cpp
 	../common/procutils.h
