@@ -65,69 +65,7 @@ void RSA_get0_key(
 }
 #endif
 
-static rdpRsaKey *ogon_generate_weak_rsa_key() {
-	BOOL success = FALSE;
-	rdpRsaKey *key = nullptr;
-	RSA *rsa = nullptr;
-	BIGNUM *e = nullptr;
-	const BIGNUM *rsa_e = nullptr;
-	const BIGNUM *rsa_n = nullptr;
-	const BIGNUM *rsa_d = nullptr;
-
-	if (!(key = (rdpRsaKey *)calloc(1, sizeof(rdpRsaKey)))) {
-		goto out;
-	}
-	if (!(e = BN_new())) {
-		goto out;
-	}
-	if (!(rsa = RSA_new())) {
-		goto out;
-	}
-	if (!BN_set_word(e, 0x10001) ||
-			!RSA_generate_key_ex(rsa, 512, e, nullptr)) {
-		goto out;
-	}
-	RSA_get0_key(rsa, &rsa_n, nullptr, nullptr);
-	key->ModulusLength = BN_num_bytes(rsa_n);
-	if (!(key->Modulus = (BYTE *)malloc(key->ModulusLength))) {
-		goto out;
-	}
-	BN_bn2bin(rsa_n, key->Modulus);
-	crypto_reverse(key->Modulus, key->ModulusLength);
-
-	RSA_get0_key(rsa, nullptr, nullptr, &rsa_d);
-	key->PrivateExponentLength = BN_num_bytes(rsa_d);
-	if (!(key->PrivateExponent = (BYTE *)malloc(key->PrivateExponentLength))) {
-		goto out;
-	}
-	BN_bn2bin(rsa_d, key->PrivateExponent);
-	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
-
-	RSA_get0_key(rsa, nullptr, &rsa_e, nullptr);
-	memset(key->exponent, 0, sizeof(key->exponent));
-	BN_bn2bin(
-			rsa_e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa_e));
-	crypto_reverse(key->exponent, sizeof(key->exponent));
-
-	success = TRUE;
-
-out:
-	if (rsa) {
-		RSA_free(rsa);
-	}
-	if (e) {
-		BN_free(e);
-	}
-	if (!success) {
-		if (key) {
-			free(key->Modulus);
-			free(key->PrivateExponent);
-			free(key);
-		}
-		return nullptr;
-	}
-	return key;
-}
+static rdpRsaKey *ogon_generate_weak_rsa_key() { return crypto_key_new(); }
 
 static int ogon_generate_certificate(
 		ogon_connection *conn, const char *cert_file, const char *key_file) {
