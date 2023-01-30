@@ -4,7 +4,7 @@ include (CMakeDependentOption)
 option(BUILD_TESTING "Build unit tests" OFF)
 
 # FreeRDP major version
-option(FREERDP_LINK_VERSION "FreeRDP major version to compile for" 2)
+set(FREERDP_LINK_VERSION 2 CACHE STRING "FreeRDP major version to compile for")
 
 # Build with OpenH264 support
 option(USE_FREERDP_H264 "use freerdp backend for h264 encoding" OFF)
