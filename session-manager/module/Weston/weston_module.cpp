@@ -236,8 +236,7 @@ static int weston_rds_module_disconnect(RDS_MODULE_COMMON *module) {
 	return 0;
 }
 
-OGON_API int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS* pEntryPoints)
-{
+int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS *pEntryPoints) {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Name = "Weston";
 

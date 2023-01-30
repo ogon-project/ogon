@@ -25,13 +25,14 @@
 #ifndef OGON_SMGR_QTMODULE_H_
 #define OGON_SMGR_QTMODULE_H_
 
+#include <ogon/api.h>
 #include <ogon/module.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS* pEntryPoints);
+OGON_API int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS *pEntryPoints);
 
 #ifdef __cplusplus
 }
