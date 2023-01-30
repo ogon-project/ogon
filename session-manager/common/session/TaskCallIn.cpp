@@ -33,7 +33,7 @@
 namespace ogon { namespace sessionmanager { namespace session {
 
 	void TaskCallIn::run() {
-		if (mCall == NULL) {
+		if (mCall == nullptr) {
 			return;
 		}
 		mCall->doStuff();

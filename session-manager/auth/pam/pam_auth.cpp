@@ -36,6 +36,8 @@
 #include "pam_auth.h"
 #include <ogon/api.h>
 
+#include <malloc.h>
+
 struct t_user_pass
 {
 	char user[256];
@@ -53,8 +55,7 @@ struct t_auth_info
 
 static void get_service_name(char* service_name)
 {
-	service_name[0] = 0;
-
+	service_name[0] = '\0';
 	if (PathFileExistsA("/etc/pam.d/ogon"))
 	{
 		strncpy(service_name, "ogon", 255);
@@ -67,23 +68,21 @@ static void get_service_name(char* service_name)
 
 static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr)
 {
-	int i;
-	struct pam_response* reply;
-	struct t_user_pass* user_pass;
+	auto user_pass = static_cast<struct t_user_pass *>(appdata_ptr);
 
-	if (!(reply = calloc(1, sizeof(struct pam_response) * num_msg))) {
+	auto reply = static_cast<struct pam_response *>(
+			calloc(sizeof(struct pam_response), num_msg));
+	if (!reply) {
 		return (PAM_BUF_ERR);
 	}
 
-	for (i = 0; i < num_msg; i++)
-	{
+	for (int i = 0; i < num_msg; i++) {
 		/* make sure the values are initialized properly */
 		reply[i].resp_retcode = PAM_SUCCESS;
 
 		switch (msg[i]->msg_style)
 		{
 			case PAM_PROMPT_ECHO_ON: /* username */
-				user_pass = appdata_ptr;
 				reply[i].resp = _strdup(user_pass->user);
 				if (!reply[i].resp) {
 					goto out_fail;
@@ -91,7 +90,6 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 				break;
 
 			case PAM_PROMPT_ECHO_OFF: /* password */
-				user_pass = appdata_ptr;
 				reply[i].resp = _strdup(user_pass->pass);
 				if (!reply[i].resp) {
 					goto out_fail;
@@ -108,7 +106,7 @@ static int verify_pam_conv(int num_msg, const struct pam_message **msg, struct p
 	return PAM_SUCCESS;
 
 out_fail:
-	for (i = 0; i < num_msg; ++i) {
+	for (int i = 0; i < num_msg; ++i) {
 		if (reply[i].resp) {
 			memset(reply[i].resp, 0, strlen(reply[i].resp));
 			free(reply[i].resp);
@@ -116,18 +114,19 @@ out_fail:
 	}
 	memset(reply, 0, sizeof(struct pam_response) * num_msg);
 	free(reply);
-	*resp = NULL;
+	*resp = nullptr;
 	return PAM_CONV_ERR;
 }
 
-long ogon_authenticate_pam(const char* username, const char* password, int* errorcode)
-{
+static long ogon_authenticate_pam(
+		const char *username, const char *password, int *errorcode) {
 	int error;
 	char service_name[256];
-	struct t_auth_info* auth_info;
 
 	get_service_name(service_name);
-	auth_info = calloc(1, sizeof(struct t_auth_info));
+
+	auto auth_info = static_cast<struct t_auth_info *>(
+			calloc(1, sizeof(struct t_auth_info)));
 	if (!auth_info) {
 		return 0;
 	}
@@ -137,7 +136,8 @@ long ogon_authenticate_pam(const char* username, const char* password, int* erro
 	}
 	auth_info->pamc.conv = &verify_pam_conv;
 	auth_info->pamc.appdata_ptr = &(auth_info->user_pass);
-	error = pam_start(service_name, 0, &(auth_info->pamc), &(auth_info->ph));
+	error = pam_start(
+			service_name, nullptr, &(auth_info->pamc), &(auth_info->ph));
 
 	if (error != PAM_SUCCESS) {
 		fprintf(stderr, "pam_start failed: %s\n", pam_strerror(auth_info->ph, error));
@@ -181,8 +181,7 @@ struct rds_auth_module_pam
 };
 typedef struct rds_auth_module_pam rdsAuthModulePam;
 
-rdsAuthModulePam* rds_auth_module_new(void)
-{
+static rdsAuthModulePam *rds_auth_module_new(void) {
 	rdsAuthModulePam* pam;
 
 	pam = (rdsAuthModulePam*) malloc(sizeof(rdsAuthModulePam));
@@ -190,16 +189,15 @@ rdsAuthModulePam* rds_auth_module_new(void)
 	return pam;
 }
 
-void rds_auth_module_free(rdsAuthModulePam* pam)
-{
+static void rds_auth_module_free(rdsAuthModulePam *pam) {
 	if (!pam)
 		return;
 
 	free(pam);
 }
 
-int rds_auth_logon_user(rdsAuthModulePam* pam, const char* username, char** domain, const char* password)
-{
+static int rds_auth_logon_user(rdsAuthModulePam *pam, const char *username,
+		char **domain, const char *password) {
 	OGON_UNUSED(domain);
 	int error_code = 0;
 	long auth_status = 0;
@@ -213,7 +211,7 @@ int rds_auth_logon_user(rdsAuthModulePam* pam, const char* username, char** doma
 	if (!auth_status)
 		return -1;
 
-	domainName = malloc(strlen(PAM_AUTH_DOMAIN) + 1);
+	domainName = static_cast<char *>(malloc(strlen(PAM_AUTH_DOMAIN) + 1));
 	if (!domainName)
 		return -1;
 	strncpy(domainName, PAM_AUTH_DOMAIN, strlen(PAM_AUTH_DOMAIN) + 1);
@@ -221,8 +219,7 @@ int rds_auth_logon_user(rdsAuthModulePam* pam, const char* username, char** doma
 	return 0;
 }
 
-OGON_API int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS* pEntryPoints)
-{
+int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS *pEntryPoints) {
 	pEntryPoints->Version = 1;
 
 	pEntryPoints->New = (pRdsAuthModuleNew) rds_auth_module_new;

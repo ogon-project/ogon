@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_CSGUARD_H_
-#define _OGON_SMGR_CSGUARD_H_
+#ifndef OGON_SMGR_CSGUARD_H_
+#define OGON_SMGR_CSGUARD_H_
 
 #include <winpr/synch.h>
 
@@ -35,13 +35,13 @@ public:
 
 	void leaveGuard() {
 		LeaveCriticalSection(mCriticalSection);
-		mCriticalSection = NULL;
+		mCriticalSection = nullptr;
 	}
 
 	~CSGuard() {
-		if (mCriticalSection != NULL) {
+		if (mCriticalSection != nullptr) {
 			LeaveCriticalSection(mCriticalSection);
-		}			
+		}
 	}
 
 private:
@@ -49,5 +49,4 @@ private:
 
 };
 
-
-#endif /* _OGON_SMGR_CSGUARD_H_ */
+#endif /* OGON_SMGR_CSGUARD_H_ */

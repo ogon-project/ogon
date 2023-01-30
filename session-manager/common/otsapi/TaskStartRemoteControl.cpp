@@ -41,7 +41,7 @@ static wLog *logger_taskStartRemoteControl = WLog_Get("ogon.sessionmanager.otsap
 
 
 TaskStartRemoteControl::TaskStartRemoteControl(UINT32 sessionID, UINT32 targetSession, BYTE HotkeyVk, INT16 HotkeyModifiers, DWORD flags, UINT32 timeout) {
-	if (!(mMessagingStarted = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(mMessagingStarted = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_Print(logger_taskStartRemoteControl, WLOG_ERROR,
 				   "Failed to create task remote control messaging started event");
 		throw std::bad_alloc();
@@ -68,10 +68,10 @@ BOOL TaskStartRemoteControl::startMessaging() {
 	TaskStartRemoteControlPtr currentTask;
 	currentTask = shared_from_this();
 
-	if (!(messagingThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) TaskStartRemoteControl::execMessagingThread, (void*) &currentTask,
-			0, NULL)))
-	{
+	if (!(messagingThread = CreateThread(nullptr, 0,
+				  (LPTHREAD_START_ROUTINE)
+						  TaskStartRemoteControl::execMessagingThread,
+				  (void *)&currentTask, 0, nullptr))) {
 		WLog_Print(logger_taskStartRemoteControl, WLOG_ERROR, "s %" PRIu32 ": error creating thread", mSessionID);
 		return false;
 	}
@@ -85,7 +85,7 @@ void* TaskStartRemoteControl::execMessagingThread(void *arg) {
 
 	currentTask->sendRemoteControlMessage();
 
-	return NULL;
+	return nullptr;
 }
 
 

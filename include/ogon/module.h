@@ -22,10 +22,14 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_MODULE_H_
-#define _OGON_MODULE_H_
+#ifndef OGON_MODULE_H_
+#define OGON_MODULE_H_
 
 #include <winpr/wtypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 typedef bool (*pgetPropertyBool)(UINT32 sessionID, const char* path, bool* value);
 typedef bool (*pgetPropertyNumber)(UINT32 sessionID, const char* path, long* value);
@@ -107,4 +111,8 @@ struct rds_module_entry_points_v1
 
 typedef int (*pRdsModuleEntry)(RDS_MODULE_ENTRY_POINTS* pEntryPoints);
 
-#endif /* _OGON_MODULES_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_MODULES_H_ */

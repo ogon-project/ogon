@@ -22,46 +22,39 @@
  */
 
 #include "../../common/icp.h"
+#include "ICP.pb-c.h"
+#include "icp_server_stubs.h"
 #include "pbrpc.h"
 #include "pipe_transport.h"
-#include "icp_server_stubs.h"
-#include "ICP.pb-c.h"
 
-
-struct icp_context
-{
-	pbRPCContext* pbcontext;
-	pbRPCTransportContext* tpcontext;
+struct icp_context {
+	pbRPCContext *pbcontext;
+	pbRPCTransportContext *tpcontext;
 };
 
-static struct icp_context* icpContext = NULL;
+static struct icp_context *icpContext = nullptr;
 
-static pbRPCMethod icpMethods[] =
-{
-	{ OGON__ICP__MSGTYPE__Ping, ping },
-	{ OGON__ICP__MSGTYPE__SwitchTo, switchTo},
-	{ OGON__ICP__MSGTYPE__LogoffUserSession, logoffUserSession},
-	{ OGON__ICP__MSGTYPE__OtsApiVirtualChannelOpen, otsapiVirtualChannelOpen},
-	{ OGON__ICP__MSGTYPE__OtsApiVirtualChannelClose, otsapiVirtualChannelClose},
-	{ OGON__ICP__MSGTYPE__OtsApiStartRemoteControl, otsapiStartRemoteControl},
-	{ OGON__ICP__MSGTYPE__OtsApiStopRemoteControl, otsapiStopRemoteControl},
-	{ OGON__ICP__MSGTYPE__Message, message},
-	{ 0, NULL }
-};
+static pbRPCMethod icpMethods[] = {{OGON__ICP__MSGTYPE__Ping, ping},
+		{OGON__ICP__MSGTYPE__SwitchTo, switchTo},
+		{OGON__ICP__MSGTYPE__LogoffUserSession, logoffUserSession},
+		{OGON__ICP__MSGTYPE__OtsApiVirtualChannelOpen,
+				otsapiVirtualChannelOpen},
+		{OGON__ICP__MSGTYPE__OtsApiVirtualChannelClose,
+				otsapiVirtualChannelClose},
+		{OGON__ICP__MSGTYPE__OtsApiStartRemoteControl,
+				otsapiStartRemoteControl},
+		{OGON__ICP__MSGTYPE__OtsApiStopRemoteControl, otsapiStopRemoteControl},
+		{OGON__ICP__MSGTYPE__Message, message}, {0, nullptr}};
 
-int ogon_icp_start(HANDLE shutdown, UINT32 vmajor, UINT32 vminor)
-{
-	icpContext = malloc(sizeof(struct icp_context));
-	if (!icpContext)
-		return -1;
+int ogon_icp_start(HANDLE shutdown, UINT32 vmajor, UINT32 vminor) {
+	icpContext = new (icp_context);
+	if (!icpContext) return -1;
 
 	icpContext->tpcontext = tp_npipe_new();
-	if (!icpContext->tpcontext)
-		goto out_free;
+	if (!icpContext->tpcontext) goto out_free;
 
 	icpContext->pbcontext = pbrpc_server_new(icpContext->tpcontext, shutdown);
-	if (!icpContext->pbcontext)
-		goto out_free_tpContext;
+	if (!icpContext->pbcontext) goto out_free_tpContext;
 
 	pbrpc_register_methods(icpContext->pbcontext, icpMethods);
 	pbrpc_server_start(icpContext->pbcontext, vmajor, vminor);
@@ -74,22 +67,19 @@ out_free:
 	return -1;
 }
 
-int ogon_icp_shutdown()
-{
+int ogon_icp_shutdown() {
 	pbrpc_server_stop(icpContext->pbcontext);
 	pbrpc_server_free(icpContext->pbcontext);
 	tp_npipe_free(icpContext->tpcontext);
-	free(icpContext);
+	delete (icpContext);
 	return 0;
 }
 
-void* ogon_icp_get_context()
-{
-	return icpContext->pbcontext;
-}
+void *ogon_icp_get_context() { return icpContext->pbcontext; }
 
-BOOL ogon_icp_get_protocol_version(void *context, UINT32 *vmajor, UINT32 *vminor) {
-	pbRPCContext* pbrpc = (pbRPCContext *)context;
+BOOL ogon_icp_get_protocol_version(
+		void *context, UINT32 *vmajor, UINT32 *vminor) {
+	pbRPCContext *pbrpc = (pbRPCContext *)context;
 
 	if (!context || !vmajor || !vminor || !pbrpc->isConnected) {
 		return FALSE;

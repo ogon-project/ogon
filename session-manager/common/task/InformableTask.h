@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_INFORMABLETASK_H_
-#define _OGON_SMGR_INFORMABLETASK_H_
+#ifndef OGON_SMGR_INFORMABLETASK_H_
+#define OGON_SMGR_INFORMABLETASK_H_
 
 #include <task/Task.h>
 #include <winpr/synch.h>
@@ -35,7 +35,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 	class InformableTask: public Task {
 	public:
 		InformableTask(){
-			if (!(mhDone = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+			if (!(mhDone = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 				throw std::bad_alloc();
 			}
 		}
@@ -68,4 +68,4 @@ namespace ogon { namespace sessionmanager { namespace task {
 
 namespace taskNS = ogon::sessionmanager::task;
 
-#endif /* _OGON_SMGR_INFORMABLETASK_H_ */
+#endif /* OGON_SMGR_INFORMABLETASK_H_ */

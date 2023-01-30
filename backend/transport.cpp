@@ -43,8 +43,9 @@
 
 #define PIPE_BUFFER_SIZE 0xFFFF
 
-void ogon_named_pipe_get_endpoint_name(DWORD id, const char *endpoint, char *dest, size_t len) {
-	sprintf_s(dest, len, "\\\\.\\pipe\\ogon_%"PRIu32"_%s", id, endpoint);
+void ogon_named_pipe_get_endpoint_name(
+		DWORD id, const char *endpoint, char *dest, size_t len) {
+	sprintf_s(dest, len, "\\\\.\\pipe\\ogon_%" PRIu32 "_%s", id, endpoint);
 }
 
 BOOL ogon_named_pipe_clean(const char *pipeName) {
@@ -57,7 +58,8 @@ BOOL ogon_named_pipe_clean(const char *pipeName) {
 	}
 
 	if (!(filename = GetNamedPipeUnixDomainSocketFilePathA(pipeName))) {
-		WLog_ERR(TAG, "GetNamedPipeUnixDomainSocketFilePathA(%s) failed", pipeName);
+		WLog_ERR(TAG, "GetNamedPipeUnixDomainSocketFilePathA(%s) failed",
+				pipeName);
 		return FALSE;
 	}
 
@@ -87,8 +89,8 @@ HANDLE ogon_named_pipe_connect(const char *pipeName, DWORD nTimeOut) {
 		return INVALID_HANDLE_VALUE;
 	}
 
-	hNamedPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE,
-		 0, NULL, OPEN_EXISTING, 0, NULL);
+	hNamedPipe = CreateFileA(pipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+			OPEN_EXISTING, 0, nullptr);
 
 	if ((!hNamedPipe) || (hNamedPipe == INVALID_HANDLE_VALUE)) {
 		WLog_ERR(TAG, "Failed to create named pipe %s", pipeName);
@@ -98,7 +100,8 @@ HANDLE ogon_named_pipe_connect(const char *pipeName, DWORD nTimeOut) {
 	return hNamedPipe;
 }
 
-HANDLE ogon_named_pipe_connect_endpoint(DWORD id, const char *endpoint, DWORD nTimeOut) {
+HANDLE ogon_named_pipe_connect_endpoint(
+		DWORD id, const char *endpoint, DWORD nTimeOut) {
 	char pipeName[256];
 
 	ogon_named_pipe_get_endpoint_name(id, endpoint, pipeName, sizeof(pipeName));
@@ -109,13 +112,13 @@ HANDLE ogon_named_pipe_create(const char *pipeName) {
 	HANDLE hNamedPipe;
 
 	hNamedPipe = CreateNamedPipe(pipeName, PIPE_ACCESS_DUPLEX,
-		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-		PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE,
-		0, NULL);
+			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+			PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0,
+			nullptr);
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE) {
 		WLog_ERR(TAG, "CreateNamedPipe '%s' failed", pipeName);
-		return NULL;
+		return nullptr;
 	}
 
 	return hNamedPipe;
@@ -131,13 +134,17 @@ HANDLE ogon_named_pipe_create_endpoint(DWORD id, const char *endpoint) {
 HANDLE ogon_named_pipe_accept(HANDLE hPipe) {
 	DWORD pipeMode;
 
-	if (!ConnectNamedPipe(hPipe, NULL) && GetLastError() != ERROR_PIPE_CONNECTED) {
-		WLog_ERR(TAG, "Failed to accept named pipe connection (error 0x%08"PRIX32")", GetLastError());
-		return NULL;
+	if (!ConnectNamedPipe(hPipe, nullptr) &&
+			GetLastError() != ERROR_PIPE_CONNECTED) {
+		WLog_ERR(TAG,
+				"Failed to accept named pipe connection (error 0x%08" PRIX32
+				")",
+				GetLastError());
+		return nullptr;
 	}
 
 	pipeMode = PIPE_NOWAIT;
-	SetNamedPipeHandleState(hPipe, &pipeMode, NULL, NULL);
+	SetNamedPipeHandleState(hPipe, &pipeMode, nullptr, nullptr);
 
 	return hPipe;
 }

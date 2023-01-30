@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_TIMEHELPERS_H_
-#define _OGON_SMGR_TIMEHELPERS_H_
+#ifndef OGON_SMGR_TIMEHELPERS_H_
+#define OGON_SMGR_TIMEHELPERS_H_
 
 #include <time.h>
 #include <winpr/wtypes.h>
@@ -32,4 +32,4 @@ void GetUnixTimeAsFileTime(time_t t, LPFILETIME lpSystemTimeAsFileTime);
 time_t to_time_t(boost::posix_time::ptime t);
 __uint64 convertFileTimeToint64( const FILETIME &fileTime);
 
-#endif /* _OGON_SMGR_TIMEHELPERS_H_ */
+#endif /* OGON_SMGR_TIMEHELPERS_H_ */

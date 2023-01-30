@@ -22,10 +22,10 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_MESSAGE_H_
-#define _OGON_MESSAGE_H_
+#ifndef OGON_MESSAGE_H_
+#define OGON_MESSAGE_H_
 
 #define MESSAGE_CUSTOM_TYPE 1
 #define MESSAGE_REQUEST_REMOTE_CONTROL 2
 
-#endif /* _OGON_MESSAGE_H_ */
+#endif /* OGON_MESSAGE_H_ */

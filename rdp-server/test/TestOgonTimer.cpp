@@ -24,17 +24,16 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <winpr/sysinfo.h>
 #include "../common/global.h"
 #include "../eventloop.h"
+#include <winpr/sysinfo.h>
 
 static void periodicTimerCb(void *data) {
 	int *counter = (int *)data;
 	*counter += 1;
 }
 
-int TestOgonTimer(int argc, char* argv[])
-{
+int TestOgonTimer(int argc, char *argv[]) {
 	OGON_UNUSED(argc);
 	OGON_UNUSED(argv);
 	ogon_event_loop *loop;
@@ -43,52 +42,42 @@ int TestOgonTimer(int argc, char* argv[])
 	UINT64 endDate;
 
 	loop = eventloop_create();
-	if (!loop)
-		return 1;
+	if (!loop) return 1;
 
 	evsrc = eventloop_add_timer(loop, 100, periodicTimerCb, &counter);
-	if (!evsrc)
-		return 2;
+	if (!evsrc) return 2;
 
 	// timer should be triggered and increment the counter
-	if (!eventloop_dispatch_loop(loop, 200))
-		return 3;
+	if (!eventloop_dispatch_loop(loop, 200)) return 3;
 
-	if (counter != 1)
-		return 4;
+	if (counter != 1) return 4;
 
 	// timer should be triggered a second time
-	if (!eventloop_dispatch_loop(loop, 200))
-		return 5;
+	if (!eventloop_dispatch_loop(loop, 200)) return 5;
 
-	if (counter != 2)
-		return 6;
+	if (counter != 2) return 6;
 
 	// timer is disabled, so nothing should happen
 	eventloop_remove_source(&evsrc);
-	if (eventloop_dispatch_loop(loop, 200))
-		return 7;
+	if (eventloop_dispatch_loop(loop, 200)) return 7;
 
-	if (counter != 2)
-		return 8;
+	if (counter != 2) return 8;
 
 	/* and finally a simple measurement test
-	 * program a timer every 20ms, and let it run for 1 second => should have a counter
-	 * around 50
+	 * program a timer every 20ms, and let it run for 1 second => should have a
+	 * counter around 50
 	 */
 	counter = 0;
 	evsrc = eventloop_add_timer(loop, 20, periodicTimerCb, &counter);
-	if (!evsrc)
-		return 9;
+	if (!evsrc) return 9;
 
 	endDate = GetTickCount64() + 1000;
 	while (GetTickCount64() < endDate) {
 		eventloop_dispatch_loop(loop, 400);
 	}
 
-	//printf("counter=%d\n", counter);
-	if (counter < 48 || counter > 52)
-		return 10;
+	// printf("counter=%d\n", counter);
+	if (counter < 48 || counter > 52) return 10;
 
 	eventloop_remove_source(&evsrc);
 	eventloop_destroy(&loop);

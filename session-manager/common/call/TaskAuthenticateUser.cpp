@@ -79,7 +79,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 
 		UINT32 connectionId = connectionStore->getConnectionIdForSessionId(mSessionId);
 		sessionNS::ConnectionPtr currentConnection = connectionStore->getConnection(connectionId);
-		if (currentConnection == NULL) {
+		if (currentConnection == nullptr) {
 			WLog_Print(logger_TaskAuthenticateUser, WLOG_ERROR,
 				"s %" PRIu32 ": Cannot get connection object (%" PRIu32 ")",
 				mSessionId, connectionId);
@@ -143,7 +143,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 
 		sessionNS::SessionPtr oldSession = sessionStore->getSession(mSessionId);
 
-		if (oldSession == NULL) {
+		if (oldSession == nullptr) {
 			WLog_Print(logger_TaskAuthenticateUser, WLOG_ERROR, "s %" PRIu32 ": Cannot get session", mSessionId);
 			mResult = 1;// will report error with answer
 			return 1;

@@ -73,8 +73,8 @@ typedef struct {
 	bool terminateSessionOnExit;
 } RDS_PROCESS_INFO;
 
-static HANDLE gSignalEvent = NULL;
-static HANDLE gSignalStop = NULL;
+static HANDLE gSignalEvent = nullptr;
+static HANDLE gSignalStop = nullptr;
 static std::list<RDS_PROCESS_INFO> gProcessInfos;
 static int run = true;
 
@@ -150,7 +150,7 @@ static bool remove_monitoring_process(DWORD process_id) {
 	return removed;
 }
 
-BOOL handle_signal(int signum) {
+static BOOL handle_signal(int signum) {
 	/* SIGCHLD: parent dead or control pipe closed */
 	if (signum == SIGPIPE) {
 		gModule.stopModule();
@@ -219,8 +219,8 @@ static void signal_stop() {
 	SetEvent(gSignalStop);
 }
 
-void SplitFilename (std::string filename, std::string& folder, std::string& file)
-{
+static void SplitFilename(
+		std::string filename, std::string &folder, std::string &file) {
 	size_t found;
 
 	filename.erase(
@@ -239,7 +239,6 @@ void SplitFilename (std::string filename, std::string& folder, std::string& file
 		file = filename.substr(found+1);
 	}
 }
-
 
 int main(int argc, char *argv[]) {
 	int read_fd;
@@ -319,12 +318,12 @@ int main(int argc, char *argv[]) {
 
 	gModule.setSessionPID(session_id);
 
-	if (!(gSignalEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(gSignalEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "CreateEvent failed!");
 		return EXIT_FAIL_CREATEEVENT;
 	}
 
-	if (!(gSignalStop = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(gSignalStop = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "CreateEvent failed!");
 		return EXIT_FAIL_CREATEEVENT;
 	}
@@ -340,17 +339,16 @@ int main(int argc, char *argv[]) {
 	 * SIGCHLD handles process death(s)
 	 * SIGPIPE might happen on the communication pipe
 	 */
-	if (sigaction(SIGTERM, &act, NULL) ||
-			sigaction(SIGCHLD, &act, NULL) ||
-			sigaction(SIGPIPE, &act, NULL)) {
+	if (sigaction(SIGTERM, &act, nullptr) ||
+			sigaction(SIGCHLD, &act, nullptr) ||
+			sigaction(SIGPIPE, &act, nullptr)) {
 		WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "sigaction failed!");
 		return EXIT_FAIL_SIGACTION;
 	}
 
 	if (sigemptyset(&set) || sigaddset(&set, SIGTERM) ||
-			sigaddset(&set, SIGCHLD) ||
-			sigaddset(&set, SIGPIPE) ||
-			pthread_sigmask(SIG_UNBLOCK, &set, NULL)) {
+			sigaddset(&set, SIGCHLD) || sigaddset(&set, SIGPIPE) ||
+			pthread_sigmask(SIG_UNBLOCK, &set, nullptr)) {
 		WLog_Print(logger_ModuleCommunication, WLOG_ERROR , "sigmask failed!");
 		return EXIT_FAIL_SIGMASK;
 	}

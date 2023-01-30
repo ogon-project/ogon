@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_
-#define _OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_
+#ifndef OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_
+#define OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_
 
 #include <security/pam_appl.h>
 #include <string>
@@ -102,4 +102,4 @@ namespace ogon { namespace launcher  {
 
 } /* launcher */ } /* ogon */
 
-#endif /* _OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_ */
+#endif /* OGON_BACKENDLAUNCHER_MODULECOMMUNICATION_H_ */

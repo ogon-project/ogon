@@ -65,7 +65,7 @@ namespace ogon { namespace pbrpc {
 			throw std::bad_alloc();
 		}
 
-		if (!(mhStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+		if (!(mhStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR,
 				"Failed to create rpc engine stop event");
 			throw std::bad_alloc();
@@ -85,12 +85,13 @@ namespace ogon { namespace pbrpc {
 
 		dwPipeMode = PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT;
 
-		hNamedPipe = CreateNamedPipe(endpoint, PIPE_ACCESS_DUPLEX, dwPipeMode, PIPE_UNLIMITED_INSTANCES,
-				PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, NULL);
+		hNamedPipe = CreateNamedPipe(endpoint, PIPE_ACCESS_DUPLEX, dwPipeMode,
+				PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0,
+				nullptr);
 
 		if (hNamedPipe == INVALID_HANDLE_VALUE) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "creating namedpipe %s failed", endpoint);
-			return NULL;
+			return nullptr;
 		}
 
 		return hNamedPipe;
@@ -100,10 +101,9 @@ namespace ogon { namespace pbrpc {
 
 		CSGuard guard(&mCSection);
 
-		if (!(mhServerThread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) RpcEngine::listenerThread, (void*)this,
-				0, NULL)))
-		{
+		if (!(mhServerThread = CreateThread(nullptr, 0,
+					  (LPTHREAD_START_ROUTINE)RpcEngine::listenerThread,
+					  (void *)this, 0, nullptr))) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "failed to create thread");
 			return false;
 		}
@@ -116,7 +116,7 @@ namespace ogon { namespace pbrpc {
 			SetEvent(mhStopEvent);
 			WaitForSingleObject(mhServerThread, INFINITE);
 			CloseHandle(mhServerThread);
-			mhServerThread = NULL;
+			mhServerThread = nullptr;
 		}
 		return true;
 	}
@@ -196,7 +196,7 @@ namespace ogon { namespace pbrpc {
 			BOOL fConnected;
 			DWORD dwPipeMode;
 
-			fConnected = ConnectNamedPipe(mhServerPipe, NULL);
+			fConnected = ConnectNamedPipe(mhServerPipe, nullptr);
 			if (!fConnected) {
 				fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
 			}
@@ -211,12 +211,12 @@ namespace ogon { namespace pbrpc {
 			mhClientPipe = mhServerPipe;
 
 			dwPipeMode = PIPE_WAIT;
-			if (!SetNamedPipeHandleState(mhClientPipe, &dwPipeMode, NULL, NULL)) {
+			if (!SetNamedPipeHandleState(
+						mhClientPipe, &dwPipeMode, nullptr, nullptr)) {
 				WLog_Print(logger_RPCEngine, WLOG_ERROR, "SetNamedPipeHandleState failed! ");
 				CloseHandle(mhServerPipe);
 				mhServerPipe = INVALID_HANDLE_VALUE;
 				return INVALID_HANDLE_VALUE;
-
 			}
 			WLog_Print(logger_RPCEngine, WLOG_TRACE, "connect client with handle %p", mhClientPipe);
 
@@ -240,7 +240,7 @@ namespace ogon { namespace pbrpc {
 		DWORD lpNumberOfBytesRead = 0;
 
 		fSuccess = ReadFile(mhClientPipe, mHeaderBuffer + mHeaderRead,
-				4 - mHeaderRead, &lpNumberOfBytesRead, NULL);
+				4 - mHeaderRead, &lpNumberOfBytesRead, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesRead == 0)) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "error reading header");
@@ -262,7 +262,7 @@ namespace ogon { namespace pbrpc {
 		DWORD lpNumberOfBytesRead = 0;
 
 		fSuccess = ReadFile(mhClientPipe, mPayloadBuffer + mPayloadRead,
-				mPacktLength - mPayloadRead, &lpNumberOfBytesRead, NULL);
+				mPacktLength - mPayloadRead, &lpNumberOfBytesRead, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesRead == 0)) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "error reading payload");
@@ -297,7 +297,7 @@ namespace ogon { namespace pbrpc {
 				}
 			}
 
-			if (foundCallOut == NULL) {
+			if (foundCallOut == nullptr) {
 				WLog_Print(logger_RPCEngine, WLOG_ERROR,
 					"Received answer for callID %" PRIu32 ", but no responding call was found",
 					callID);
@@ -350,7 +350,7 @@ namespace ogon { namespace pbrpc {
 		}
 
 		callNS::CallPtr createdCall = callNS::CallPtr(CALL_FACTORY.createClass(callType));
-		if (createdCall == NULL) {
+		if (createdCall == nullptr) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "no registered class for calltype=%" PRIu32 "", callType);
 			sendError(callID, callType);
 			return CLIENT_ERROR;
@@ -453,16 +453,16 @@ namespace ogon { namespace pbrpc {
 		DWORD lpNumberOfBytesWritten;
 		DWORD messageSize = htonl(data.size());
 
-		fSuccess = WriteFile(mhClientPipe, &messageSize,
-				4, &lpNumberOfBytesWritten, NULL);
+		fSuccess = WriteFile(mhClientPipe, &messageSize, 4,
+				&lpNumberOfBytesWritten, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesWritten == 0)) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "error sending");
 			return CLIENT_ERROR;
 		}
 
-		fSuccess = WriteFile(mhClientPipe, data.c_str(),
-				data.size(), &lpNumberOfBytesWritten, NULL);
+		fSuccess = WriteFile(mhClientPipe, data.c_str(), data.size(),
+				&lpNumberOfBytesWritten, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesWritten == 0)) {
 			WLog_Print(logger_RPCEngine, WLOG_ERROR, "error sending");

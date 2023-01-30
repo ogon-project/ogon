@@ -269,7 +269,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		std::string greeter;
 		pCLIENT_INFORMATION clientInformation;
 
-		if (currentSession == NULL) {
+		if (currentSession == nullptr) {
 			WLog_Print(logger_TaskLogonUser, WLOG_ERROR, "s %" PRIu32 ": Could not get session with sessionID %" PRIu32 "", mSessionId, mSessionId);
 			goto errorOut;
 		}

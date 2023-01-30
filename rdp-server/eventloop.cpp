@@ -32,15 +32,20 @@
 #include <sys/time.h>
 #endif
 
-#include <unistd.h>
-#include <errno.h>
 #include <assert.h>
+#include <errno.h>
+#include <unistd.h>
 
-#include <winpr/memory.h>
-#include <winpr/file.h>
-#include <winpr/synch.h>
-#include <winpr/collections.h>
+#include <list>
+#include <map>
+#include <memory>
+#include <vector>
+
 #include "../common/global.h"
+#include <winpr/collections.h>
+#include <winpr/file.h>
+#include <winpr/memory.h>
+#include <winpr/synch.h>
 
 #include "eventloop.h"
 
@@ -57,9 +62,9 @@ struct _ogon_event_loop {
 	fd_set exceptset;
 #endif
 
-	wLinkedList *sources;
-	wLinkedList *rescheduled;
-	wLinkedList *cleanups;
+	std::map<ogon_event_source *, std::shared_ptr<ogon_event_source> > sources;
+	std::vector<ogon_event_source *> cleanups;
+	std::vector<ogon_event_source *> rescheduled;
 };
 typedef void (*ogon_source_dtor)(ogon_event_source *evsource);
 
@@ -78,17 +83,18 @@ struct _ogon_event_source {
 };
 
 ogon_event_loop *eventloop_create(void) {
-	ogon_event_loop *ret = calloc(1, sizeof(ogon_event_loop) );
+	auto ret = new (ogon_event_loop);
 	if (!ret) {
 		WLog_ERR(TAG, "error creating event loop");
-		return NULL;
+		return nullptr;
 	}
 
 #ifdef HAVE_EPOLL_H
 	ret->epollfd = epoll_create(1);
 	if (ret->epollfd < 0) {
-		WLog_ERR(TAG, "error creating epollfd, epoll_create returned %d", errno);
-		goto out_free_loop;
+		WLog_ERR(
+				TAG, "error creating epollfd, epoll_create returned %d", errno);
+		goto fail;
 	}
 #else
 	FD_ZERO(&ret->readset);
@@ -96,94 +102,48 @@ ogon_event_loop *eventloop_create(void) {
 	FD_ZERO(&ret->exceptset);
 #endif
 
-	ret->sources = LinkedList_New();
-	if (!ret->sources) {
-		WLog_ERR(TAG, "error creating sources LinkedList");
-		goto out_epoll;
-	}
-
-	ret->cleanups = LinkedList_New();
-	if (!ret->cleanups) {
-		WLog_ERR(TAG, "error creating cleanups LinkedList");
-		goto out_sources;
-	}
-
-	ret->rescheduled = LinkedList_New();
-	if (!ret->rescheduled) {
-		WLog_ERR(TAG, "error creating rescheduled LinkedList");
-		goto out_cleanups;
-	}
-
 	return ret;
 
-out_cleanups:
-	LinkedList_Free(ret->cleanups);
-out_sources:
-	LinkedList_Free(ret->sources);
-out_epoll:
-#ifdef HAVE_EPOLL_H
-	close(ret->epollfd);
-out_free_loop:
-#endif
-	free(ret);
-	return NULL;
+fail:
+	eventloop_destroy(&ret);
+	return nullptr;
 }
 
 static void treat_cleanups(ogon_event_loop *evloop) {
-	ogon_event_source *source;
-
-	LinkedList_Enumerator_Reset(evloop->cleanups);
-	while(LinkedList_Enumerator_MoveNext(evloop->cleanups)) {
-		source = LinkedList_Enumerator_Current(evloop->cleanups);
+	for (auto source : evloop->cleanups) {
 		if (source->dtor) {
 			source->dtor(source);
 		}
-		LinkedList_Remove(evloop->sources, source);
-
-		free(source);
+		evloop->sources.erase(source);
 	}
-
-	LinkedList_Clear(evloop->cleanups);
+	evloop->cleanups.clear();
 }
 
 static void treat_rescheduled(ogon_event_loop *evloop) {
-	ogon_event_source *source;
-
-	while (LinkedList_Count(evloop->rescheduled) > 0)	{
-		source = LinkedList_First(evloop->rescheduled);
-
+	for (auto source : evloop->rescheduled) {
 		if (!source->markedForRemove) {
 			int mask = source->rescheduleMask;
 			source->rescheduleMask = 0;
 
 			source->callback(mask, source->fd, source->handle, source->data);
 		}
-
-		LinkedList_RemoveFirst(evloop->rescheduled);
 	}
+	evloop->rescheduled.clear();
 }
 
 void eventloop_destroy(ogon_event_loop **pevloop) {
 	ogon_event_loop *evloop = *pevloop;
 
-	if (!evloop)
-		return;
+	if (!evloop) return;
 
 #ifdef HAVE_EPOLL_H
 	close(evloop->epollfd);
 #endif
 
 	treat_cleanups(evloop);
-	LinkedList_Free(evloop->cleanups);
 
-	LinkedList_Enumerator_Reset(evloop->sources);
-	while(LinkedList_Enumerator_MoveNext(evloop->sources)) 	{
-		free(LinkedList_Enumerator_Current(evloop->sources));
-	}
-	LinkedList_Free(evloop->sources);
-	LinkedList_Free(evloop->rescheduled);
-	free(evloop);
-	*pevloop = NULL;
+	delete (evloop);
+	*pevloop = nullptr;
 }
 
 #ifdef HAVE_EPOLL_H
@@ -202,19 +162,17 @@ static inline int computeEpollMask(int mask) {
 }
 #endif
 
-static ogon_event_source *eventloop_add_handle_fd(ogon_event_loop *evloop, int mask,
-	HANDLE handle, int fd, ogon_event_loop_cb cb, void *cb_data)
-{
+static ogon_event_source *eventloop_add_handle_fd(ogon_event_loop *evloop,
+		int mask, HANDLE handle, int fd, ogon_event_loop_cb cb, void *cb_data) {
 #ifdef HAVE_EPOLL_H
 	struct epoll_event epollev;
 	int r;
 #endif
-	ogon_event_source *ret;
 
-	if (!(ret = (ogon_event_source *)malloc(sizeof(ogon_event_source)))) {
-		return NULL;
+	std::shared_ptr<ogon_event_source> ret(new ogon_event_source);
+	if (!ret) {
+		return nullptr;
 	}
-
 	ret->fd = fd;
 	ret->mask = mask;
 	ret->eventloop = evloop;
@@ -223,17 +181,14 @@ static ogon_event_source *eventloop_add_handle_fd(ogon_event_loop *evloop, int m
 	ret->handle = handle;
 	ret->markedForRemove = FALSE;
 	ret->rescheduleMask = 0;
-	ret->dtor = NULL;
+	ret->dtor = nullptr;
 
-	if (!LinkedList_AddFirst(evloop->sources, ret)) {
-		WLog_ERR(TAG, "error LinkedList_AddFirst");
-		goto fail_add_list;
-	}
+	evloop->sources.emplace(ret.get(), ret);
 
 #ifdef HAVE_EPOLL_H
 	ZeroMemory(&epollev, sizeof(epollev));
 	epollev.events = computeEpollMask(mask);
-	epollev.data.ptr = ret;
+	epollev.data.ptr = ret.get();
 
 	r = epoll_ctl(evloop->epollfd, EPOLL_CTL_ADD, ret->fd, &epollev);
 	if (r < 0) {
@@ -257,15 +212,13 @@ static ogon_event_source *eventloop_add_handle_fd(ogon_event_loop *evloop, int m
 	}
 #endif
 
-	return ret;
+	return ret.get();
 
 #ifdef HAVE_EPOLL_H
 fail_epoll_ctl:
-	LinkedList_Remove(evloop->sources, ret);
+	evloop->sources.erase(ret.get());
 #endif
-fail_add_list:
-	free(ret);
-	return NULL;
+	return nullptr;
 }
 
 static void timer_source_dtor(ogon_event_source *src) {
@@ -280,8 +233,7 @@ static int timer_cb(int mask, int fd, HANDLE handle, void *data) {
 	ogon_event_source *evsrc = (ogon_event_source *)data;
 
 	/* spurious notification */
-	if (!(mask & OGON_EVENTLOOP_READ))
-		return 0;
+	if (!(mask & OGON_EVENTLOOP_READ)) return 0;
 
 	/* drain the timerFd */
 	do {
@@ -303,31 +255,31 @@ static int timer_cb(int mask, int fd, HANDLE handle, void *data) {
 }
 
 ogon_event_source *eventloop_add_timer(ogon_event_loop *evloop, UINT32 timeout,
-		ogon_event_loop_timer_cb cb, void *cb_data)
-{
+		ogon_event_loop_timer_cb cb, void *cb_data) {
 	ogon_event_source *ret;
 	LARGE_INTEGER due;
 	HANDLE h;
 
 	if (!cb) {
-		return NULL;
+		return nullptr;
 	}
 
-	h = CreateWaitableTimer(NULL, TRUE, NULL);
+	h = CreateWaitableTimer(nullptr, TRUE, nullptr);
 	if (!h || h == INVALID_HANDLE_VALUE) {
-		return NULL;
+		return nullptr;
 	}
 
 	due.QuadPart = 0;
-	if (!SetWaitableTimer(h, &due, timeout, NULL, NULL, 0)) {
+	if (!SetWaitableTimer(h, &due, timeout, nullptr, nullptr, 0)) {
 		CloseHandle(h);
-		return NULL;
+		return nullptr;
 	}
 
-	ret = eventloop_add_handle(evloop, OGON_EVENTLOOP_READ, h, timer_cb, NULL);
+	ret = eventloop_add_handle(
+			evloop, OGON_EVENTLOOP_READ, h, timer_cb, nullptr);
 	if (!ret) {
 		CloseHandle(h);
-		return NULL;
+		return nullptr;
 	}
 
 	ret->data = ret; /* set the callback data to the eventSource itself */
@@ -337,38 +289,33 @@ ogon_event_source *eventloop_add_timer(ogon_event_loop *evloop, UINT32 timeout,
 	return ret;
 }
 
-
-ogon_event_source *eventloop_add_handle(ogon_event_loop *evloop, int mask, HANDLE handle,
-	ogon_event_loop_cb cb, void *cb_data)
-{
+ogon_event_source *eventloop_add_handle(ogon_event_loop *evloop, int mask,
+		HANDLE handle, ogon_event_loop_cb cb, void *cb_data) {
 	int fd = GetEventFileDescriptor(handle);
 	if (fd < 0) {
 		WLog_ERR(TAG, "error GetEventFileDescriptor failed");
-		return 0;
+		return nullptr;
 	}
 
 	return eventloop_add_handle_fd(evloop, mask, handle, fd, cb, cb_data);
 }
 
 ogon_event_source *eventloop_add_fd(ogon_event_loop *evloop, int mask, int fd,
-	ogon_event_loop_cb cb, void *cb_data)
-{
+		ogon_event_loop_cb cb, void *cb_data) {
 	if (fd < 0) {
 		WLog_ERR(TAG, "error fd cannot be less than 0");
-		return 0;
+		return nullptr;
 	}
-	return eventloop_add_handle_fd(evloop, mask, INVALID_HANDLE_VALUE, fd, cb, cb_data);
+	return eventloop_add_handle_fd(
+			evloop, mask, INVALID_HANDLE_VALUE, fd, cb, cb_data);
 }
 
-int eventsource_mask(const ogon_event_source *source) {
-	return source->mask;
-}
+int eventsource_mask(const ogon_event_source *source) { return source->mask; }
 
-int eventsource_fd(const ogon_event_source *source) {
-	return source->fd;
-}
+int eventsource_fd(const ogon_event_source *source) { return source->fd; }
 
-void eventsource_store_state(ogon_event_source *source, ogon_source_state *state) {
+void eventsource_store_state(
+		ogon_event_source *source, ogon_source_state *state) {
 	assert(source);
 	assert(state);
 
@@ -379,10 +326,10 @@ void eventsource_store_state(ogon_event_source *source, ogon_source_state *state
 	state->cbdata = source->data;
 }
 
-ogon_event_source *eventloop_restore_source(ogon_event_loop *evloop,
-	ogon_source_state *state)
-{
-	ogon_event_source *ret = eventloop_add_fd(evloop, state->mask, state->fd, state->cb, state->cbdata);
+ogon_event_source *eventloop_restore_source(
+		ogon_event_loop *evloop, ogon_source_state *state) {
+	ogon_event_source *ret = eventloop_add_fd(
+			evloop, state->mask, state->fd, state->cb, state->cbdata);
 	if (ret) {
 		ret->handle = state->handle;
 	}
@@ -435,7 +382,7 @@ static BOOL eventsource_reschedule(ogon_event_source *source, int updateMask) {
 	newMask = source->rescheduleMask | updateMask;
 	if (!source->rescheduleMask) {
 		ogon_event_loop *evloop = source->eventloop;
-		ret = LinkedList_AddLast(evloop->rescheduled, source);
+		evloop->rescheduled.push_back(source);
 	}
 	source->rescheduleMask = newMask;
 	return ret;
@@ -461,7 +408,7 @@ BOOL eventloop_remove_source(ogon_event_source **sourceP) {
 	}
 
 #ifdef HAVE_EPOLL_H
-	if (epoll_ctl(evloop->epollfd, EPOLL_CTL_DEL, source->fd, 0) < 0) {
+	if (epoll_ctl(evloop->epollfd, EPOLL_CTL_DEL, source->fd, nullptr) < 0) {
 		WLog_ERR(TAG, "error epoll_ctl failed with error %d", errno);
 		ret = FALSE;
 	}
@@ -476,22 +423,13 @@ BOOL eventloop_remove_source(ogon_event_source **sourceP) {
 	FD_CLR(source->fd, &evloop->exceptset);
 #endif
 
-	if (!LinkedList_AddFirst(evloop->cleanups, source)) {
-		/**
-		 * There is nothing we can or should do in this case and since
-		 * source->markedForRemove is flagged the only drawback is that
-		 * source stays in memory until the eventloop is destroyed
-		 */
-	}
+	evloop->cleanups.push_back(source);
 
 out:
 	source->markedForRemove = TRUE;
-	*sourceP = 0;
+	*sourceP = nullptr;
 	return ret;
 }
-
-
-
 
 #ifdef HAVE_EPOLL_H
 
@@ -516,16 +454,20 @@ int eventloop_dispatch_loop(ogon_event_loop *evloop, long timeout) {
 		}
 
 		mask = 0;
-		if ((source->mask & OGON_EVENTLOOP_READ) && (epoll_event->events & EPOLLIN)) {
+		if ((source->mask & OGON_EVENTLOOP_READ) &&
+				(epoll_event->events & EPOLLIN)) {
 			mask |= OGON_EVENTLOOP_READ;
 		}
-		if ((source->mask & OGON_EVENTLOOP_WRITE) && (epoll_event->events & EPOLLOUT)) {
+		if ((source->mask & OGON_EVENTLOOP_WRITE) &&
+				(epoll_event->events & EPOLLOUT)) {
 			mask |= OGON_EVENTLOOP_WRITE;
 		}
-		if ((source->mask & OGON_EVENTLOOP_ERROR) && (epoll_event->events & EPOLLERR)) {
+		if ((source->mask & OGON_EVENTLOOP_ERROR) &&
+				(epoll_event->events & EPOLLERR)) {
 			mask |= OGON_EVENTLOOP_ERROR;
 		}
-		if ((source->mask & OGON_EVENTLOOP_HANGUP) &&(epoll_event->events & EPOLLHUP)) {
+		if ((source->mask & OGON_EVENTLOOP_HANGUP) &&
+				(epoll_event->events & EPOLLHUP)) {
 			mask |= OGON_EVENTLOOP_HANGUP;
 		}
 
@@ -533,10 +475,8 @@ int eventloop_dispatch_loop(ogon_event_loop *evloop, long timeout) {
 	}
 
 	treat_rescheduled(evloop);
+	treat_cleanups(evloop);
 
-	if (LinkedList_Count(evloop->cleanups)) {
-		treat_cleanups(evloop);
-	}
 	return count;
 }
 #else
@@ -560,7 +500,8 @@ int eventloop_dispatch_loop(ogon_event_loop *evloop, long timeout) {
 		memcpy(&writeset, &evloop->writeset, sizeof(writeset));
 		memcpy(&exceptset, &evloop->exceptset, sizeof(exceptset));
 
-		status = select(evloop->maxFd+1, &readset, &writeset, &exceptset, duePtr);
+		status = select(
+				evloop->maxFd + 1, &readset, &writeset, &exceptset, duePtr);
 	} while (status < 0 && errno == EINTR);
 
 	if (status < 0) {
@@ -568,7 +509,7 @@ int eventloop_dispatch_loop(ogon_event_loop *evloop, long timeout) {
 	}
 
 	LinkedList_Enumerator_Reset(evloop->sources);
-	while(LinkedList_Enumerator_MoveNext(evloop->sources) && status > 0) {
+	while (LinkedList_Enumerator_MoveNext(evloop->sources) && status > 0) {
 		source = LinkedList_Enumerator_Current(evloop->sources);
 		mask = 0;
 

@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_STRINGHELPERS_H_
-#define _OGON_SMGR_STRINGHELPERS_H_
+#ifndef OGON_SMGR_STRINGHELPERS_H_
+#define OGON_SMGR_STRINGHELPERS_H_
 
 #include <vector>
 #include <string>
@@ -62,4 +62,7 @@ namespace boost {
 	template<> std::string lexical_cast<std::string, bool>(const bool &b);
 }
 
-#endif /* _OGON_SMGR_STRINGHELPERS_H_ */
+std::string wchar_to_utf8(const std::u16string &wstr);
+std::u16string utf8_to_wchar(const std::string &str);
+
+#endif /* OGON_SMGR_STRINGHELPERS_H_ */

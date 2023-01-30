@@ -83,7 +83,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 				sessionId, WTS_PERM_FLAGS_VIRTUAL_CHANNEL);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR, "s %" PRIu32 ": Session not found or no permission!", sessionId);
 			_return.__set_pipeName("");
 			_return.__set_instance(0);
@@ -143,7 +143,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 			sessionId, WTS_PERM_FLAGS_VIRTUAL_CHANNEL);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR,
 				"s %" PRIu32 ": Session not found or no permission!", sessionId);
 			return false;
@@ -184,7 +184,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 			sessionId, WTS_PERM_FLAGS_DISCONNECT);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR,
 				"s %" PRIu32 ": Session not found or no permission!", sessionId);
 			return false;
@@ -202,7 +202,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 			sessionId, WTS_PERM_FLAGS_LOGOFF);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR,
 				"s %" PRIu32 ": Session not found or no permission!", sessionId);
 			return false;
@@ -223,9 +223,9 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		DWORD index;
 
 		sessionNS::SessionPtr current = APP_CONTEXT.getPermissionManager()->getSessionForToken(authToken);
-		if (current == NULL) {
+		if (current == nullptr) {
 			permissionNS::LogonPermissionPtr permission = APP_CONTEXT.getPermissionManager()->getPermissionForLogon(authToken);
-			if (permission == NULL) {
+			if (permission == nullptr) {
 				WLog_Print(logger_OTSApiHandler, WLOG_ERROR, "Logon Permission not found!");
 				_return.__set_returnValue(false);
 				return;
@@ -268,7 +268,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 
 		_return.__set_returnValue(false);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR,
 				"s %" PRIu32 ": no session found or no permission!", sessionId);
 			return;
@@ -416,15 +416,16 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 				return sessionNS::SessionPtr();
 			}
 		}
-		if (session == NULL) {
+		if (session == nullptr) {
 			// check auth tokens
 			permissionNS::LogonPermissionPtr permission = APP_CONTEXT.getPermissionManager()->getPermissionForLogon(authToken);
-			if (permission == NULL ) {
+			if (permission == nullptr) {
 				// no authtoken found
 				return sessionNS::SessionPtr();
 			}
 			sessionNS::SessionPtr ownSession = APP_CONTEXT.getSessionStore()->getSession(sessionId);
-			if ((ownSession != NULL ) && (ownSession->getDomain() == permission->getDomain()) &&
+			if ((ownSession != nullptr) &&
+					(ownSession->getDomain() == permission->getDomain()) &&
 					(ownSession->getUserName() == permission->getUsername())) {
 				// same user can do anything
 				return ownSession;
@@ -473,7 +474,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 
 	TDWORD OTSApiHandler::getPermissionForToken(const TSTRING &authToken) {
 		permissionNS::LogonPermissionPtr permission = APP_CONTEXT.getPermissionManager()->getPermissionForLogon(authToken);
-		if (permission == NULL) {
+		if (permission == nullptr) {
 			return 0;
 		} else {
 			return permission->getPermission();
@@ -520,7 +521,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 				sourceLogonId, WTS_PERM_FLAGS_REMOTE_CONTROL);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR, "s %" PRIu32 ": Session not found or no permission!", sourceLogonId);
 			return false;
 		}
@@ -552,7 +553,7 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 		sessionNS::SessionPtr session = getSessionAndCheckForPerm(authToken,
 			sessionId, WTS_PERM_FLAGS_MESSAGE);
 
-		if (session == NULL) {
+		if (session == nullptr) {
 			WLog_Print(logger_OTSApiHandler, WLOG_ERROR,
 				"s %" PRIu32 ": Session not found or no permission!", sessionId);
 			return 0;

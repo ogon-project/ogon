@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SERVICE_HELPER_H_
-#define _OGON_SERVICE_HELPER_H_
+#ifndef OGON_SERVICE_HELPER_H_
+#define OGON_SERVICE_HELPER_H_
 
 #include <ogon/backend.h>
 
@@ -154,5 +154,4 @@ OGON_API void ogon_service_free(ogon_backend_service* service);
 }
 #endif
 
-
-#endif /* _OGON_SERVICE_HELPER_H_ */
+#endif /* OGON_SERVICE_HELPER_H_ */

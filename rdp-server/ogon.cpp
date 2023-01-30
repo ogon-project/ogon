@@ -31,82 +31,90 @@
 #include <unistd.h>
 #endif
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 
 #ifndef WIN32
 #include <signal.h>
 #endif
 
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/library.h>
 #include <winpr/path.h>
+#include <winpr/ssl.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/cmdline.h>
-#include <winpr/library.h>
-#include <winpr/file.h>
-#include <winpr/ssl.h>
+#include <winpr/version.h>
 #include <winpr/wlog.h>
 
-#include <ogon/version.h>
 #include <ogon/build-config.h>
+#include <ogon/version.h>
 
-#include <winpr/sysinfo.h>
 #include <openssl/ssl.h>
+#include <winpr/sysinfo.h>
 
-#include "icp/icp_client_stubs.h"
 #include "../common/global.h"
 #include "../common/icp.h"
 #include "../common/procutils.h"
-#include "ogon.h"
 #include "app_context.h"
+#include "buildflags.h"
+#include "eventloop.h"
+#include "icp/icp_client_stubs.h"
+#include "ogon.h"
 #include "openh264.h"
 #include "peer.h"
-#include "eventloop.h"
-#include "buildflags.h"
 
 #define TAG OGON_TAG("core.main")
 #define PIDFILE "ogon-rdp-server.pid"
 
-static HANDLE g_term_event = NULL;
-static HANDLE g_signal_event = NULL;
+static HANDLE g_term_event = nullptr;
+static HANDLE g_signal_event = nullptr;
 static UINT16 g_listen_port = 3389;
 
-COMMAND_LINE_ARGUMENT_A ogon_args[] = {
-	{ "help", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "show help screen" },
-	{ "kill", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "kill a running daemon" },
-	{ "nodaemon", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "run in foreground" },
-	{ "version", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print the version" },
-	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", "3389", NULL, -1, NULL, "listening port" },
-	{ "log", COMMAND_LINE_VALUE_REQUIRED, "<backend>", "", NULL, -1, NULL, "logging backend (syslog or journald)" },
-	{ "loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", NULL, -1, NULL, "logging level"},
-	{ "buildconfig", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL, "print build configuration"},
-	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
-};
+static COMMAND_LINE_ARGUMENT_A ogon_args[] = {
+		{"help", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"show help screen"},
+		{"kill", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"kill a running daemon"},
+		{"nodaemon", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"run in foreground"},
+		{"version", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1, nullptr,
+				"print the version"},
+		{"port", COMMAND_LINE_VALUE_REQUIRED, "<number>", "3389", nullptr, -1,
+				nullptr, "listening port"},
+		{"log", COMMAND_LINE_VALUE_REQUIRED, "<backend>", "", nullptr, -1,
+				nullptr, "logging backend (syslog or journald)"},
+		{"loglevel", COMMAND_LINE_VALUE_REQUIRED, "<level>", "", nullptr, -1,
+				nullptr, "logging level"},
+		{"buildconfig", COMMAND_LINE_VALUE_FLAG, "", nullptr, nullptr, -1,
+				nullptr, "print build configuration"},
+		{nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr}};
 
-static void printhelprow(const char *kshort, const char *klong, const char *helptext) {
+static void printhelprow(
+		const char *kshort, const char *klong, const char *helptext) {
 	if (kshort) {
-		printf("    %s, %-20s %s\n", kshort,klong, helptext);
+		printf("    %s, %-20s %s\n", kshort, klong, helptext);
 	} else {
 		printf("        %-20s %s\n", klong, helptext);
 	}
-
 }
 
 static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
-	printhelprow(NULL, "--help", "print this help screen");
-	printhelprow(NULL, "--kill", "kill a running daemon");
-	printhelprow(NULL, "--version", "print the version");
-	printhelprow(NULL, "--nodaemon", "run in foreground");
-	printhelprow(NULL, "--port=<number>", "listening port (default: 3389)");
-	printhelprow(NULL, "--log=<backend>", "logging backend (syslog or journald)");
-	printhelprow(NULL, "--loglevel=<level>", "level for logging");
-	printhelprow(NULL, "--buildconfig", "Print build configuration");
+	printhelprow(nullptr, "--help", "print this help screen");
+	printhelprow(nullptr, "--kill", "kill a running daemon");
+	printhelprow(nullptr, "--version", "print the version");
+	printhelprow(nullptr, "--nodaemon", "run in foreground");
+	printhelprow(nullptr, "--port=<number>", "listening port (default: 3389)");
+	printhelprow(
+			nullptr, "--log=<backend>", "logging backend (syslog or journald)");
+	printhelprow(nullptr, "--loglevel=<level>", "level for logging");
+	printhelprow(nullptr, "--buildconfig", "Print build configuration");
 }
-
 
 #ifndef WIN32
 static struct {
@@ -114,8 +122,8 @@ static struct {
 	siginfo_t info;
 } g_signals[NSIG];
 
-
-static void signal_handler_native(int signal, siginfo_t *siginfo, void *context) {
+static void signal_handler_native(
+		int signal, siginfo_t *siginfo, void *context) {
 	/**
 	 * Warning: This is the native signal handler
 	 * Only use async-signal-safe functions here!
@@ -145,8 +153,9 @@ static void signal_handler_internal(int signal) {
 	uid = g_signals[signal].info.si_uid;
 	pname = get_process_name(pid);
 
-	WLog_INFO(TAG, "received signal %d from process %lu '%s' (uid %lu)",
-		signal, (unsigned long) pid, pname ? pname : "*unknown*", (unsigned long) uid);
+	WLog_INFO(TAG, "received signal %d from process %lu '%s' (uid %lu)", signal,
+			(unsigned long)pid, pname ? pname : "*unknown*",
+			(unsigned long)uid);
 
 	free(pname);
 
@@ -164,22 +173,24 @@ static void signal_handler_internal(int signal) {
 			break;
 	}
 
-	/* some unexpected signal wants to be handled. shutdown as well in this case */
-	WLog_ERR(TAG, "shutting down because of unexpected signal %d from process %lu (uid %lu) ...",
-		signal, (unsigned long) pid, (unsigned long) uid);
+	/* some unexpected signal wants to be handled. shutdown as well in this case
+	 */
+	WLog_ERR(TAG,
+			"shutting down because of unexpected signal %d from process %lu "
+			"(uid %lu) ...",
+			signal, (unsigned long)pid, (unsigned long)uid);
 
 	SetEvent(g_term_event);
 }
 #endif /* WIN32 not defined */
 
-
-static BOOL ogon_peer_accepted(freerdp_listener* instance, freerdp_peer *peer) {
+static BOOL ogon_peer_accepted(freerdp_listener *instance, freerdp_peer *peer) {
 	ogon_connection_runloop *runloop;
 
 	OGON_UNUSED(instance);
 
 	runloop = ogon_runloop_new(peer);
-	return runloop != NULL;
+	return runloop != nullptr;
 }
 
 typedef struct {
@@ -193,7 +204,7 @@ static int handle_term_event(int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(fd);
 	OGON_UNUSED(handle);
 
-	main_loop_context *context = data;
+	auto context = static_cast<main_loop_context *>(data);
 	context->doRun = FALSE;
 	return 0;
 }
@@ -219,12 +230,13 @@ static int handle_signal_event(int mask, int fd, HANDLE handle, void *data) {
 	return 0;
 }
 
-static int handle_incoming_connection(int mask, int fd, HANDLE handle, void *data) {
+static int handle_incoming_connection(
+		int mask, int fd, HANDLE handle, void *data) {
 	OGON_UNUSED(mask);
 	OGON_UNUSED(fd);
 	OGON_UNUSED(handle);
 
-	main_loop_context *context = data;
+	auto context = static_cast<main_loop_context *>(data);
 	freerdp_listener *listener = context->listener;
 
 	if (!listener->CheckFileDescriptor(listener)) {
@@ -257,8 +269,8 @@ static BOOL ogon_main_loop(UINT16 port) {
 	}
 	context.listener->PeerAccepted = ogon_peer_accepted;
 
-	if (!context.listener->Open(context.listener, NULL, port)) {
-		WLog_ERR(TAG, "error opening listener on port %"PRIu16"", port);
+	if (!context.listener->Open(context.listener, nullptr, port)) {
+		WLog_ERR(TAG, "error opening listener on port %" PRIu16 "", port);
 		freerdp_listener_free(context.listener);
 		return FALSE;
 	}
@@ -269,16 +281,16 @@ static BOOL ogon_main_loop(UINT16 port) {
 		goto error_eventloop;
 	}
 
-	term_event_source = eventloop_add_handle(loop, OGON_EVENTLOOP_READ, g_term_event,
-			handle_term_event, &context);
+	term_event_source = eventloop_add_handle(loop, OGON_EVENTLOOP_READ,
+			g_term_event, handle_term_event, &context);
 	if (!term_event_source) {
 		WLog_ERR(TAG, "unable to create to add term event in the event loop");
 		goto error_term_event;
 	}
 
 #ifndef WIN32
-	signal_event_source = eventloop_add_handle(loop, OGON_EVENTLOOP_READ, g_signal_event,
-			handle_signal_event, &context);
+	signal_event_source = eventloop_add_handle(loop, OGON_EVENTLOOP_READ,
+			g_signal_event, handle_signal_event, &context);
 	if (!signal_event_source) {
 		WLog_ERR(TAG, "unable to create to add signal event in the event loop");
 		goto error_signal_event;
@@ -286,17 +298,19 @@ static BOOL ogon_main_loop(UINT16 port) {
 #endif
 
 	ZeroMemory(handle_sources, sizeof(handle_sources));
-	nCount = context.listener->GetEventHandles(context.listener, events, MAX_EVENT_HANDLES);
+	nCount = context.listener->GetEventHandles(
+			context.listener, events, MAX_EVENT_HANDLES);
 	if (!nCount) {
 		WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 		goto error_listener_handles;
 	}
 
 	for (i = 0; i < nCount; i++) {
-		handle_sources[i] = eventloop_add_handle(loop, OGON_EVENTLOOP_READ, events[i],
-				handle_incoming_connection, &context);
+		handle_sources[i] = eventloop_add_handle(loop, OGON_EVENTLOOP_READ,
+				events[i], handle_incoming_connection, &context);
 		if (!handle_sources[i]) {
-			WLog_ERR(TAG, "Failed to create an event source for handle %p", events[i]);
+			WLog_ERR(TAG, "Failed to create an event source for handle %p",
+					events[i]);
 			goto error_handle_sources;
 		}
 	}
@@ -305,7 +319,6 @@ static BOOL ogon_main_loop(UINT16 port) {
 	while (context.doRun) {
 		eventloop_dispatch_loop(loop, 1 * 1000);
 	}
-
 
 error_handle_sources:
 	for (i = 0; i < MAX_EVENT_HANDLES && handle_sources[i]; i++) {
@@ -326,7 +339,7 @@ error_eventloop:
 	return context.returnValue;
 }
 
-void session_manager_connection_lost() {
+static void session_manager_connection_lost() {
 	WLog_INFO(TAG, "session manager connection lost, killing all sessions");
 	app_context_stop_all_connections();
 }
@@ -337,7 +350,9 @@ static void initializeWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	wLogAppender *appender;
 	const char *prefixFormat;
 
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 
 	if (!(wlog_root = WLog_GetRoot())) {
 		fprintf(stderr, "Failed to get the logger root\n");
@@ -355,21 +370,24 @@ static void initializeWLog(unsigned wlog_appender_type, DWORD logLevel) {
 	}
 
 	switch (wlog_appender_type) {
-	case WLOG_APPENDER_JOURNALD:
-		if (!(appender = WLog_GetLogAppender(wlog_root))) {
-			fprintf(stderr, "failed to retrieve root appender\n");
-			goto fail;
-		}
-		if (!WLog_ConfigureAppender(appender, "identifier", "ogon-rdp")) {
-			fprintf(stderr, "failed to set journald identifier\n");
-			goto fail;
-		}
-		prefixFormat = "%tid-[%lv:%fl@%fn:%ln] - ";
-		break;
-	case WLOG_APPENDER_CONSOLE:
-	default:
-		prefixFormat = "[%yr.%mo.%dy %hr:%mi:%se:%ml] [%pid:%tid] [%lv:%mn] [%fl|%fn|%ln] - ";
-		break;
+		case WLOG_APPENDER_JOURNALD:
+			if (!(appender = WLog_GetLogAppender(wlog_root))) {
+				fprintf(stderr, "failed to retrieve root appender\n");
+				goto fail;
+			}
+			if (!WLog_ConfigureAppender(
+						appender, "identifier", (void *)"ogon-rdp")) {
+				fprintf(stderr, "failed to set journald identifier\n");
+				goto fail;
+			}
+			prefixFormat = "%tid-[%lv:%fl@%fn:%ln] - ";
+			break;
+		case WLOG_APPENDER_CONSOLE:
+		default:
+			prefixFormat =
+					"[%yr.%mo.%dy %hr:%mi:%se:%ml] [%pid:%tid] [%lv:%mn] "
+					"[%fl|%fn|%ln] - ";
+			break;
 	}
 
 	if (!WLog_Layout_SetPrefixFormat(wlog_root, layout, prefixFormat)) {
@@ -386,11 +404,15 @@ fail:
 	exit(1);
 }
 
-static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_process,
-		unsigned *wlog_appender_type, DWORD *log_level) {
+static void parseCommandLine(int argc, char **argv, int *no_daemon,
+		int *kill_process, unsigned *wlog_appender_type, DWORD *log_level) {
 	DWORD flags;
 	int status = 0;
+#if WINPR_VERSION_MAJOR < 3
 	COMMAND_LINE_ARGUMENT_A *arg;
+#else
+	const COMMAND_LINE_ARGUMENT_A *arg;
+#endif
 
 	*no_daemon = *kill_process = 0;
 
@@ -399,10 +421,11 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 	flags |= COMMAND_LINE_SIGIL_DASH;
 	flags |= COMMAND_LINE_SIGIL_DOUBLE_DASH;
 
-	status = CommandLineParseArgumentsA(argc, argv, ogon_args, flags, NULL, NULL, NULL);
+	status = CommandLineParseArgumentsA(
+			argc, argv, ogon_args, flags, nullptr, nullptr, nullptr);
 
 	if (status != COMMAND_LINE_STATUS_PRINT_HELP && status != 0) {
-		fprintf(stderr,"Failed to parse command line: %d\n", status);
+		fprintf(stderr, "Failed to parse command line: %d\n", status);
 		printhelp(argv[0]);
 		exit(-1);
 	}
@@ -410,26 +433,27 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 	arg = ogon_args;
 
 	do {
-		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
-			continue;
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT)) continue;
 
 		CommandLineSwitchStart(arg)
 
-		CommandLineSwitchCase(arg, "kill") {
+				CommandLineSwitchCase(arg, "kill") {
 			*kill_process = 1;
 		}
-		CommandLineSwitchCase(arg, "nodaemon") {
-			*no_daemon = 1;
-		}
+		CommandLineSwitchCase(arg, "nodaemon") { *no_daemon = 1; }
 		CommandLineSwitchCase(arg, "version") {
 			printf("ogon %s (commit %s)\n", OGON_VERSION_FULL, GIT_REVISION);
 			exit(0);
 		}
 		CommandLineSwitchCase(arg, "buildconfig") {
-			printf("Build configuration: " BUILD_CONFIG "\n"
-				"Build type:          " BUILD_TYPE "\n"
-				"CFLAGS:             " CFLAGS "\n"
-				"Compiler:            " COMPILER_ID ", " COMPILER_VERSION "\n");
+			printf("Build configuration: " BUILD_CONFIG
+				   "\n"
+				   "Build type:          " BUILD_TYPE
+				   "\n"
+				   "CFLAGS:             " CFLAGS
+				   "\n"
+				   "Compiler:            " COMPILER_ID ", " COMPILER_VERSION
+				   "\n");
 			exit(0);
 		}
 		CommandLineSwitchCase(arg, "h") {
@@ -443,7 +467,8 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 		CommandLineSwitchCase(arg, "port") {
 			g_listen_port = atoi(arg->Value);
 			if (g_listen_port == 0) {
-				fprintf(stderr, "invalid port number %"PRIu16"\n", g_listen_port);
+				fprintf(stderr, "invalid port number %" PRIu16 "\n",
+						g_listen_port);
 				exit(1);
 			}
 		}
@@ -475,20 +500,19 @@ static void parseCommandLine(int argc, char **argv, int *no_daemon, int *kill_pr
 			}
 		}
 		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 }
 
-void killProcess(char *pid_file)  __attribute__ ((noreturn));
+void killProcess(char *pid_file) __attribute__((noreturn));
 
 void killProcess(char *pid_file) {
-	FILE* fp;
+	FILE *fp;
 	char text[256];
 	pid_t pid;
 
 	fprintf(stderr, "stopping ogon-rdp-server\n");
 
-	fp = NULL;
+	fp = nullptr;
 
 	if (PathFileExistsA(pid_file)) {
 		fp = fopen(pid_file, "r");
@@ -497,11 +521,10 @@ void killProcess(char *pid_file) {
 	if (!fp) {
 		fprintf(stderr, "problem opening pid file [%s]\n", pid_file);
 		fprintf(stderr, "maybe its not running\n");
-	}
-	else {
+	} else {
 		int status;
 		ZeroMemory(text, 32);
-		status = fread((void*) text, 1, 31, fp);
+		status = fread((void *)text, 1, 31, fp);
 		fclose(fp);
 
 		if (status <= 0) {
@@ -511,28 +534,28 @@ void killProcess(char *pid_file) {
 		pid = atoi(text);
 
 		if (pid > 0) {
-			fprintf(stderr, "stopping process id %lu\n", (unsigned long) pid);
+			fprintf(stderr, "stopping process id %lu\n", (unsigned long)pid);
 			kill(pid, SIGTERM);
 		} else {
 			fprintf(stderr, "refusing to kill pid 0\n");
 		}
-
 	}
 
 	exit(0);
 }
 
-void checkPidFile(char *pid_file) {
-
-	FILE* fp;
+static void checkPidFile(char *pid_file) {
+	FILE *fp;
 
 	if (!PathFileExistsA(OGON_VAR_PATH)) {
-		fprintf(stderr, "Directory '%s' doesn't exist or isn't accessible\n", OGON_VAR_PATH);
+		fprintf(stderr, "Directory '%s' doesn't exist or isn't accessible\n",
+				OGON_VAR_PATH);
 		exit(1);
 	}
 
 	if (!PathFileExistsA(OGON_PID_PATH)) {
-		fprintf(stderr, "Directory '%s' doesn't exist or isn't accessible\n", OGON_PID_PATH);
+		fprintf(stderr, "Directory '%s' doesn't exist or isn't accessible\n",
+				OGON_PID_PATH);
 		exit(1);
 	}
 
@@ -540,12 +563,16 @@ void checkPidFile(char *pid_file) {
 	fp = fopen(pid_file, "w+");
 
 	if (!fp) {
-		fprintf(stderr, "running in daemon mode with no access to pid files, quitting\n");
+		fprintf(stderr,
+				"running in daemon mode with no access to pid files, "
+				"quitting\n");
 		exit(0);
 	}
 
-	if (fwrite((void*) "0", 1, 1, fp) < 1) {
-		fprintf(stderr, "running in daemon mode with no access to pid files, quitting\n");
+	if (fwrite((void *)"0", 1, 1, fp) < 1) {
+		fprintf(stderr,
+				"running in daemon mode with no access to pid files, "
+				"quitting\n");
 		fclose(fp);
 		exit(0);
 	}
@@ -554,9 +581,8 @@ void checkPidFile(char *pid_file) {
 	DeleteFileA(pid_file);
 }
 
-void daemonizeCode(char *pid_file) {
-
-	FILE* fp;
+static void daemonizeCode(char *pid_file) {
+	FILE *fp;
 	pid_t pid;
 	char text[256];
 
@@ -574,7 +600,7 @@ void daemonizeCode(char *pid_file) {
 	}
 
 	if (0 != pid) {
-		fprintf(stderr, "process %lu started\n", (unsigned long) pid);
+		fprintf(stderr, "process %lu started\n", (unsigned long)pid);
 		exit(0);
 	}
 
@@ -586,8 +612,8 @@ void daemonizeCode(char *pid_file) {
 	if (!fp) {
 		fprintf(stderr, "error opening pid file [%s]\n", pid_file);
 	} else {
-		sprintf_s(text, sizeof(text), "%lu", (unsigned long) pid);
-		if (fwrite((void*) text, strlen(text), 1, fp) != 1) {
+		sprintf_s(text, sizeof(text), "%lu", (unsigned long)pid);
+		if (fwrite((void *)text, strlen(text), 1, fp) != 1) {
 			fprintf(stderr, "problem writing to pid file..\n");
 		}
 		fclose(fp);
@@ -596,7 +622,7 @@ void daemonizeCode(char *pid_file) {
 #ifdef __sun
 	closefrom(3);
 #else
-#ifdef F_MAXFD // on some BSD derivates
+#ifdef F_MAXFD	// on some BSD derivates
 	maxfd = fcntl(0, F_MAXFD);
 #else
 	maxfd = sysconf(_SC_OPEN_MAX);
@@ -604,7 +630,7 @@ void daemonizeCode(char *pid_file) {
 	for (fd = 0; fd < maxfd; fd++) {
 		close(fd);
 	}
-#endif // __sun
+#endif	// __sun
 	fd = open("/dev/null", O_RDWR);
 	if (fd != STDIN_FILENO) {
 		fprintf(stderr, "/dev/null is not STDIN_FILENO\n");
@@ -621,7 +647,7 @@ void daemonizeCode(char *pid_file) {
 	/* end of daemonizing code */
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 	int no_daemon;
 	int kill_process;
 	char pid_file[256];
@@ -636,7 +662,8 @@ int main(int argc, char** argv) {
 
 	no_daemon = kill_process = 0;
 
-	parseCommandLine(argc, argv, &no_daemon, &kill_process, &wlog_appender_type, &log_level);
+	parseCommandLine(argc, argv, &no_daemon, &kill_process, &wlog_appender_type,
+			&log_level);
 
 	sprintf_s(pid_file, 255, "%s/%s", OGON_PID_PATH, PIDFILE);
 
@@ -653,7 +680,7 @@ int main(int argc, char** argv) {
 #ifndef WIN32
 	/* block all signals per default */
 	sigfillset(&set);
-	if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
+	if (pthread_sigmask(SIG_BLOCK, &set, nullptr)) {
 		fprintf(stderr, "error blocking all signals\n");
 		return 1;
 	}
@@ -663,14 +690,16 @@ int main(int argc, char** argv) {
 		checkPidFile(pid_file);
 	}
 
-	if (!no_daemon)	{
+	if (!no_daemon) {
 		daemonizeCode(pid_file);
 	}
 
 	initializeWLog(wlog_appender_type, log_level);
 
-	WLog_INFO(TAG, "ogon-rdp-server %s (commit %s) started", OGON_VERSION_FULL, GIT_REVISION);
-	WLog_INFO(TAG, "protocol version %d.%d", OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR);
+	WLog_INFO(TAG, "ogon-rdp-server %s (commit %s) started", OGON_VERSION_FULL,
+			GIT_REVISION);
+	WLog_INFO(TAG, "protocol version %d.%d", OGON_PROTOCOL_VERSION_MAJOR,
+			OGON_PROTOCOL_VERSION_MINOR);
 
 	if (!winpr_InitializeSSL(WINPR_SSL_INIT_ENABLE_LOCKING)) {
 		WLog_ERR(TAG, "Unable to initialize winpr SSL");
@@ -678,14 +707,14 @@ int main(int argc, char** argv) {
 		goto fail_init_ssl;
 	}
 
-	if (!(g_term_event = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(g_term_event = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_ERR(TAG, "error creating termination event");
 		ret = 1;
 		goto fail_term_event;
 	}
 
 #ifndef WIN32
-	if (!(g_signal_event = CreateEvent(NULL, TRUE, FALSE, NULL))) {
+	if (!(g_signal_event = CreateEvent(nullptr, TRUE, FALSE, nullptr))) {
 		WLog_ERR(TAG, "error creating signal event");
 		ret = 1;
 		goto fail_signal_event;
@@ -698,8 +727,9 @@ int main(int argc, char** argv) {
 		goto fail_app_context;
 	}
 
-	if (ogon_icp_start(g_term_event, OGON_PROTOCOL_VERSION_MAJOR, OGON_PROTOCOL_VERSION_MINOR) < 0) {
-		WLog_ERR(TAG, "error creating ICP server");;
+	if (ogon_icp_start(g_term_event, OGON_PROTOCOL_VERSION_MAJOR,
+				OGON_PROTOCOL_VERSION_MINOR) < 0) {
+		WLog_ERR(TAG, "error creating ICP server");
 		ret = 1;
 		goto fail_icp_start;
 	}
@@ -719,13 +749,13 @@ int main(int argc, char** argv) {
 	/* our signal handler uses the sa_sigaction prototype */
 	act.sa_flags = SA_SIGINFO;
 	/* handle the following signals */
-	sigaction(SIGINT, &act, NULL);
-	sigaction(SIGTERM, &act, NULL);
+	sigaction(SIGINT, &act, nullptr);
+	sigaction(SIGTERM, &act, nullptr);
 	/* and unblock them as well */
 	sigemptyset(&set);
 	sigaddset(&set, SIGINT);
 	sigaddset(&set, SIGTERM);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+	pthread_sigmask(SIG_UNBLOCK, &set, nullptr);
 #endif
 
 	WLog_DBG(TAG, "entering main loop");
@@ -754,12 +784,14 @@ fail_signal_event:
 fail_term_event:
 	winpr_CleanupSSL(WINPR_SSL_CLEANUP_GLOBAL);
 fail_init_ssl:
-	if (!no_daemon)	{
+	if (!no_daemon) {
 		DeleteFileA(pid_file);
 	}
 
 	WLog_DBG(TAG, "Terminating..");
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Uninit();
+#endif
 
 	return ret;
 }

@@ -33,7 +33,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 	static wLog *logger_SessionNotifier = WLog_Get("ogon.sessionmanager.session.sessionnotifier");
 
-	SessionNotifier::SessionNotifier() : mDBusConn(NULL) {
+	SessionNotifier::SessionNotifier() : mDBusConn(nullptr) {
 		if (!InitializeCriticalSectionAndSpinCount(&mCSection, 0x00000400)) {
 			WLog_Print(logger_SessionNotifier, WLOG_FATAL,
 				"Failed to initialize session notifier critical section");
@@ -54,7 +54,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 			dbus_error_free(&err);
 			return false;
 		}
-		if (NULL == mDBusConn) {
+		if (nullptr == mDBusConn) {
 			WLog_Print(logger_SessionNotifier, WLOG_FATAL,
 				"Could not connect to dbus.");
 			return false;
@@ -98,7 +98,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		msg = dbus_message_new_signal("/ogon/SessionManager/session/notification", // object name of the signal
 									 "ogon.SessionManager.session.notification", // interface name of the signal
 									 "SessionNotification"); // name of the signal
-		if (NULL == msg) {
+		if (nullptr == msg) {
 			WLog_Print(logger_SessionNotifier, WLOG_ERROR,
 				"could not create new dbus message");
 			return false;

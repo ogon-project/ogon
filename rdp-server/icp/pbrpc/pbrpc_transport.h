@@ -21,16 +21,21 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
-#define _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
+#ifndef OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
+#define OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_
 
 #include <winpr/wtypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 typedef struct pbrpc_transport_context pbRPCTransportContext;
 
 typedef int (*pTransport_open)(pbRPCTransportContext* context, int timeout);
 typedef int (*pTransport_close)(pbRPCTransportContext* context);
-typedef int (*pTransport_write)(pbRPCTransportContext* context, char* data, unsigned int datalen);
+typedef int (*pTransport_write)(
+		pbRPCTransportContext *context, const char *data, unsigned int datalen);
 typedef int (*pTransport_read)(pbRPCTransportContext* context, char* data, unsigned int datalen);
 typedef HANDLE (*pTransport_get_fds)(pbRPCTransportContext* context);
 
@@ -43,4 +48,8 @@ struct pbrpc_transport_context
 	pTransport_get_fds get_fds;
 };
 
-#endif /* _OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_ICP_PBRPCTRANSPORT_H_ */

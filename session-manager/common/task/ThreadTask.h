@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_THREADTASK_H_
-#define _OGON_SMGR_THREADTASK_H_
+#ifndef OGON_SMGR_THREADTASK_H_
+#define OGON_SMGR_THREADTASK_H_
 
 #include <task/Task.h>
 
@@ -30,13 +30,13 @@ namespace ogon { namespace sessionmanager { namespace task {
 
 	class ThreadTask: public Task {
 	public:
-		ThreadTask():mhStarted(0), mhStop(0){}
-		virtual ~ThreadTask() {}
-		virtual void run() = 0;
+	 ThreadTask() : mhStarted(nullptr), mhStop(nullptr) {}
+	 virtual ~ThreadTask() {}
+	 virtual void run() = 0;
 
-		void setHandles(HANDLE stopHandle,HANDLE startedHandle) {
-			mhStop = stopHandle;
-			mhStarted = startedHandle;
+	 void setHandles(HANDLE stopHandle, HANDLE startedHandle) {
+		 mhStop = stopHandle;
+		 mhStarted = startedHandle;
 		}
 
 		virtual void preProcess(){
@@ -59,4 +59,4 @@ namespace ogon { namespace sessionmanager { namespace task {
 
 namespace taskNS = ogon::sessionmanager::task;
 
-#endif /* _OGON_SMGR_THREADTASK_H_ */
+#endif /* OGON_SMGR_THREADTASK_H_ */

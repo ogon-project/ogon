@@ -41,29 +41,26 @@
 
 using namespace std;
 
-static struct option long_options[] = {
-		{"help", no_argument, 0, 'h' },
-		{"list", no_argument, 0, 'l' },
-		{"listdetail",  no_argument, 0, 'x' },
-		{"user", required_argument, 0, 'u' },
-		{"password", required_argument, 0, 'p'},
-		{"session", required_argument, 0, 's' },
-		{"server", required_argument, 0, 'e' },
-		{"disconnect", no_argument, 0, 'd' },
-		{"logoff", no_argument, 0, 'o' },
-		{"disconnectUser", required_argument, 0, 'D' },
-		{"logoffUser", required_argument, 0, 'O' },
-		{"startShadow", no_argument, 0,  'm' },
-		{"stopShadow", no_argument, 0,  't' },
-		{"text", required_argument, 0,  'g' },
-		{0, 0, 0, 0 }
-};
+static struct option long_options[] = {{"help", no_argument, nullptr, 'h'},
+		{"list", no_argument, nullptr, 'l'},
+		{"listdetail", no_argument, nullptr, 'x'},
+		{"user", required_argument, nullptr, 'u'},
+		{"password", required_argument, nullptr, 'p'},
+		{"session", required_argument, nullptr, 's'},
+		{"server", required_argument, nullptr, 'e'},
+		{"disconnect", no_argument, nullptr, 'd'},
+		{"logoff", no_argument, nullptr, 'o'},
+		{"disconnectUser", required_argument, nullptr, 'D'},
+		{"logoffUser", required_argument, nullptr, 'O'},
+		{"startShadow", no_argument, nullptr, 'm'},
+		{"stopShadow", no_argument, nullptr, 't'},
+		{"text", required_argument, nullptr, 'g'}, {nullptr, 0, nullptr, 0}};
 
 #define SHORT_OPTS "hlxu:p:s:e:doD:O:mtg:"
 
 #define TICKS_PER_SECOND 10000000
 #define EPOCH_DIFFERENCE 11644473600LL
-time_t convertWindowsTimeToUnixTime(long long int input){
+static time_t convertWindowsTimeToUnixTime(long long int input) {
 	long long int temp;
 	temp = input / TICKS_PER_SECOND; //convert from 100ns intervals to seconds;
 	temp = temp - EPOCH_DIFFERENCE;  //subtract number of seconds between epochs
@@ -72,7 +69,7 @@ time_t convertWindowsTimeToUnixTime(long long int input){
 
 #define MESSAGE_TITLE "ogon message"
 
-const char * stateToString(WTS_CONNECTSTATE_CLASS connectState) {
+static const char *stateToString(WTS_CONNECTSTATE_CLASS connectState) {
 	switch (connectState) {
 		case WTSActive:
 			return "Active";
@@ -99,7 +96,7 @@ const char * stateToString(WTS_CONNECTSTATE_CLASS connectState) {
 	}
 }
 
-const char * protoTypeToString(USHORT type) {
+static const char *protoTypeToString(USHORT type) {
 	switch (type) {
 		case 0:
 			return "console session";
@@ -112,7 +109,7 @@ const char * protoTypeToString(USHORT type) {
 	}
 }
 
-const char * addrFamToString(DWORD type) {
+static const char *addrFamToString(DWORD type) {
 	switch (type) {
 		case 2:
 			return "IPv4";
@@ -123,9 +120,9 @@ const char * addrFamToString(DWORD type) {
 	}
 }
 
-BOOL printSessionDetailed(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer) {
-
-	LPSTR pBuffer = NULL;
+static BOOL printSessionDetailed(
+		UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer) {
+	LPSTR pBuffer = nullptr;
 	BOOL bSuccess;
 	DWORD bytesReturned = 0;
 	char buffer[25];
@@ -265,10 +262,10 @@ BOOL printSessionDetailed(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState,
 	return TRUE;
 }
 
-BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE hServer, BOOL printHeader) {
-
-	LPSTR pUsername = NULL;
-	LPSTR pDomain = NULL;
+static BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState,
+		HANDLE hServer, BOOL printHeader) {
+	LPSTR pUsername = nullptr;
+	LPSTR pDomain = nullptr;
 	BOOL bSuccess;
 	DWORD bytesReturned = 0;
 
@@ -303,9 +300,7 @@ BOOL printSession(UINT32 sessionId, WTS_CONNECTSTATE_CLASS connectState, HANDLE 
 	return TRUE;
 }
 
-
-
-bool listSessions(HANDLE hServer, bool detailed) {
+static bool listSessions(HANDLE hServer, bool detailed) {
 	DWORD index;
 	DWORD count;
 	BOOL bSuccess;
@@ -313,7 +308,7 @@ bool listSessions(HANDLE hServer, bool detailed) {
 	BOOL first = true;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessions(hServer, 0, 1, &pSessionInfo, &count);
 
@@ -339,19 +334,19 @@ bool listSessions(HANDLE hServer, bool detailed) {
 	return true;
 }
 
-
-bool terminateUserSessions(HANDLE hServer, const char* user, bool onlyDisconnect) {
+static bool terminateUserSessions(
+		HANDLE hServer, const char *user, bool onlyDisconnect) {
 	DWORD index;
 	DWORD count;
 	BOOL bSuccess;
 	PWTS_SESSION_INFO pSessionInfo;
-	LPSTR pUserName = NULL;
+	LPSTR pUserName = nullptr;
 	DWORD bytesReturned = 0;
 	UINT32 sessionId;
 	BOOL bReturnValue = true;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessions(hServer, 0, 1, &pSessionInfo, &count);
 
@@ -377,7 +372,7 @@ bool terminateUserSessions(HANDLE hServer, const char* user, bool onlyDisconnect
 
 		bSuccess = strcmp(pUserName, user) == 0;
 		WTSFreeMemory(pUserName);
-		pUserName = NULL;
+		pUserName = nullptr;
 
 		if (!bSuccess) {
 			continue;
@@ -411,11 +406,12 @@ bool terminateUserSessions(HANDLE hServer, const char* user, bool onlyDisconnect
 	return bReturnValue;
 }
 
-void printhelprow(const char *kshort, const char *klong,const char *helptext) {
+static void printhelprow(
+		const char *kshort, const char *klong, const char *helptext) {
 	printf("    %s, %-20s %s\n", kshort,klong,helptext);
 }
 
-void printhelp(const char *bin) {
+static void printhelp(const char *bin) {
 	printf("Usage: %s [options]\n", bin);
 	printf("\noptions:\n\n");
 	printhelprow("-h", "--help", "prints this help screen");
@@ -441,7 +437,6 @@ void printhelp(const char *bin) {
 	printf("  list sessions detailed: ogon-cli -x -u <username> -p <password>\n\n");
 	printf("  shadow a session: ogon-cli -s <sessionId> -m\n\n");
 	printf("    Note: To abort shadowing press CTRL + F10.\n");
-
 }
 
 int main(int argc,char * const argv[]) {
@@ -459,7 +454,7 @@ int main(int argc,char * const argv[]) {
 	bool stopShadow = false;
 	bool textMessage = false;
 	std::string message;
-	char *envval = NULL;
+	char *envval = nullptr;
 	std::string servername = "";
 
 	while (1) {
@@ -553,7 +548,8 @@ int main(int argc,char * const argv[]) {
 	}
 
 	if (username.size() > 0 ) {
-		if (!WTSLogonUser(serverHandle, username.c_str(), password.c_str(), NULL)) {
+		if (!WTSLogonUser(serverHandle, username.c_str(), password.c_str(),
+					nullptr)) {
 			printf("Incorrect username or password!\n");
 			goto out;
 		}

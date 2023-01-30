@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_SESSION_SESSIONACCESSOR_H_
-#define _OGON_SMGR_SESSION_SESSIONACCESSOR_H_
+#ifndef OGON_SMGR_SESSION_SESSIONACCESSOR_H_
+#define OGON_SMGR_SESSION_SESSIONACCESSOR_H_
 
 #include <string>
 #include <session/Session.h>
@@ -171,4 +171,4 @@ private:
 
 namespace sessionNS = ogon::sessionmanager::session;
 
-#endif /* _OGON_SMGR_SESSION_SESSIONACCESSOR_H_ */
+#endif /* OGON_SMGR_SESSION_SESSIONACCESSOR_H_ */

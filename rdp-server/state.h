@@ -21,8 +21,12 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_STATE_H_
-#define _OGON_RDPSRV_STATE_H_
+#ifndef OGON_RDPSRV_STATE_H_
+#define OGON_RDPSRV_STATE_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* @brief states of the frame emitting automata
  */
@@ -68,11 +72,15 @@ typedef enum _ogon_event ogon_event;
 struct _ogon_state_machine;
 typedef struct _ogon_state_machine ogon_state_machine;
 
-ogon_state_machine *ogon_state_new();
+ogon_state_machine *ogon_state_new(void);
 void ogon_state_free(ogon_state_machine *stateMachine);
 void ogon_state_set_event(ogon_state_machine *stateMachine, ogon_event event);
 ogon_state ogon_state_get(ogon_state_machine *stateMachine);
 void ogon_state_prepare_shadowing(ogon_state_machine *src, ogon_state_machine *dst);
 BOOL ogon_state_should_create_frame(ogon_state_machine *stateMachine);
 
-#endif /* _OGON_RDPSRV_STATE_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_STATE_H_ */

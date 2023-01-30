@@ -14,8 +14,8 @@
 /* We can't use the name 'uint32_t' here because it will conflict with
  * any version provided by the system headers or application. */
 
-#ifndef _OGON_RDPSRV_PMURHASH_H_
-#define _OGON_RDPSRV_PMURHASH_H_
+#ifndef OGON_RDPSRV_PMURHASH_H_
+#define OGON_RDPSRV_PMURHASH_H_
 
 /* First look for special cases */
 #if defined(_MSC_VER)
@@ -66,4 +66,4 @@ void PMurHash32_test(const void *key, int len, MH_UINT32 seed, void *out);
 }
 #endif
 
-#endif /* _OGON_RDPSRV_PMURHASH_H_ */
+#endif /* OGON_RDPSRV_PMURHASH_H_ */

@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_BACKEND_H_
-#define _OGON_RDPSRV_BACKEND_H_
+#ifndef OGON_RDPSRV_BACKEND_H_
+#define OGON_RDPSRV_BACKEND_H_
 
 #include <winpr/collections.h>
 #include <freerdp/codec/region.h>
@@ -32,9 +32,15 @@
 
 #include <ogon/backend.h>
 
+#include "commondefs.h"
 #include "eventloop.h"
 
-typedef int(*backend_server_protocol_cb)(ogon_connection *conn, ogon_message *msg);
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+typedef int (*backend_server_protocol_cb)(
+		ogon_connection *conn, const ogon_message *msg);
 
 /** @brief holds data related to the backend connection, the content provider */
 struct _ogon_backend_connection {
@@ -68,7 +74,7 @@ struct _ogon_backend_connection {
 	UINT32 next_message_id;
 
 	ogon_client_interface client;
-	backend_server_protocol_cb *server;
+	const backend_server_protocol_cb *server;
 	ogon_backend_props properties;
 	BOOL version_exchanged;
 	BOOL multiseatCapable;
@@ -106,5 +112,8 @@ BOOL ogon_backend_initialize(ogon_connection *conn, ogon_backend_connection *bac
  */
 void backend_destroy(ogon_backend_connection **backendP);
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif /* _OGON_RDPSRV_BACKEND_H_ */
+#endif /* OGON_RDPSRV_BACKEND_H_ */

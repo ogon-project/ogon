@@ -46,9 +46,9 @@ namespace ogon { namespace sessionmanager { namespace task {
 	static wLog *logger_Executor = WLog_Get("ogon.sessionmanager.task.Executor");
 
 	Executor::Executor() {
-		mhStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		mhTaskThreadStarted = CreateEvent(NULL, TRUE, FALSE, NULL);
-		mhStopThreads = CreateEvent(NULL, TRUE, FALSE, NULL);
+		mhStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		mhTaskThreadStarted = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		mhStopThreads = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 		if (!mhStopEvent || !mhTaskThreadStarted || !mhStopThreads) {
 			WLog_Print(logger_Executor, WLOG_FATAL,
@@ -60,7 +60,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 				"Failed to initialize executor critical section");
 			throw std::bad_alloc();
 		}
-		mhServerThread = NULL;
+		mhServerThread = nullptr;
 		mRunning = false;
 	}
 
@@ -80,10 +80,9 @@ namespace ogon { namespace sessionmanager { namespace task {
 			return false;
 		}
 
-		if (!(mhServerThread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) Executor::execThread, (void*) this,
-				0, NULL)))
-		{
+		if (!(mhServerThread = CreateThread(nullptr, 0,
+					  (LPTHREAD_START_ROUTINE)Executor::execThread,
+					  (void *)this, 0, nullptr))) {
 			WLog_Print(logger_Executor, WLOG_ERROR, "failed to create thread");
 			return false;
 		}
@@ -99,7 +98,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 			SetEvent(mhStopEvent);
 			WaitForSingleObject(mhServerThread, INFINITE);
 			CloseHandle(mhServerThread);
-			mhServerThread = NULL;
+			mhServerThread = nullptr;
 		} else {
 			WLog_Print(logger_Executor, WLOG_ERROR,
 				"Executor was not started before.");
@@ -139,9 +138,9 @@ namespace ogon { namespace sessionmanager { namespace task {
 					if (threadTask) {
 						// start Task as thread
 						threadTask->setHandles(mhStopThreads, mhTaskThreadStarted);
-						HANDLE taskThread = CreateThread(NULL, 0,
-							(LPTHREAD_START_ROUTINE) Executor::execTask,
-							(void*) &currentTask, 0, NULL);
+						HANDLE taskThread = CreateThread(nullptr, 0,
+								(LPTHREAD_START_ROUTINE)Executor::execTask,
+								(void *)&currentTask, 0, nullptr);
 						if (!taskThread) {
 							WLog_Print(logger_Executor, WLOG_ERROR, "failed to create task thread");
 							// dont abort the whole Sessionmanager, just signal the failure
@@ -188,7 +187,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 		executor->runExecutor();
 
 		WLog_Print(logger_Executor, WLOG_INFO, "stopped Executor thread");
-		return NULL;
+		return nullptr;
 	}
 
 	void* Executor::execTask(void *arg) {
@@ -200,7 +199,7 @@ namespace ogon { namespace sessionmanager { namespace task {
 		task->run();
 		WLog_Print(logger_Executor, WLOG_TRACE, "stopped Task thread");
 		task->postProcess();
-		return NULL;
+		return nullptr;
 	}
 
 

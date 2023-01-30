@@ -21,9 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-
-#ifndef _OGON_SMGR_SESSION_CONNECTIONSTORE_H_
-#define _OGON_SMGR_SESSION_CONNECTIONSTORE_H_
+#ifndef OGON_SMGR_SESSION_CONNECTIONSTORE_H_
+#define OGON_SMGR_SESSION_CONNECTIONSTORE_H_
 
 #include "Connection.h"
 
@@ -63,4 +62,4 @@ namespace ogon { namespace sessionmanager { namespace session {
 
 namespace sessionNS = ogon::sessionmanager::session;
 
-#endif /* _OGON_SMGR_SESSION_CONNECTIONSTORE_H_ */
+#endif /* OGON_SMGR_SESSION_CONNECTIONSTORE_H_ */

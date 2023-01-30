@@ -300,14 +300,14 @@ namespace ogon { namespace sessionmanager { namespace module {
 			if (mModulesRemoteMap.count(moduleName)) {
 				return mModulesRemoteMap[moduleName];
 			} else {
-				return NULL;
+				return nullptr;
 			}
 		}
 
 		if (mModulesLocalMap.count(moduleName)) {
 			return mModulesLocalMap[moduleName];
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -315,7 +315,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 		if (mAuthModulesMap.count(moduleName)) {
 			return mAuthModulesMap[moduleName];
 		}
-		return NULL;
+		return nullptr;
 	}
 
 

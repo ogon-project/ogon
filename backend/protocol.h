@@ -26,8 +26,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_BACKEND_PROTOCOL_H_
-#define _OGON_BACKEND_PROTOCOL_H_
+#ifndef OGON_BACKEND_PROTOCOL_H_
+#define OGON_BACKEND_PROTOCOL_H_
 
 #include <ogon/backend.h>
 #include "backend.pb-c.h"
@@ -63,5 +63,4 @@ typedef union _ogon_protobuf_message {
 	Ogon__Backend__MessageReply messageReply;
 } ogon_protobuf_message;
 
-
-#endif /* _OGON_BACKEND_PROTOCOL_H_ */
+#endif /* OGON_BACKEND_PROTOCOL_H_ */

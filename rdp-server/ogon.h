@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_OGON_H_
-#define _OGON_RDPSRV_OGON_H_
+#ifndef OGON_RDPSRV_OGON_H_
+#define OGON_RDPSRV_OGON_H_
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -38,10 +38,14 @@
 #include "commondefs.h"
 #include <ogon/backend.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 int ogon_send_surface_bits(ogon_connection *conn);
 
-void ogon_connection_set_pointer(ogon_connection *connection, ogon_msg_set_pointer* msg);
+void ogon_connection_set_pointer(
+		ogon_connection *connection, const ogon_msg_set_pointer *msg);
 
 void ogon_connection_clear_pointer_cache(ogon_connection *connection);
 
@@ -125,5 +129,8 @@ enum {
 	NOTIFY_USER_MESSAGE,
 };
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif /* _OGON_RDPSRV_OGON_H_ */
+#endif /* OGON_RDPSRV_OGON_H_ */

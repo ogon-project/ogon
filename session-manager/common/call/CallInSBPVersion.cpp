@@ -82,7 +82,7 @@ namespace ogon { namespace sessionmanager { namespace call {
 	bool CallInSBPVersion::prepare() {
 		sessionNS::SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(mSessionId);
 
-		if (currentSession == NULL) {
+		if (currentSession == nullptr) {
 			WLog_Print(logger_CallInSBPVersion, WLOG_ERROR,
 				"Session %" PRIu32 " not found, cannot process SBP Version Info packet!",
 				mSessionId);

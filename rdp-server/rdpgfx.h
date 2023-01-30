@@ -22,13 +22,17 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_RDPGFX_CHANNEL_H_
-#define _OGON_RDPSRV_RDPGFX_CHANNEL_H_
+#ifndef OGON_RDPSRV_RDPGFX_CHANNEL_H_
+#define OGON_RDPSRV_RDPGFX_CHANNEL_H_
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpgfx.h>
 
 #include "channels.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 typedef enum _rdpgfx_server_open_result
 {
@@ -160,4 +164,8 @@ struct _rdpgfx_server_context
 rdpgfx_server_context* rdpgfx_server_context_new(HANDLE vcm);
 void rdpgfx_server_context_free(rdpgfx_server_context* context);
 
-#endif /* _OGON_RDPSRV_RDPGFX_CHANNEL_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_RDPGFX_CHANNEL_H_ */

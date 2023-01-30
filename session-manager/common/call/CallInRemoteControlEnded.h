@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_
-#define _OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_
+#ifndef OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_
+#define OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_
 
 #include "CallFactory.h"
 #include "CallIn.h"
@@ -59,4 +59,4 @@ FACTORY_REGISTER_DWORD(CallFactory, CallInRemoteControlEnded, ogon::icp::RemoteC
 
 namespace callNS = ogon::sessionmanager::call;
 
-#endif /* _OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_ */
+#endif /* OGON_SMGR_CALL_CALLINREMOTECONTROLENDED_H_ */

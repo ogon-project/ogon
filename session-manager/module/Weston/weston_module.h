@@ -21,19 +21,20 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_WESTONMODULE_H_
-#define _OGON_SMGR_WESTONMODULE_H_
+#ifndef OGON_SMGR_WESTONMODULE_H_
+#define OGON_SMGR_WESTONMODULE_H_
 
+#include <ogon/api.h>
 #include <ogon/module.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS* pEntryPoints);
+OGON_API int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS *pEntryPoints);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _OGON_SMGR_WESTONMODULE_H_ */
+#endif /* OGON_SMGR_WESTONMODULE_H_ */

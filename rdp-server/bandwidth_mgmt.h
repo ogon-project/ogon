@@ -21,12 +21,15 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_BANDWIDTH_MGMT_H_
-#define _OGON_RDPSRV_BANDWIDTH_MGMT_H_
+#ifndef OGON_RDPSRV_BANDWIDTH_MGMT_H_
+#define OGON_RDPSRV_BANDWIDTH_MGMT_H_
 
 #include <freerdp/freerdp.h>
 #include "commondefs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 void ogon_bwmgmt_init_buckets(ogon_connection *conn, UINT32 bitrate);
 UINT32 ogon_bwmgmt_update_bucket(ogon_connection *conn);
@@ -34,10 +37,19 @@ BOOL ogon_bwmgmt_update_data_usage(ogon_connection *conn);
 UINT32 ogon_bwmgtm_calc_max_target_frame_size(ogon_connection *conn);
 
 BOOL ogon_bwmgmt_client_detect_rtt(ogon_connection *conn);
-BOOL ogon_bwmgmt_client_rtt_measure_response(rdpContext *context, UINT16 sequenceNumber);
+
+BOOL ogon_bwmgmt_client_rtt_measure_response(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber);
 
 BOOL ogon_bwmgmt_detect_bandwidth_start(ogon_connection *conn);
 BOOL ogon_bwmgmt_detect_bandwidth_stop(ogon_connection *conn);
-BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpContext *context, UINT16 sequenceNumber);
 
-#endif /* _OGON_RDPSRV_BANDWIDTH_MGMT_H_ */
+BOOL ogon_bwmgmt_client_bandwidth_measure_results(rdpAutoDetect *autodetect,
+		RDP_TRANSPORT_TYPE transport, UINT16 responseType,
+		UINT16 sequenceNumber);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_BANDWIDTH_MGMT_H_ */

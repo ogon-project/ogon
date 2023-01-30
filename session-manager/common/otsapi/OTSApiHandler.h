@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_OTSAPI_HANDLER_H_
-#define _OGON_SMGR_OTSAPI_HANDLER_H_
+#ifndef OGON_SMGR_OTSAPI_HANDLER_H_
+#define OGON_SMGR_OTSAPI_HANDLER_H_
 
 #include <otsapi/otsapi.h>
 #include <winpr/synch.h>
@@ -72,4 +72,4 @@ namespace ogon{ namespace sessionmanager{ namespace otsapi {
 
 namespace otsapiNS = ogon::sessionmanager::otsapi;
 
-#endif /* _OGON_SMGR_OTSAPI_HANDLER_H_ */
+#endif /* OGON_SMGR_OTSAPI_HANDLER_H_ */

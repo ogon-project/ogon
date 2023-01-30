@@ -89,7 +89,7 @@ namespace ogon { namespace sessionmanager { namespace session {
 		}
 
 		sessionNS::ConnectionPtr connection = APP_CONTEXT.getConnectionStore()->getConnection(mConnectionId);
-		if (connection != NULL) {
+		if (connection != nullptr) {
 			connection->setSessionId(mSessionId);
 		}
 		setConnectState(WTSActive);

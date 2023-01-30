@@ -31,9 +31,11 @@
 #define TAG OGON_TAG("core.state")
 
 #ifdef WITH_DEBUG_STATE
-#define DEBUG_STATE(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_STATE(fmt, ...) WLog_DBG(TAG, fmt, ##__VA_ARGS__)
 #else
-#define DEBUG_STATE(fmt, ...) do { } while (0)
+#define DEBUG_STATE(fmt, ...) \
+	do {                      \
+	} while (0)
 #endif
 
 struct _ogon_state_machine {
@@ -47,7 +49,7 @@ struct _ogon_state_machine {
 
 #ifdef WITH_DEBUG_STATE
 static const char *get_state_name(ogon_state state) {
-	switch(state) {
+	switch (state) {
 		case OGON_STATE_INVALID:
 			return "INVALID";
 		case OGON_STATE_WAITING_BACKEND:
@@ -72,7 +74,7 @@ static const char *get_state_name(ogon_state state) {
 }
 
 static const char *get_event_name(ogon_event event) {
-	switch(event) {
+	switch (event) {
 		case OGON_EVENT_INVALID:
 			return "INVALID";
 		case OGON_EVENT_BACKEND_ATTACHED:
@@ -120,9 +122,8 @@ static const char *get_event_name(ogon_event event) {
 }
 #endif
 
-
 ogon_state_machine *ogon_state_new() {
-	ogon_state_machine *stateMachine = calloc(1, sizeof(ogon_state_machine));
+	auto stateMachine = new (ogon_state_machine);
 	if (!stateMachine) {
 		return stateMachine;
 	}
@@ -131,38 +132,47 @@ ogon_state_machine *ogon_state_new() {
 }
 
 void ogon_state_free(ogon_state_machine *stateMachine) {
-	free(stateMachine);
+	delete (stateMachine);
 }
 
-static inline void ogon_state_set_wait_frame_sent(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_wait_frame_sent(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_WAITING_FRAME_SENT;
 }
 
-static inline void ogon_state_set_waiting_active_output(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_waiting_active_output(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_WAITING_ACTIVE_OUTPUT;
 }
 
-static inline void ogon_state_set_waiting_timer(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_waiting_timer(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_WAITING_TIMER;
 }
 
-static inline void ogon_state_set_waiting_sync_reply(ogon_state_machine *stateMachine) {
-	/* In case resize is pending an we are waiting for a timer keep that state */
-	if (stateMachine->resizePending && stateMachine->currentState == OGON_STATE_WAITING_TIMER) {
+static inline void ogon_state_set_waiting_sync_reply(
+		ogon_state_machine *stateMachine) {
+	/* In case resize is pending an we are waiting for a timer keep that state
+	 */
+	if (stateMachine->resizePending &&
+			stateMachine->currentState == OGON_STATE_WAITING_TIMER) {
 		return;
 	}
 	stateMachine->currentState = OGON_STATE_WAITING_SYNC_REPLY;
 }
 
-static inline void ogon_state_set_waiting_ack(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_waiting_ack(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_WAITING_ACK;
 }
 
-static inline void ogon_state_set_eventloop_move(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_eventloop_move(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_EVENTLOOP_MOVE;
 }
 
-static inline void ogon_state_set_waiting_backend(ogon_state_machine *stateMachine) {
+static inline void ogon_state_set_waiting_backend(
+		ogon_state_machine *stateMachine) {
 	stateMachine->currentState = OGON_STATE_WAITING_BACKEND;
 }
 
@@ -172,119 +182,122 @@ void ogon_state_set_event(ogon_state_machine *stateMachine, ogon_event event) {
 #endif
 	DEBUG_STATE("Event %s", get_event_name(event));
 
-	switch(event){
+	switch (event) {
+		case OGON_EVENT_BACKEND_SYNC_REPLY_RECEIVED:
+			if (stateMachine->outputSuppressed ||
+					stateMachine->waitingGraphicsPipeline) {
+				ogon_state_set_waiting_active_output(stateMachine);
+			} else {
+				ogon_state_set_wait_frame_sent(stateMachine);
+			}
+			break;
 
-	case OGON_EVENT_BACKEND_SYNC_REPLY_RECEIVED:
-		if (stateMachine->outputSuppressed || stateMachine->waitingGraphicsPipeline) {
-			ogon_state_set_waiting_active_output(stateMachine);
-		} else {
-			ogon_state_set_wait_frame_sent(stateMachine);
-		}
-		break;
+		case OGON_EVENT_FRONTEND_DISABLE_OUTPUT:
+			stateMachine->outputSuppressed = TRUE;
+			break;
 
-	case OGON_EVENT_FRONTEND_DISABLE_OUTPUT:
-		stateMachine->outputSuppressed = TRUE;
-		break;
+		case OGON_EVENT_FRONTEND_ENABLE_OUTPUT:
+			if (!stateMachine->waitingGraphicsPipeline &&
+					stateMachine->currentState ==
+							OGON_STATE_WAITING_ACTIVE_OUTPUT) {
+				stateMachine->handleFrame = TRUE;
+				ogon_state_set_waiting_timer(stateMachine);
+			}
+			stateMachine->outputSuppressed = FALSE;
+			break;
 
-	case OGON_EVENT_FRONTEND_ENABLE_OUTPUT:
-		if (!stateMachine->waitingGraphicsPipeline && stateMachine->currentState == OGON_STATE_WAITING_ACTIVE_OUTPUT) {
+		case OGON_EVENT_FRONTEND_WAITING_GFX:
+			stateMachine->waitingGraphicsPipeline = TRUE;
+			break;
+
+		case OGON_EVENT_FRONTEND_STOP_WAITING_GFX:
+			if (!stateMachine->outputSuppressed &&
+					stateMachine->currentState ==
+							OGON_STATE_WAITING_ACTIVE_OUTPUT) {
+				stateMachine->handleFrame = TRUE;
+				ogon_state_set_waiting_timer(stateMachine);
+			}
+			stateMachine->waitingGraphicsPipeline = FALSE;
+			break;
+
+		case OGON_EVENT_FRONTEND_BANDWIDTH_FAIL:
+			stateMachine->waitingForBandwidth = TRUE;
+			break;
+
+		case OGON_EVENT_FRONTEND_BANDWIDTH_GOOD:
+			stateMachine->waitingForBandwidth = FALSE;
+			break;
+
+		case OGON_EVENT_FRONTEND_FRAME_ACK_RECEIVED:
+			ogon_state_set_waiting_timer(stateMachine);
+			break;
+
+		case OGON_EVENT_BACKEND_SYNC_REQUESTED:
+			stateMachine->handleFrame = FALSE;
+			ogon_state_set_waiting_sync_reply(stateMachine);
+			break;
+
+		case OGON_EVENT_FRONTEND_FRAME_ACK_SEND:
+			ogon_state_set_waiting_ack(stateMachine);
+			break;
+
+		case OGON_EVENT_FRONTEND_FRAME_SENT:
+			ogon_state_set_waiting_timer(stateMachine);
+			break;
+
+		case OGON_EVENT_FRONTEND_IMMEDIATE_REQUEST:
+			stateMachine->handleFrame = TRUE;
+			ogon_state_set_waiting_sync_reply(stateMachine);
+			break;
+
+		case OGON_EVENT_BACKEND_TRIGGER_REWIRE:
+			stateMachine->handleFrame = TRUE;
+			ogon_state_set_eventloop_move(stateMachine);
+			break;
+
+		case OGON_EVENT_FRONTEND_NEW_SHADOWING:
 			stateMachine->handleFrame = TRUE;
 			ogon_state_set_waiting_timer(stateMachine);
-		}
-		stateMachine->outputSuppressed = FALSE;
-		break;
+			break;
 
-	case OGON_EVENT_FRONTEND_WAITING_GFX:
-		stateMachine->waitingGraphicsPipeline = TRUE;
-		break;
-
-	case OGON_EVENT_FRONTEND_STOP_WAITING_GFX:
-		if (!stateMachine->outputSuppressed && stateMachine->currentState == OGON_STATE_WAITING_ACTIVE_OUTPUT) {
+		case OGON_EVENT_BACKEND_REWIRE_ORIGINAL:
 			stateMachine->handleFrame = TRUE;
 			ogon_state_set_waiting_timer(stateMachine);
-		}
-		stateMachine->waitingGraphicsPipeline = FALSE;
-		break;
+			break;
 
-	case OGON_EVENT_FRONTEND_BANDWIDTH_FAIL:
-		stateMachine->waitingForBandwidth = TRUE;
-		break;
+		case OGON_EVENT_FRONTEND_REWIRE_ERROR:
+			ogon_state_set_waiting_timer(stateMachine);
+			break;
 
-	case OGON_EVENT_FRONTEND_BANDWIDTH_GOOD:
-		stateMachine->waitingForBandwidth = FALSE;
-		break;
+		case OGON_EVENT_BACKEND_SWITCH:
+			stateMachine->handleFrame = TRUE;
+			ogon_state_set_waiting_backend(stateMachine);
+			break;
 
-	case OGON_EVENT_FRONTEND_FRAME_ACK_RECEIVED:
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
+		case OGON_EVENT_FRONTEND_TRIGGER_RESIZE:
+			stateMachine->resizePending = TRUE;
+			break;
 
-	case OGON_EVENT_BACKEND_SYNC_REQUESTED:
-		stateMachine->handleFrame = FALSE;
-		ogon_state_set_waiting_sync_reply(stateMachine);
-		break;
+		case OGON_EVENT_BACKEND_ATTACHED:
+			stateMachine->handleFrame = TRUE;
+			ogon_state_set_waiting_timer(stateMachine);
+			break;
 
-	case OGON_EVENT_FRONTEND_FRAME_ACK_SEND:
-		ogon_state_set_waiting_ack(stateMachine);
-		break;
+		case OGON_EVENT_FRONTEND_RESIZED:
+			stateMachine->resizePending = FALSE;
+			break;
 
-	case OGON_EVENT_FRONTEND_FRAME_SENT:
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
+		case OGON_EVENT_FRAME_TIMER:
+			stateMachine->handleFrame = TRUE;
+			break;
 
-	case OGON_EVENT_FRONTEND_IMMEDIATE_REQUEST:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_waiting_sync_reply(stateMachine);
-		break;
-
-	case OGON_EVENT_BACKEND_TRIGGER_REWIRE:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_eventloop_move(stateMachine);
-		break;
-
-	case OGON_EVENT_FRONTEND_NEW_SHADOWING:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
-
-	case OGON_EVENT_BACKEND_REWIRE_ORIGINAL:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
-
-	case OGON_EVENT_FRONTEND_REWIRE_ERROR:
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
-
-	case OGON_EVENT_BACKEND_SWITCH:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_waiting_backend(stateMachine);
-		break;
-
-	case OGON_EVENT_FRONTEND_TRIGGER_RESIZE:
-		stateMachine->resizePending = TRUE;
-		break;
-
-	case OGON_EVENT_BACKEND_ATTACHED:
-		stateMachine->handleFrame = TRUE;
-		ogon_state_set_waiting_timer(stateMachine);
-		break;
-
-	case OGON_EVENT_FRONTEND_RESIZED:
-		stateMachine->resizePending = FALSE;
-		break;
-
-	case OGON_EVENT_FRAME_TIMER:
-		stateMachine->handleFrame = TRUE;
-		break;
-
-	default:
-		WLog_DBG(TAG, "Unhandled event! (%d)", event);
-
+		default:
+			WLog_DBG(TAG, "Unhandled event! (%d)", event);
 	}
 
-	DEBUG_STATE("Transition from %s -> %s (resize pending: %s)", get_state_name(before),
-		get_state_name(stateMachine->currentState),
-		stateMachine->resizePending ? "YES" : "NO");
+	DEBUG_STATE("Transition from %s -> %s (resize pending: %s)",
+			get_state_name(before), get_state_name(stateMachine->currentState),
+			stateMachine->resizePending ? "YES" : "NO");
 }
 
 ogon_state ogon_state_get(ogon_state_machine *stateMachine) {
@@ -294,19 +307,21 @@ ogon_state ogon_state_get(ogon_state_machine *stateMachine) {
 	return stateMachine->currentState;
 }
 
-void ogon_state_prepare_shadowing(ogon_state_machine *spy, ogon_state_machine *src) {
+void ogon_state_prepare_shadowing(
+		ogon_state_machine *spy, ogon_state_machine *src) {
 	spy->handleFrame = src->handleFrame;
 }
 
 BOOL ogon_state_should_create_frame(ogon_state_machine *stateMachine) {
-	DEBUG_STATE("Should handle frame? - handleFrame: %"PRId32" - state: %s",
-		stateMachine->handleFrame, get_state_name(stateMachine->currentState));
+	DEBUG_STATE("Should handle frame? - handleFrame: %" PRId32 " - state: %s",
+			stateMachine->handleFrame,
+			get_state_name(stateMachine->currentState));
 
 	if ((stateMachine->currentState == OGON_STATE_WAITING_TIMER ||
-		stateMachine->currentState == OGON_STATE_WAITING_SYNC_REPLY)
-		&& stateMachine->handleFrame && !stateMachine->resizePending
-		&& !stateMachine->outputSuppressed && !stateMachine->waitingForBandwidth)
-	{
+				stateMachine->currentState == OGON_STATE_WAITING_SYNC_REPLY) &&
+			stateMachine->handleFrame && !stateMachine->resizePending &&
+			!stateMachine->outputSuppressed &&
+			!stateMachine->waitingForBandwidth) {
 		return TRUE;
 	}
 

@@ -22,12 +22,16 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICPCLIENTSTUBS_H_
-#define _OGON_RDPSRV_ICPCLIENTSTUBS_H_
+#ifndef OGON_RDPSRV_ICPCLIENTSTUBS_H_
+#define OGON_RDPSRV_ICPCLIENTSTUBS_H_
 
 #include <winpr/wtypes.h>
 
 #include "../commondefs.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 int ogon_icp_Ping(BOOL* pong);
 int ogon_icp_DisconnectUserSession(UINT32 connectionId, BOOL* disconnected);
@@ -77,5 +81,8 @@ void ogon_PropertyItem_free(PropertyItem *items);
 
 int ogon_icp_get_property_bulk(UINT32 connectionId, PropertyItem *items);
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif /* _OGON_RDPSRV_ICPCLIENTSTUBS_H_ */
+#endif /* OGON_RDPSRV_ICPCLIENTSTUBS_H_ */

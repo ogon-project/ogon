@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_CHANNELS_H_
-#define _OGON_RDPSRV_CHANNELS_H_
+#ifndef OGON_RDPSRV_CHANNELS_H_
+#define OGON_RDPSRV_CHANNELS_H_
 
 #include <freerdp/utils/ringbuffer.h>
 #include <freerdp/channels/wtsvc.h>
@@ -32,6 +32,9 @@
 #include "ogon.h"
 #include "eventloop.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 enum {
 	CREATE_REQUEST_PDU = 0x01,
@@ -141,4 +144,8 @@ BOOL virtual_manager_close_internal_virtual_channel(internal_virtual_channel *in
 internal_virtual_channel *virtual_manager_open_internal_virtual_channel(ogon_vcm *vcm, const char *name, BOOL isDynamic);
 BOOL virtual_manager_write_internal_virtual_channel(internal_virtual_channel *intVC, BYTE *data, UINT32 length, UINT32 *pWritten);
 
-#endif /* _OGON_RDPSRV_CHANNELS_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_CHANNELS_H_ */

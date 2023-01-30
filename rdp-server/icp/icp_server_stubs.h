@@ -22,10 +22,14 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ICPSERVERSTUBS_H_
-#define _OGON_RDPSRV_ICPSERVERSTUBS_H_
+#ifndef OGON_RDPSRV_ICPSERVERSTUBS_H_
+#define OGON_RDPSRV_ICPSERVERSTUBS_H_
 
 #include "pbrpc.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 int ping(LONG tag, pbRPCPayload *request, pbRPCPayload **response);
 int switchTo(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
@@ -36,4 +40,8 @@ int otsapiStartRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **p
 int otsapiStopRemoteControl(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload **pbresponse);
 int message(LONG tag, pbRPCPayload* pbrequest, pbRPCPayload** pbresponse);
 
-#endif /* _OGON_RDPSRV_ICPSERVERSTUBS_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_ICPSERVERSTUBS_H_ */

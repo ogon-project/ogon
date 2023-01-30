@@ -33,7 +33,8 @@
 
 #include "security.h"
 
-BOOL ogon_socket_credentials(int fd, uid_t *uid, BOOL *haveUid, pid_t *pid, BOOL *havePid) {
+BOOL ogon_socket_credentials(
+		int fd, uid_t *uid, BOOL *haveUid, pid_t *pid, BOOL *havePid) {
 #if defined(SO_PEERCRED)
 	/* Linux */
 #if defined(_WIN32)

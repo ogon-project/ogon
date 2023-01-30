@@ -82,7 +82,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 		if (!remoteModule) {
 			WLog_Print(logger_RemoteModule, WLOG_ERROR , "calloc failed!");
-			return NULL;
+			return nullptr;
 		}
 
 		remoteModule->context = new RemoteModuleTransportContext();
@@ -116,7 +116,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 			goto exit_out;
 		}
 
-		serveOneRemoteCall(remoteModule, NULL);
+		serveOneRemoteCall(remoteModule, nullptr);
 
 	exit_out:
 		CloseHandle(remoteModule->context->mhRead);
@@ -129,8 +129,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 	size_t RemoteModule::getEnvLength(char *env) {
 		char *cp = env;
-		if (env == NULL)
-			return 0;
+		if (env == nullptr) return 0;
 
 		while (*cp || *(cp + 1))
 		{
@@ -303,7 +302,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 		if (!request.SerializeToString(&encodedRequest)) {
 			// failed to serialize
 			WLog_Print(logger_RemoteModule, WLOG_ERROR , "error serializing getCustomInfoModuleRequest");
-			return NULL;
+			return nullptr;
 		}
 
 		remoteModule->context->mCurrentCallID = getNextCallID();
@@ -311,7 +310,7 @@ namespace ogon { namespace sessionmanager { namespace module {
 		if (writepbRpc(*remoteModule->context, encodedRequest, remoteModule->context->mCurrentCallID,
 					   ogon::module::ModuleGetCustomInfo, false, true )) {
 			WLog_Print(logger_RemoteModule, WLOG_ERROR , "write failed!");
-			return NULL;
+			return nullptr;
 		}
 
 		std::string moduleGetCustomInfoReturn;
@@ -341,12 +340,12 @@ namespace ogon { namespace sessionmanager { namespace module {
 		std::string base;
 		std::string debugfile;
 
-		if (!CreatePipe(&remotecontext->mhRead, &stdOutEnd, NULL, 0)) {
+		if (!CreatePipe(&remotecontext->mhRead, &stdOutEnd, nullptr, 0)) {
 			printf("Read pipe creation failed. error=%" PRIu32 "\n", GetLastError());
 			return FALSE;
 		}
 
-		if (!CreatePipe(&stdInEnd, &remotecontext->mhWrite, NULL, 0)) {
+		if (!CreatePipe(&stdInEnd, &remotecontext->mhWrite, nullptr, 0)) {
 			printf("Write pipe creation failed. error=%" PRIu32 "\n", GetLastError());
 			goto error_out_read;
 		}
@@ -365,18 +364,8 @@ namespace ogon { namespace sessionmanager { namespace module {
 		StartupInfo.hStdOutput = stdOutEnd;
 		StartupInfo.hStdInput = stdInEnd;
 
-
-		status = CreateProcess(NULL,
-							   lpCommandLine,
-							   NULL,
-							   NULL,
-							   FALSE,
-							   0,
-							   NULL,
-							   NULL,
-							   &StartupInfo,
-							   &ProcessInformation);
-
+		status = CreateProcess(nullptr, lpCommandLine, nullptr, nullptr, FALSE,
+				0, nullptr, nullptr, &StartupInfo, &ProcessInformation);
 
 		CloseHandle(ProcessInformation.hProcess);
 		CloseHandle(ProcessInformation.hThread);
@@ -401,10 +390,10 @@ namespace ogon { namespace sessionmanager { namespace module {
 		return status;
 	error_out_write:
 		CloseHandle(remotecontext->mhWrite);
-		remotecontext->mhWrite = NULL;
+		remotecontext->mhWrite = nullptr;
 	error_out_read:
 		CloseHandle(remotecontext->mhRead);
-		remotecontext->mhRead = NULL;
+		remotecontext->mhRead = nullptr;
 		return status;
 	}
 
@@ -443,8 +432,8 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 		CloseHandle(context->context->mhRead);
 		CloseHandle(context->context->mhWrite);
-		context->context->mhRead = NULL;
-		context->context->mhWrite = NULL;
+		context->context->mhRead = nullptr;
+		context->context->mhWrite = nullptr;
 		context->launcherStarted = false;
 		return TRUE;
 

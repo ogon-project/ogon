@@ -23,8 +23,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_RDPSRV_ENCODER_H_
-#define _OGON_RDPSRV_ENCODER_H_
+#ifndef OGON_RDPSRV_ENCODER_H_
+#define OGON_RDPSRV_ENCODER_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,7 +38,12 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/region.h>
 
+#if defined(USE_FREERDP_H264)
+#include <freerdp/codec/h264.h>
+#endif
+#if defined(WITH_OPENH264)
 #include "openh264.h"
+#endif
 
 #ifdef WITH_ENCODER_STATS
 #include <freerdp/utils/stopwatch.h>
@@ -48,6 +53,10 @@
 #define STOPWATCH_START(sw)	do { } while (0)
 #define STOPWATCH_STOP(sw)	do { } while (0)
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 typedef struct _ogon_bmp_context {
 	BITMAP_PLANAR_CONTEXT *planar;
@@ -93,6 +102,9 @@ typedef struct _ogon_bitmap_encoder {
 #ifdef WITH_OPENH264
 	ogon_h264_context *h264_context;
 #endif
+#if defined(USE_FREERDP_H264)
+	H264_CONTEXT *fh264_context;
+#endif
 
 #ifdef WITH_ENCODER_STATS
 	STOPWATCH *swSendSurfaceBits;
@@ -120,4 +132,8 @@ BOOL ogon_bitmap_encoder_update_maxrequest_size(ogon_bitmap_encoder *encoder,
 
 void ogon_encoder_blank_client_view_area(ogon_bitmap_encoder *encoder, RECTANGLE_16 *r);
 
-#endif /* _OGON_RDPSRV_ENCODER_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* OGON_RDPSRV_ENCODER_H_ */

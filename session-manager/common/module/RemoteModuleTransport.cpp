@@ -37,8 +37,8 @@ namespace ogon { namespace sessionmanager { namespace module {
 	static wLog *logger_RemoteModuleTransport = WLog_Get("ogon.sessionmanager.module.remotemoduletransport");
 
 	RemoteModuleTransportContext::RemoteModuleTransportContext() {
-		mhRead = NULL;
-		mhWrite = NULL;
+		mhRead = nullptr;
+		mhWrite = nullptr;
 		mHeaderRead = 0;
 		mPacktLength = 0;
 		mPayloadRead = 0;
@@ -74,8 +74,9 @@ namespace ogon { namespace sessionmanager { namespace module {
 				return REMOTE_CLIENT_ERROR;
 		}
 
-		fSuccess = ReadFile(context.mhRead, context.mHeaderBuffer + context.mHeaderRead,
-							4 - context.mHeaderRead, &lpNumberOfBytesRead, NULL);
+		fSuccess = ReadFile(context.mhRead,
+				context.mHeaderBuffer + context.mHeaderRead,
+				4 - context.mHeaderRead, &lpNumberOfBytesRead, nullptr);
 
 		if (!fSuccess || lpNumberOfBytesRead == 0) {
 			WLog_Print(logger_RemoteModuleTransport, WLOG_DEBUG, "error reading header (read: %" PRIu32 " fSuccess: %" PRId32 ")",
@@ -120,8 +121,10 @@ namespace ogon { namespace sessionmanager { namespace module {
 				return REMOTE_CLIENT_ERROR;
 		}
 
-		fSuccess = ReadFile(context.mhRead, context.mPayloadBuffer + context.mPayloadRead,
-							context.mPacktLength - context.mPayloadRead, &lpNumberOfBytesRead, NULL);
+		fSuccess = ReadFile(context.mhRead,
+				context.mPayloadBuffer + context.mPayloadRead,
+				context.mPacktLength - context.mPayloadRead,
+				&lpNumberOfBytesRead, nullptr);
 
 		if (!fSuccess || lpNumberOfBytesRead == 0) {
 			WLog_Print(logger_RemoteModuleTransport, WLOG_DEBUG, "error reading payload");
@@ -287,8 +290,8 @@ namespace ogon { namespace sessionmanager { namespace module {
 			return REMOTE_CLIENT_ERROR;
 		}
 
-		fSuccess = WriteFile(context.mhWrite, &messageSize,
-							 4, &lpNumberOfBytesWritten, NULL);
+		fSuccess = WriteFile(context.mhWrite, &messageSize, 4,
+				&lpNumberOfBytesWritten, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesWritten == 0)) {
 			WLog_Print(logger_RemoteModuleTransport, WLOG_DEBUG, "error writing header data");
@@ -296,8 +299,8 @@ namespace ogon { namespace sessionmanager { namespace module {
 			return REMOTE_CLIENT_ERROR;
 		}
 
-		fSuccess = WriteFile(context.mhWrite, data.data(),
-							 data.size(), &lpNumberOfBytesWritten, NULL);
+		fSuccess = WriteFile(context.mhWrite, data.data(), data.size(),
+				&lpNumberOfBytesWritten, nullptr);
 
 		if (!fSuccess || (lpNumberOfBytesWritten == 0)) {
 			WLog_Print(logger_RemoteModuleTransport, WLOG_DEBUG, "error writing payload data");

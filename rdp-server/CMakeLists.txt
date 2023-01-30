@@ -8,33 +8,33 @@ include_directories(".")
 include_directories("${CMAKE_BINARY_DIR}/backend")
 
 set(${MODULE_PREFIX}_SRCS
-	app_context.c
+	app_context.cpp
 	app_context.h
-	backend.c
-	channels.c
+	backend.cpp
+	channels.cpp
 	channels.h
-	encoder.c
+	encoder.cpp
 	encoder.h
-	eventloop.c
+	eventloop.cpp
 	eventloop.h
-	ogon.c
+	ogon.cpp
 	ogon.h
-	frontend.c
-	graphics.c
-	peer.c
+	frontend.cpp
+	graphics.cpp
+	peer.cpp
 	peer.h
-	PMurHash.c
+	PMurHash.cpp
 	PMurHash.h
-	state.c
+	state.cpp
 	state.h
-	rdpgfx.c
+	rdpgfx.cpp
 	rdpgfx.h
 	font8x8.h
-	openh264.c
+	openh264.cpp
 	openh264.h
-	bandwidth_mgmt.c
+	bandwidth_mgmt.cpp
 	bandwidth_mgmt.h
-	../common/procutils.c
+	../common/procutils.cpp
 	../common/procutils.h
 	)
 

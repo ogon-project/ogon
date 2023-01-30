@@ -34,18 +34,20 @@ namespace ogon { namespace launcher {
 
 static wLog *logger = WLog_Get("ogon.launcher");
 
-	SystemSession::SystemSession() : mPamHandle(NULL), mSessionOpen(false), mUTMPwritten(false),
-			mSessionPID(0), mSessionID(0)
-	{
-	}
+SystemSession::SystemSession()
+	: mPamHandle(nullptr),
+	  mSessionOpen(false),
+	  mUTMPwritten(false),
+	  mSessionPID(0),
+	  mSessionID(0) {}
 
-	SystemSession::~SystemSession() {
-		if (mSessionOpen) {
-			stopSession();
-		}
-		if (mPamHandle) {
-			uninitalizePAM();
-		}
+SystemSession::~SystemSession() {
+	if (mSessionOpen) {
+		stopSession();
+	}
+	if (mPamHandle) {
+		uninitalizePAM();
+	}
 	}
 
 	bool SystemSession::startSession() {
@@ -81,17 +83,12 @@ static wLog *logger = WLog_Get("ogon.launcher");
 	}
 
 	bool SystemSession::populateEnv(char **envBlockp) const {
-		const char *toPopulate[] = {
-			"XDG_RUNTIME_DIR",
-			"XDG_SESSION_ID",
+		const char *toPopulate[] = {"XDG_RUNTIME_DIR", "XDG_SESSION_ID",
 
-			/* these one should not be set in our case, but it doesn't hurt to
-			 * populate them if pam_systemd has set them.
-			 */
-			"XDG_SEAT",
-			"XDG_VTNR",
-			NULL
-		};
+				/* these one should not be set in our case, but it doesn't hurt
+				 * to populate them if pam_systemd has set them.
+				 */
+				"XDG_SEAT", "XDG_VTNR", nullptr};
 
 		for (int i = 0; toPopulate[i]; i++) {
 			const char *val = pam_getenv(mPamHandle, toPopulate[i]);
@@ -134,7 +131,7 @@ static wLog *logger = WLog_Get("ogon.launcher");
 
 	bool SystemSession::init(const std::string &userName, const std::string &serviceName,
 			const std::string &remoteHost, pid_t sessionPID, UINT32 sessionID) {
-		pam_conv conv = {SystemSession::pam_conv_cb, NULL};
+		pam_conv conv = {SystemSession::pam_conv_cb, nullptr};
 
 		if (mPamHandle) {
 			return false;
@@ -170,7 +167,7 @@ static wLog *logger = WLog_Get("ogon.launcher");
 		strncpy(utx.ut_host, mRemoteHost.c_str(), __UT_HOSTSIZE - 1);
 		snprintf(utx.ut_line, __UT_LINESIZE - 1, "rdp:%" PRIu32 "", mSessionID);
 
-		gettimeofday (&tv, NULL);
+		gettimeofday(&tv, nullptr);
 		utx.ut_tv.tv_sec = tv.tv_sec;
 		utx.ut_tv.tv_usec = tv.tv_usec;
 

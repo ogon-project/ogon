@@ -22,8 +22,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_VERSION_H_
-#define _OGON_VERSION_H_
+#ifndef OGON_VERSION_H
+#define OGON_VERSION_H
 
 #define OGON_VERSION_MAJOR ${OGON_VERSION_MAJOR}
 #define OGON_VERSION_MINOR ${OGON_VERSION_MINOR}

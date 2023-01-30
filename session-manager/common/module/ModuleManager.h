@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_MODULEMANAGER_H_
-#define _OGON_SMGR_MODULEMANAGER_H_
+#ifndef OGON_SMGR_MODULEMANAGER_H_
+#define OGON_SMGR_MODULEMANAGER_H_
 
 #include "Module.h"
 #include "AuthModule.h"
@@ -60,4 +60,4 @@ namespace ogon { namespace sessionmanager { namespace module {
 
 namespace moduleNS = ogon::sessionmanager::module;
 
-#endif /* _OGON_SMGR_MODULEMANAGER_H_ */
+#endif /* OGON_SMGR_MODULEMANAGER_H_ */

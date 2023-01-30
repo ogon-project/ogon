@@ -36,11 +36,12 @@
 #include <sys/wait.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/environment.h>
 #include <winpr/pipe.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/environment.h>
+#include <winpr/version.h>
+#include <winpr/wlog.h>
 
 #include <ogon/backend.h>
 
@@ -72,11 +73,11 @@ static DWORD qt_clean_up_process(PROCESS_INFORMATION *pi) {
 	if (pi->hProcess) {
 		GetExitCodeProcess(pi->hProcess, &ret);
 		CloseHandle(pi->hProcess);
-		pi->hProcess = NULL;
+		pi->hProcess = nullptr;
 	}
 	if (pi->hThread) {
 		CloseHandle(pi->hThread);
-		pi->hThread = NULL;
+		pi->hThread = nullptr;
 	}	return ret;
 }
 
@@ -92,7 +93,8 @@ static int qt_rds_stop_process(PROCESS_INFORMATION *pi, unsigned int wait_sec, U
 	WaitForSingleObject(pi->hProcess, 5);
 #else
 	if (gStatus.removeMonitoringProcess(pi->dwProcessId)) {
-		TerminateChildProcess(pi->dwProcessId, wait_sec * 1000, NULL, sessionId);
+		TerminateChildProcess(
+				pi->dwProcessId, wait_sec * 1000, nullptr, sessionId);
 	}
 #endif
 	qt_clean_up_process(pi);
@@ -104,7 +106,7 @@ static RDS_MODULE_COMMON* qt_rds_module_new(void)
 	rdsModuleQt* qt = (rdsModuleQt *)calloc(1, sizeof(rdsModuleQt));
 	if (!qt) {
 		fprintf(stderr, "%s: error allocating qt module memory\n", __FUNCTION__);
-		return NULL;
+		return nullptr;
 	}
 
 	WLog_Print(gModuleLog, WLOG_DEBUG, "RdsModuleNew");
@@ -142,21 +144,22 @@ static char* qt_rds_module_start(RDS_MODULE_COMMON* module)
 	sprintf_s(qPipeName, sizeof(qPipeName), "/tmp/.pipe/ogon_%" PRIu32 "_%s", SessionId, endpoint);
 	if (!SetEnvironmentVariableEBA(&module->envBlock, "OGON_PIPE_PATH", qPipeName)) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not set OGON_PIPE_PATH in the environment block", SessionId);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!getPropertyStringWrapper(module->baseConfigPath, &gConfig, SessionId, "cmd", cmd, 256)) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not query %s.cmd, stopping qt module again, because of missing command ",
 				   SessionId, module->baseConfigPath);
-		return NULL;
+		return nullptr;
 	}
 
 	sprintf_s(lpCommandLine, sizeof(lpCommandLine),	"%s -platform ogon", cmd);
 
 	WLog_Print(gModuleLog, WLOG_DEBUG, "s %" PRIu32 ": Starting process with command line: %s", SessionId, lpCommandLine);
 
-	status = CreateProcessAsUserA(module->userToken, NULL, lpCommandLine, NULL,
-			NULL, FALSE, 0, module->envBlock, NULL,	&(qt->si), &(qt->pi));
+	status = CreateProcessAsUserA(module->userToken, nullptr, lpCommandLine,
+			nullptr, nullptr, FALSE, 0, module->envBlock, nullptr, &(qt->si),
+			&(qt->pi));
 	if (!status) {
 		WLog_Print(gModuleLog, WLOG_FATAL, "s %" PRIu32 ": Could not start qt application %s", SessionId, cmd);
 		goto out_create_process_error;
@@ -187,8 +190,7 @@ out_wait_pipe_error:
 out_pipe_name_error:
 	qt_rds_stop_process(&(qt->pi), 2, SessionId);
 out_create_process_error:
-	return NULL;
-
+	return nullptr;
 }
 
 static int qt_rds_module_stop(RDS_MODULE_COMMON *module)
@@ -207,22 +209,22 @@ static char *qt_get_custom_info(RDS_MODULE_COMMON *module)
 	char *customInfo = (char *)malloc(11);
 	if (!customInfo) {
 		WLog_Print(gModuleLog, WLOG_ERROR, "s %" PRIu32 ": malloc failed", module->sessionId);
-		return NULL;
+		return nullptr;
 	}
 
 	snprintf(customInfo, 11, "%" PRIu32 "", qt->pi.dwProcessId);
 	return customInfo;
 }
 
-int qt_module_init() {
+static int qt_module_init() {
+#if WINPR_VERSION_MAJOR < 3
 	WLog_Init();
+#endif
 	gModuleLog = WLog_Get("com.ogon.module.qt");
 	return 0;
 }
 
-int qt_module_destroy() {
-	return 0;
-}
+static int qt_module_destroy() { return 0; }
 static int qt_rds_module_connect(RDS_MODULE_COMMON *module) {
 	OGON_UNUSED(module);
 	return 0;
@@ -233,8 +235,7 @@ static int qt_rds_module_disconnect(RDS_MODULE_COMMON *module) {
 	return 0;
 }
 
-OGON_API int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS* pEntryPoints)
-{
+int RdsModuleEntry(RDS_MODULE_ENTRY_POINTS *pEntryPoints) {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Name = "Qt";
 

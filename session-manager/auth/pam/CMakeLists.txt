@@ -4,7 +4,7 @@ set(MODULE_PREFIX "OGON_AUTH_PAM")
 include_directories(${PAM_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
-	pam_auth.c
+	pam_auth.cpp
 	pam_auth.h)
 
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})

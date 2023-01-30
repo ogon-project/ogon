@@ -36,7 +36,8 @@ TaskEndRemoteControl::TaskEndRemoteControl(UINT32 connectionId) : mResult(false)
 
 void TaskEndRemoteControl::run() {
 	sessionNS::ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(mConnectionId);
-	if ((currentConnection == NULL) || (currentConnection->getSessionId() == 0)) {
+	if ((currentConnection == nullptr) ||
+			(currentConnection->getSessionId() == 0)) {
 		mResult = false;
 		return;
 	}

@@ -49,7 +49,7 @@ namespace ogon { namespace sessionmanager { namespace permission {
 			throw std::bad_alloc();
 		}
 		mRandomBucket = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		srand(time(NULL));
+		srand(time(nullptr));
 		removeAuthTokens();
 		mUnknownGroupsLogonAllowed = false;
 	}
@@ -163,7 +163,7 @@ namespace ogon { namespace sessionmanager { namespace permission {
 		std::list<std::string> groupList;
 
 		groups = (gid_t*)malloc(ngroups * sizeof (gid_t));
-		if (groups == NULL) {
+		if (groups == nullptr) {
 			WLog_Print(logger_PermissionManager, WLOG_FATAL,
 				"malloc for groups failed!");
 			return groupList;
@@ -171,7 +171,7 @@ namespace ogon { namespace sessionmanager { namespace permission {
 
 		struct passwd *pw;
 		pw = getpwnam(username.c_str());
-		if (pw == NULL) {
+		if (pw == nullptr) {
 			WLog_Print(logger_PermissionManager, WLOG_FATAL,
 				"getpwnam for groups failed!");
 			free(groups);

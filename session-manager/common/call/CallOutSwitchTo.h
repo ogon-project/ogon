@@ -21,8 +21,8 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
-#ifndef _OGON_SMGR_CALL_CALLOUTSWITCHTO_H_
-#define _OGON_SMGR_CALL_CALLOUTSWITCHTO_H_
+#ifndef OGON_SMGR_CALL_CALLOUTSWITCHTO_H_
+#define OGON_SMGR_CALL_CALLOUTSWITCHTO_H_
 
 #include <string>
 #include "CallOut.h"
@@ -67,4 +67,4 @@ namespace ogon { namespace sessionmanager { namespace call {
 
 namespace callNS = ogon::sessionmanager::call;
 
-#endif /* _OGON_SMGR_CALL_CALLOUTSWITCHTO_H_ */
+#endif /* OGON_SMGR_CALL_CALLOUTSWITCHTO_H_ */
