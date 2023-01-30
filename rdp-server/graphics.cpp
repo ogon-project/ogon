@@ -902,9 +902,9 @@ int ogon_send_gfx_h264_bits(ogon_connection *conn, const BYTE *data,
 	inputRect.bottom = encoder->desktopHeight;
 	if (enableFullAVC444) {
 		rc = avc444_compress(h264, data, encoder->srcFormat, encoder->scanLine,
-				encoder->desktopWidth, encoder->desktopHeight, &inputRect,
-				useAVC444v2 ? 2 : 1, &op, &encodedData, &encodedSize,
-				&chromaData, &chromaSize, &meta, &auxMeta);
+				encoder->desktopWidth, encoder->desktopHeight,
+				useAVC444v2 ? 2 : 1, &inputRect, &op, &encodedData,
+				&encodedSize, &chromaData, &chromaSize, &meta, &auxMeta);
 	} else {
 		rc = avc420_compress(h264, data, encoder->srcFormat, encoder->scanLine,
 				encoder->desktopWidth, encoder->desktopHeight, &inputRect,
