@@ -21,14 +21,16 @@
  * For more information see the file LICENSE in the distribution of this file.
  */
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/pipe.h>
 
 #include "pipe_transport.h"
 
 struct np_transport_context {
-	pbRPCTransportContext context;
-	HANDLE handle;
+	pbRPCTransportContext context = {};
+	HANDLE handle = nullptr;
 };
 typedef struct np_transport_context NpTransportContext;
 
@@ -36,6 +38,7 @@ static int tp_npipe_open(pbRPCTransportContext *context, int timeout) {
 	HANDLE hNamedPipe = nullptr;
 	char pipeName[] = "\\\\.\\pipe\\ogon_SessionManager";
 	NpTransportContext *np = (NpTransportContext *)context;
+	assert(np);
 
 	if (!WaitNamedPipeA(pipeName, timeout)) {
 		return -1;
@@ -54,6 +57,7 @@ static int tp_npipe_open(pbRPCTransportContext *context, int timeout) {
 
 static int tp_npipe_close(pbRPCTransportContext *context) {
 	NpTransportContext *np = (NpTransportContext *)context;
+	assert(np);
 
 	if (np->handle) {
 		CloseHandle(np->handle);
@@ -68,6 +72,7 @@ static int tp_npipe_write(pbRPCTransportContext *context, const char *data,
 	DWORD bytesWritten;
 	BOOL fSuccess = FALSE;
 	NpTransportContext *np = (NpTransportContext *)context;
+	assert(np);
 
 	fSuccess = WriteFile(
 			np->handle, data, datalen, (LPDWORD)&bytesWritten, nullptr);
@@ -84,6 +89,7 @@ static int tp_npipe_read(
 	NpTransportContext *np = (NpTransportContext *)context;
 	DWORD bytesRead;
 	BOOL fSuccess = FALSE;
+	assert(np);
 
 	fSuccess = ReadFile(np->handle, data, datalen, &bytesRead, nullptr);
 
@@ -96,6 +102,7 @@ static int tp_npipe_read(
 
 static HANDLE tp_npipe_get_fds(pbRPCTransportContext *context) {
 	NpTransportContext *np = (NpTransportContext *)context;
+	assert(np);
 	return np->handle;
 }
 
