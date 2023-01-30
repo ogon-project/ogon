@@ -26,6 +26,7 @@
 #define OGON_SMGR_AUTH_PAM_H_
 
 #include "../../auth.h"
+#include <ogon/api.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +34,7 @@ extern "C" {
 
 #define PAM_AUTH_DOMAIN ""
 
-int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS* pEntryPoints);
+OGON_API int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS *pEntryPoints);
 
 #ifdef __cplusplus
 }

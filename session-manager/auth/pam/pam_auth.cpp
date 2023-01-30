@@ -219,8 +219,7 @@ static int rds_auth_logon_user(rdsAuthModulePam *pam, const char *username,
 	return 0;
 }
 
-OGON_API int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS* pEntryPoints)
-{
+int RdsAuthModuleEntry(RDS_AUTH_MODULE_ENTRY_POINTS *pEntryPoints) {
 	pEntryPoints->Version = 1;
 
 	pEntryPoints->New = (pRdsAuthModuleNew) rds_auth_module_new;
